@@ -1,0 +1,24 @@
+User
+    id : key
+    name : string (unindexed)
+    migration_key : string
+
+Session
+    id : key
+    user : string
+    creation : datetime (auto_now_add)
+
+Game
+    id : key
+    creation : datetime (auto_now_add)
+    description : text
+    red : string
+    black : string
+    moves : text
+
+Message
+    id : key
+    game : string
+    user : string (unindexed)
+    timestamp : datetime (unindexed, auto_now_add)
+    content : text
