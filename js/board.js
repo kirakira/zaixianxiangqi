@@ -1,3 +1,4 @@
+var SVG_NS = "http://www.w3.org/2000/svg";
 var gridSize = 50, middleGap = 0;
 var PIECE_K = 1, PIECE_A = 2, PIECE_E = 3, PIECE_H = 4, PIECE_R = 5, PIECE_C = 6, PIECE_P = 7;
 var PIECE_RK = 1, PIECE_RA = 2, PIECE_RE = 3, PIECE_RH = 4, PIECE_RR = 5, PIECE_RC = 6, PIECE_RP = 7,
@@ -6,7 +7,7 @@ var PIECE_TEXTS = ["", "帥", "仕", "相", "傌", "俥", "炮", "兵",
                    "", "將", "士", "象", "馬", "車", "砲", "卒"];
 var board = [];
 
-function getCanvas() {
+function getSVG() {
     return document.getElementById("board");
 }
 
@@ -21,87 +22,102 @@ function getGridY(i, j) {
         return gridSize / 2 + i * gridSize + middleGap;
 }
 
-function drawGrid(context) {
-    context.beginPath();
-    context.lineWidth = "1";
-    context.strokeStyle = "grey";
-    for (i = 0; i < 9; ++i) {
-        context.moveTo(gridSize / 2 + i * gridSize, gridSize / 2);
-        context.lineTo(gridSize / 2 + i * gridSize, gridSize / 2 + gridSize * 4);
-        if (i == 0 || i == 8)
-            context.lineTo(gridSize / 2 + i * gridSize, gridSize / 2 + gridSize * 5 + middleGap);
-        else
-            context.moveTo(gridSize / 2 + i * gridSize, gridSize / 2 + gridSize * 5 + middleGap);
-        context.lineTo(gridSize / 2 + i * gridSize, gridSize / 2 + gridSize * 9 + middleGap);
-    }
-    for (i = 0; i < 10; ++i) {
-        var y = gridSize / 2 + i * gridSize;
-        if (i >= 5)
-            y += middleGap;
-        context.moveTo(gridSize / 2, y);
-        context.lineTo(gridSize / 2 + gridSize * 8, y);
-    }
-
-    context.moveTo(getGridX(0, 3), getGridY(0, 3));
-    context.lineTo(getGridX(2, 5), getGridY(2, 5));
-    context.moveTo(getGridX(0, 5), getGridY(0, 5));
-    context.lineTo(getGridX(2, 3), getGridY(2, 3));
-    context.moveTo(getGridX(7, 3), getGridY(7, 3));
-    context.lineTo(getGridX(9, 5), getGridY(9, 5));
-    context.moveTo(getGridX(7, 5), getGridY(7, 5));
-    context.lineTo(getGridX(9, 3), getGridY(9, 3));
-
-    context.stroke();
+function createLine(i1, j1, i2, j2, c, id) {
+    var x1 = getGridX(i1, j1), y1 = getGridY(i1, j1);
+    var x2 = getGridX(i2, j2), y2 = getGridY(i2, j2);
+    var line = document.createElementNS(SVG_NS, "line");
+    line.setAttribute("x1", x1.toString());
+    line.setAttribute("y1", y1.toString());
+    line.setAttribute("x2", x2.toString());
+    line.setAttribute("y2", y2.toString());
+    line.setAttribute("class", c);
+    if (id)
+        line.setAttribute("id", id);
+    return line;
 }
 
-function drawPiece(context, i, j, text, red) {
+function createCircle(i, j, r, c, id) {
     var x = getGridX(i, j), y = getGridY(i, j);
+    var circle = document.createElementNS(SVG_NS, "circle");
+    circle.setAttribute("cx", x.toString());
+    circle.setAttribute("cy", y.toString());
+    circle.setAttribute("r", r.toString());
+    circle.setAttribute("class", c.toString());
+    if (id)
+        circle.setAttribute("id", id);
+    return circle;
+}
 
-    context.lineWidth = "1";
+function createText(i, j, text, c, id) {
+    var x = getGridX(i, j) - 10, y = getGridY(i, j) + 5;
+    var t = document.createElementNS(SVG_NS, "text");
+    t.setAttribute("font-size", "24");
+    t.setAttribute("x", x.toString());
+    t.setAttribute("y", y.toString());
+    t.appendChild(document.createTextNode(text));
+    t.setAttribute("class", c.toString());
+    if (id)
+        t.setAttribute("id", id);
+    return t;
+}
 
-    context.beginPath();
-    context.arc(x, y, 23, 0, 2 * Math.PI);
-    context.fillStyle = "white";
-    context.fill();
+function toPosition(i, j) {
+    var colNames = "abcdefghi";
+    return colNames[j] + (9 - i).toString();
+}
 
+function drawPiece(i, j, text, red) {
+    var outer = createCircle(i, j, 23, "piece-outer", "piece-outer-" + toPosition(i, j));
+    var inner = createCircle(i, j, 20, "piece-inner", "piece-inner-" + toPosition(i, j));
+    var t = createText(i, j, text, "piece-text", "piece-text-" + toPosition(i, j));
     if (red) {
-        context.strokeStyle = "red";
-        context.fillStyle = "red";
+        outer.setAttribute("stroke", "red");
+        inner.setAttribute("stroke", "red");
+        t.setAttribute("fill", "red");
     } else {
-        context.strokeStyle = "black";
-        context.fillStyle = "black";
+        outer.setAttribute("stroke", "black");
+        inner.setAttribute("stroke", "black");
+        t.setAttribute("fill", "black");
     }
-
-    context.beginPath();
-    context.arc(x, y, 23, 0, 2 * Math.PI);
-    context.stroke();
-    context.beginPath();
-    context.arc(x, y, 20, 0, 2 * Math.PI);
-    context.stroke();
-
-    context.font = "24px Arial";
-    context.fillText(text, x - 12, y + 8);
+    outer.setAttribute("stroke-width", "2");
+    inner.setAttribute("stroke-width", "2");
+    outer.setAttribute("fill", "white");
+    inner.setAttribute("fill-opacity", "0");
+    insertElement(outer);
+    insertElement(inner);
+    insertElement(t);
 }
 
-function drawPieces(context) {
-    for (i = 0; i < 10; ++i) {
-        for (j = 0; j < 9; ++j) {
-            if (board[i][j] != 0)
-                drawPiece(context, i, j, PIECE_TEXTS[board[i][j]], board[i][j] >= 8);
-        }
+function insertElement(e) {
+    getSVG().appendChild(e);
+}
+
+function drawGridLine(i1, j1, i2, j2) {
+    var line = createLine(i1, j1, i2, j2, "grid");
+    line.setAttribute("stroke-width", "1");
+    line.setAttribute("stroke", "gray");
+    insertElement(line);
+}
+
+function drawGrid() {
+    var svg = getSVG();
+    for (i = 0; i < 9; ++i) {
+        drawGridLine(0, i, 4, i);
+        if (i == 0 || i == 8)
+            drawGridLine(4, i, 5, i);
+        drawGridLine(5, i, 9, i);
     }
-}
-
-function drawHighlightedGrid(context) {
-}
-
-function drawHintedGrid(context) {
+    for (i = 0; i < 10; ++i)
+        drawGridLine(i, 0, i, 8);
+    drawGridLine(0, 3, 2, 5);
+    drawGridLine(0, 5, 2, 3);
+    drawGridLine(7, 3, 9, 5);
+    drawGridLine(9, 3, 7, 5);
 }
 
 function drawBoard() {
-    var context = getCanvas().getContext("2d");
-    drawGrid(context);
-    drawPieces(context);
+    drawGrid();
+    drawPiece(1, 1, "哈", true);
 }
 
 function pieceClicked(i, j) {
@@ -181,7 +197,6 @@ function setBoard(fen) {
 }
 
 function init() {
-    getCanvas().addEventListener("mousedown", onClick);
     board = [];
     for (i = 0; i < 10; ++i) {
         board.push([]);
