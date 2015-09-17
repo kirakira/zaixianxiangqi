@@ -49,7 +49,7 @@ function createCircle(i, j, r, c, id) {
 }
 
 function createText(i, j, text, c, id) {
-    var x = getGridX(i, j) - 10, y = getGridY(i, j) + 5;
+    var x = getGridX(i, j) - 12, y = getGridY(i, j) + 8;
     var t = document.createElementNS(SVG_NS, "text");
     t.setAttribute("font-size", "24");
     t.setAttribute("x", x.toString());
