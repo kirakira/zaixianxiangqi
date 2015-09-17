@@ -41,6 +41,16 @@ function drawGrid(context) {
         context.moveTo(gridSize / 2, y);
         context.lineTo(gridSize / 2 + gridSize * 8, y);
     }
+
+    context.moveTo(getGridX(0, 3), getGridY(0, 3));
+    context.lineTo(getGridX(2, 5), getGridY(2, 5));
+    context.moveTo(getGridX(0, 5), getGridY(0, 5));
+    context.lineTo(getGridX(2, 3), getGridY(2, 3));
+    context.moveTo(getGridX(7, 3), getGridY(7, 3));
+    context.lineTo(getGridX(9, 5), getGridY(9, 5));
+    context.moveTo(getGridX(7, 5), getGridY(7, 5));
+    context.lineTo(getGridX(9, 3), getGridY(9, 3));
+
     context.stroke();
 }
 
@@ -80,6 +90,12 @@ function drawPieces(context) {
                 drawPiece(context, i, j, PIECE_TEXTS[board[i][j]], board[i][j] >= 8);
         }
     }
+}
+
+function drawHighlightedGrid(context) {
+}
+
+function drawHintedGrid(context) {
 }
 
 function drawBoard() {
