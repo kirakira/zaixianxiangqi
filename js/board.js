@@ -1,10 +1,10 @@
 var SVG_NS = "http://www.w3.org/2000/svg";
 var gridSize = 50, middleGap = 0;
 var PIECE_K = 1, PIECE_A = 2, PIECE_E = 3, PIECE_H = 4, PIECE_R = 5, PIECE_C = 6, PIECE_P = 7;
-var PIECE_RK = 1, PIECE_RA = 2, PIECE_RE = 3, PIECE_RH = 4, PIECE_RR = 5, PIECE_RC = 6, PIECE_RP = 7,
-    PIECE_BK = 9, PIECE_BA = 10, PIECE_BE = 11, PIECE_BH = 12, PIECE_BR = 13, PIECE_BC = 14, PIECE_BP = 15;
-var PIECE_TEXTS = ["", "帥", "仕", "相", "傌", "俥", "炮", "兵",
-                   "", "將", "士", "象", "馬", "車", "砲", "卒"];
+var PIECE_BK = 1, PIECE_BA = 2, PIECE_BE = 3, PIECE_BH = 4, PIECE_BR = 5, PIECE_BC = 6, PIECE_BP = 7,
+    PIECE_RK = 9, PIECE_RA = 10, PIECE_RE = 11, PIECE_RH = 12, PIECE_RR = 13, PIECE_RC = 14, PIECE_RP = 15;
+var PIECE_TEXTS = ["", "將", "士", "象", "馬", "車", "砲", "卒",
+                   "", "帥", "仕", "相", "傌", "俥", "炮", "兵"];
 var board = [];
 
 function getSVG() {
@@ -49,7 +49,7 @@ function createCircle(i, j, r, c, id) {
 }
 
 function createText(i, j, text, c, id) {
-    var x = getGridX(i, j) - 12, y = getGridY(i, j) + 8;
+    var x = getGridX(i, j) - 12, y = getGridY(i, j) + 7;
     var t = document.createElementNS(SVG_NS, "text");
     t.setAttribute("font-size", "24");
     t.setAttribute("x", x.toString());
@@ -66,11 +66,15 @@ function toPosition(i, j) {
     return colNames[j] + (9 - i).toString();
 }
 
-function drawPiece(i, j, text, red) {
+function isRed(piece) {
+    return piece >= 8;
+}
+
+function drawPiece(i, j, piece) {
     var outer = createCircle(i, j, 23, "piece-outer", "piece-outer-" + toPosition(i, j));
     var inner = createCircle(i, j, 20, "piece-inner", "piece-inner-" + toPosition(i, j));
-    var t = createText(i, j, text, "piece-text", "piece-text-" + toPosition(i, j));
-    if (red) {
+    var t = createText(i, j, PIECE_TEXTS[piece], "piece-text", "piece-text-" + toPosition(i, j));
+    if (isRed(piece)) {
         outer.setAttribute("stroke", "red");
         inner.setAttribute("stroke", "red");
         t.setAttribute("fill", "red");
@@ -86,10 +90,26 @@ function drawPiece(i, j, text, red) {
     insertElement(outer);
     insertElement(inner);
     insertElement(t);
+    var cover = createCircle(i, j, 23, "piece-cover", "piece-cover-" + toPosition(i, j));
+    cover.setAttribute("stroke-width", "0");
+    cover.setAttribute("fill-opacity", "0");
+    cover.setAttribute("onmousedown", "pieceClicked(" + i.toString() + ", " + j.toString() + ")");
+    insertElement(cover);
+}
+
+function erasePiece(i, j, piece) {
+    removeElement("piece-cover-" + toPosition(i, j));
+    removeElement("piece-text-" + toPosition(i, j));
+    removeElement("piece-inner-" + toPosition(i, j));
+    removeElement("piece-outer-" + toPosition(i, j));
 }
 
 function insertElement(e) {
     getSVG().appendChild(e);
+}
+
+function removeElement(id) {
+    getSVG().removeChild(document.getElementById(id));
 }
 
 function drawGridLine(i1, j1, i2, j2) {
@@ -115,39 +135,20 @@ function drawGrid() {
     drawGridLine(9, 3, 7, 5);
 }
 
+function drawPieces() {
+    for (i = 0; i < 10; ++i)
+        for (j = 0; j < 9; ++j)
+            if (board[i][j] != 0)
+                drawPiece(i, j, board[i][j]);
+}
+
 function drawBoard() {
     drawGrid();
-    drawPiece(1, 1, "哈", true);
+    drawPieces();
 }
 
 function pieceClicked(i, j) {
     alert(i + "eee" + j);
-}
-
-function distance(x1, y1, x2, y2) {
-    var dx = x1 - x2, dy = y1 - y2;
-    return Math.sqrt(dx * dx + dy * dy);
-}
-
-function onClick(evt) {
-    evt = evt || window.event;
-    var button = evt.which || evt.button;
-    if (button == 1) {
-        // left button
-        var canvas = getCanvas();
-        var x = event.pageX - canvas.offsetLeft;
-        var y = event.pageY - canvas.offsetTop;
-        var found = false;
-        for (i = 0; !found && i < 10; ++i)
-            for (j = 0; !found && j < 9; ++j) {
-                var gridX = getGridX(i, j), gridY = getGridY(i, j);
-                if (distance(x, y, gridX, gridY) <= 23) {
-                    found = true;
-                    if (board[i][j] != 0)
-                        pieceClicked(i, j);
-                }
-            }
-    }
 }
 
 function toPiece(c) {
