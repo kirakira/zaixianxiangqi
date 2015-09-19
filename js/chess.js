@@ -184,7 +184,7 @@ function generateREMoves(i, j) {
     for (r = 0; r < 4; ++r) {
         if (inBoard(i + 2 * ddi[r], j + 2 * ddj[r])
                 && board[i + ddi[r]][j + ddj[r]] == 0
-                && i + ddi[r] > 4)
+                && inRedBase(i + ddi[r]))
             moves.push(new Move(i, j, i + 2 * ddi[r], j + 2 * ddj[r]));
     }
     return moves;
@@ -195,7 +195,7 @@ function generateBEMoves(i, j) {
     for (r = 0; r < 4; ++r) {
         if (inBoard(i + 2 * ddi[r], j + 2 * ddj[r])
                 && board[i + ddi[r]][j + ddj[r]] == 0
-                && i + ddi[r] <= 4)
+                && !inRedBase(i + ddi[r]))
             moves.push(new Move(i, j, i + 2 * ddi[r], j + 2 * ddj[r]));
     }
     return moves;
@@ -238,13 +238,37 @@ function generateCMoves(i, j) {
     return moves;
 }
 
+function inRedBase(i) {
+    return i > 4;
+}
+
 function generateRPMoves(i, j) {
     var moves = [];
+    if (inRedBase(i, j))
+        moves.push(new Move(i, j, i - 1, j));
+    else {
+        if (inBoard(i - 1, j))
+            moves.push(new Move(i, j, i - 1, j));
+        if (inBoard(i, j - 1))
+            moves.push(new Move(i, j, i, j - 1));
+        if (inBoard(i, j + 1))
+            moves.push(new Move(i, j, i, j + 1));
+    }
     return moves;
 }
 
 function generateBPMoves(i, j) {
     var moves = [];
+    if (!inRedBase(i, j))
+        moves.push(new Move(i, j, i + 1, j));
+    else {
+        if (inBoard(i + 1, j))
+            moves.push(new Move(i, j, i + 1, j));
+        if (inBoard(i, j - 1))
+            moves.push(new Move(i, j, i, j - 1));
+        if (inBoard(i, j + 1))
+            moves.push(new Move(i, j, i, j + 1));
+    }
     return moves;
 }
 
