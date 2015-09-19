@@ -221,6 +221,20 @@ function generateRMoves(i, j) {
 
 function generateCMoves(i, j) {
     var moves = [];
+    for (r = 0; r < 4; ++r) {
+        var ii = i + di[r], jj = j + dj[4];
+        var met = false;
+        for (ii = i + di[r], jj = j + dj[r]; inBoard(ii, jj); ii += di[r], jj += dj[r]) {
+            if (!met && board[ii][jj] == 0)
+                moves.push(new Move(i, j, ii, jj));
+            else if (!met && board[ii][jj] != 0)
+                met = true;
+            else if (met && board[ii][jj] != 0) {
+                moves.push(new Move(i, j, ii, jj));
+                break;
+            }
+        }
+    }
     return moves;
 }
 
