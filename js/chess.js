@@ -173,6 +173,9 @@ function generateKMoves(i, j) {
 
 function generateAMoves(i, j) {
     var moves = [];
+    for (r = 0; r < 4; ++r)
+        if (inPalace(i + ddi[r], j + ddj[r]))
+            moves.push(new Move(i, j, i + ddi[r], j + ddj[r]));
     return moves;
 }
 
