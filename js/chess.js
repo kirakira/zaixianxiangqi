@@ -151,6 +151,10 @@ function inPalace(i, j) {
     return j >= 3 && j <= 5 && ((i >= 0 && i <= 2) || (i >= 7 && i <= 9));
 }
 
+function inRedBase(i) {
+    return i > 4;
+}
+
 var di = [0, 1, 0, -1];
 var dj = [1, 0, -1, 0];
 var ddi = [1, 1, -1, -1];
@@ -203,6 +207,11 @@ function generateBEMoves(i, j) {
 
 function generateHMoves(i, j) {
     var moves = [];
+    [[1, 2, 0, 1], [1, -2, 0, -1], [-1, 2, 0, 1], [-1, -2, 0, -1],
+     [2, 1, 1, 0], [2, -1, 1, 0], [-2, 1, -1, 0], [-2, -1, -1, 0]].forEach(function(pattern) {
+         if (inBoard(i + pattern[0], j + pattern[1]) && board[i + pattern[2]][j + pattern[3]] == 0)
+             moves.push(new Move(i, j, i + pattern[0], j + pattern[1]));
+    });
     return moves;
 }
 
@@ -236,10 +245,6 @@ function generateCMoves(i, j) {
         }
     }
     return moves;
-}
-
-function inRedBase(i) {
-    return i > 4;
 }
 
 function generateRPMoves(i, j) {
