@@ -1,15 +1,15 @@
 User
-    id : key
+    id : key (autogen, number)
     name : string (unindexed)
     migration_key : string
 
 Session
-    id : key
+    id : key (autogen)
     user : string
     creation : datetime (auto_now_add)
 
 Game
-    id : key
+    id : key (short, nonauto)
     creation : datetime (auto_now_add)
     description : text
     red : string
@@ -17,7 +17,7 @@ Game
     moves : text
 
 Message
-    id : key
+    id : key (autogen)
     game : string
     user : string (unindexed)
     timestamp : datetime (unindexed, auto_now_add)
