@@ -208,6 +208,14 @@ function generateHMoves(i, j) {
 
 function generateRMoves(i, j) {
     var moves = [];
+    for (r = 0; r < 4; ++r) {
+        var ii = i + di[r], jj = j + dj[4];
+        for (ii = i + di[r], jj = j + dj[r]; inBoard(ii, jj); ii += di[r], jj += dj[r]) {
+            moves.push(new Move(i, j, ii, jj));
+            if (board[ii][jj] != 0)
+                break;
+        }
+    }
     return moves;
 }
 
