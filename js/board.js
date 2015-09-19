@@ -1,4 +1,6 @@
 var SVG_NS = "http://www.w3.org/2000/svg";
+var PIECE_TEXTS = ["", "將", "士", "象", "馬", "車", "砲", "卒",
+                   "", "帥", "仕", "相", "傌", "俥", "炮", "兵"];
 var gridSize = 50, middleGap = 0;
 var selected = false, select_i, select_j;
 
@@ -204,11 +206,11 @@ function makeMove(i1, j1, i2, j2) {
 
 function amIRed() {
     // TODO
-    return true;
+    return isRedToGo();
 }
 
 function pieceClicked(i, j) {
-    if (board[i][j] != 0 && isRedPiece(board[i][j]) == isRedNext() && amIRed() == isRedNext()) {
+    if (board[i][j] != 0 && isRedPiece(board[i][j]) == isRedToGo() && amIRed() == isRedToGo()) {
         selected = true;
         select_i = i;
         select_j = j;
