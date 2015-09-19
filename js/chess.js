@@ -181,11 +181,23 @@ function generateAMoves(i, j) {
 
 function generateREMoves(i, j) {
     var moves = [];
+    for (r = 0; r < 4; ++r) {
+        if (inBoard(i + 2 * ddi[r], j + 2 * ddj[r])
+                && board[i + ddi[r]][j + ddj[r]] == 0
+                && i + ddi[r] > 4)
+            moves.push(new Move(i, j, i + 2 * ddi[r], j + 2 * ddj[r]));
+    }
     return moves;
 }
 
 function generateBEMoves(i, j) {
     var moves = [];
+    for (r = 0; r < 4; ++r) {
+        if (inBoard(i + 2 * ddi[r], j + 2 * ddj[r])
+                && board[i + ddi[r]][j + ddj[r]] == 0
+                && i + ddi[r] <= 4)
+            moves.push(new Move(i, j, i + 2 * ddi[r], j + 2 * ddj[r]));
+    }
     return moves;
 }
 
