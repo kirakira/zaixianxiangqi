@@ -15,6 +15,8 @@ Game
     red : string
     black : string
     moves : text
+    red_activity : datetime (auto_now_add)
+    black_activity : datetime (auto_now_add)
 
 Message
     id : key (autogen)
@@ -22,3 +24,41 @@ Message
     user : string (unindexed)
     timestamp : datetime (unindexed, auto_now_add)
     content : text
+
+====
+
+getOrCreateUser()
+
+get /:
+    sid = getOrCreateUser()
+    set sid in cookie
+    if last game is active
+        gid = get id for last game
+    else
+        gid = create new game
+    redirect to /game/gid
+
+get /game/*:
+    sid = getOrCreateUser()
+    set sid in cookie
+    gameInfo = getGameInfo()
+    if gameInfo not found
+        set error in template
+    else
+        set gameInfo in page template
+
+get /gameinfo:
+    payload: gid
+    returns: "bad game id" or {id, creation, description, red, black, moves}
+
+post /gameinfo:
+    payload: sid, gid[, description][, moves]
+    returns: {"ok" or "fail", {gameinfo}}
+
+get /userinfo:
+    payload: uid
+    returns: "bad user name" or {uid, name}
+
+post /userinfo:
+    payload: sid, name
+    returns: {"ok" or "fail", userinfo}

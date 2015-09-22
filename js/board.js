@@ -150,9 +150,13 @@ function drawPieces() {
                 drawPiece(i, j, board[i][j]);
 }
 
+function removeAllChildren(id) {
+    var elem = document.getElementById(id);
+    while (elem.lastChild) elem.removeChild(elem.lastChild);
+}
+
 function resetSVG() {
-    var svg = getSVG();
-    while (svg.lastChild) svg.removeChild(svg.lastChild);
+    removeAllChildren("board");
 }
 
 function redrawBoard() {
@@ -221,6 +225,3 @@ function pieceClicked(i, j) {
         // then send move to server..
     }
 }
-
-init();
-redrawBoard();

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script type="text/javascript" src="js/chess.js" charset="UTF-8" defer></script>
+        <script type="text/javascript" src="js/board.js" charset="UTF-8" defer></script>
+        <script type="text/javascript" src="js/page.js" charset="UTF-8" defer></script>
+        <script type="text/javascript">{{ jsCode }}</script>
+        <title>在线象棋对战</title>
+    </head>
+    <body>
+        <div id="header">
+            <span>Hello, {{ playerName }}!</span>
+            <h3>{{ gameTitle }}</h3>
+            <ul id="player-list">
+                <li id="red-player"></li>
+                <li id="black-play"></li>
+            </ul>
+        </div>
+        <div>
+            <svg xmlns="http://www.w3.org/2000/svg" id="board" width="450" height="500"></svg>
+        </div>
+        <div id="chat">
+        </div>
+    </body>
+</html>
+{% endautoescape %}

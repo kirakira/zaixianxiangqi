@@ -85,7 +85,7 @@ function setBoard(fen, redNext) {
     redToGo = redNext;
 }
 
-function init() {
+function newGame() {
     board = [];
     for (i = 0; i < 10; ++i) {
         board.push([]);
