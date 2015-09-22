@@ -223,6 +223,6 @@ function pieceClicked(i, j) {
 }
 
 var attachFastClick = Origami.fastclick;
-attachFastClick(document.body);
+attachFastClick(document.getElementById("board"));
 init();
 redrawBoard();
