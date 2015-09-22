@@ -49,7 +49,7 @@ get /game/*:
 
 get /gameinfo:
     payload: gid
-    returns: "bad game id" or {id, creation, description, red, black, moves}
+    returns: "bad game id" or {id, creation, description, red = {uid, name}, black = {uid, name}, moves}
 
 post /gameinfo:
     payload: sid, gid[, description][, moves]

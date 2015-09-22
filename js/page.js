@@ -1,6 +1,6 @@
 var lastGameInfo;
 
-function post(url, payload, success, failure) {
+function ajax(method, url, payload, success, failure) {
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
         if (xmlhttp.readyState == 4) {
@@ -10,12 +10,23 @@ function post(url, payload, success, failure) {
                 failure(xmlhttp.responseText);
         }
     }
-    xmlhttp.open("POST", "gameinfo", true);
-    xmlhttp.send(payload);
+    xmlhttp.open(method, url, true);
+    if (payload)
+        xmlhttp.send(payload);
+    else
+        xmlhttp.send();
+}
+
+function get(url, success, failure) {
+    ajax("GET", url, undefined, success, failure);
+}
+
+function post(url, payload, success, failure) {
+    ajax("POST", url, payload, success, failure);
 }
 
 function requestGameInfo(gid) {
-    post("gameinfo", "gid=" + gid, function(data) {
+    get("/gameinfo?gid=" + gid, function(data) {
         lastGameInfo = gameInfo;
         gameInfo = JSON.parse(data);
         refreshGame();
@@ -35,20 +46,20 @@ function playersChanged(oldGameInfo, newGameInfo) {
 }
 
 function refreshPlayerList() {
-    removeAllChilren("red-player");
+    removeAllChildren("red-player");
     removeAllChildren("black-player");
-    if (gameInfo.redPlayer) {
+    if (gameInfo.red) {
         document.getElementById("red-player").appendChild(
-                document.createTextNode(gameInfo.redPlayer));
+                document.createTextNode(gameInfo.red.name));
     } else {
         var a = document.createElement("a");
         a.setAttribute("href", "#");
         a.setAttribute("onclick", "sitRed()");
         document.getElementById("red-player").appendChild(a);
     }
-    if (gameInfo.blackPlayer) {
+    if (gameInfo.black) {
         document.getElementById("black-player").appendChild(
-                document.createTextNode(gameInfo.blackPlayer));
+                document.createTextNode(gameInfo.black.name));
     } else {
         var a = document.createElement("a");
         a.setAttribute("href", "#");
@@ -65,4 +76,4 @@ function refreshGame() {
 
 // global: currentGameId, gameInfo, lastGameInfo
 refreshGame();
-window.setTimeInterval(requestGameInfo(currentGameId), 500);
+window.setInterval(requestGameInfo(currentGameId), 500);
