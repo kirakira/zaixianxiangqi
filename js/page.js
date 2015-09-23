@@ -25,24 +25,65 @@ function post(url, payload, success, failure) {
     ajax("POST", url, payload, success, failure);
 }
 
+function onGameInfoUpdate(data) {
+    if (data == "fail")
+        alert("Operation failed");
+    else {
+        try {
+            var newGameInfo = JSON.parse(data);
+            lastGameInfo = gameInfo;
+            gameInfo = newGameInfo;
+            refreshGame();
+        } catch (err) {
+            console.log("Unrecognized server response: " + data);
+        }
+    }
+}
+
+function onGameInfoUpdateFailure(data) {
+    console.log("Retrieve game info failed");
+}
+
 function requestGameInfo(gid) {
-    get("/gameinfo?gid=" + gid, function(data) {
-        lastGameInfo = gameInfo;
-        gameInfo = JSON.parse(data);
-        refreshGame();
-    }, function(data) {
-        console.log("Request game info failed");
-    });
+    get("/gameinfo?gid=" + gid, onGameInfoUpdate, onGameInfoUpdateFailure);
 }
 
 function playersChanged(oldGameInfo, newGameInfo) {
-    if (!oldGameInfo)
+    if (!oldGameInfo) {
         return true;
+    }
     if (newGameInfo) {
-        return (oldGameInfo.black != newGameInfo.black
-                || oldGameInfo.red != newGameInfo.red);
+        return (!oldGameInfo.black && newGameInfo.black)
+            || (!oldGameInfo.red && newGameInfo.red)
+            || (oldGameInfo.black && newGameInfo.black && oldGameInfo.black.id != newGameInfo.black.id)
+            || (oldGameInfo.red && newGameInfo.red && oldGameInfo.red.id != newGameInfo.red.id);
     }
     return false;
+}
+
+function getCookie(cname) {
+    var name = cname + "=";
+    var ca = document.cookie.split(';');
+    for(var i = 0; i < ca.length; ++i) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1);
+        if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+    }
+    return "";
+}
+
+function getSid() {
+    return getCookie("sid");
+}
+
+function sitRed() {
+    post("/gameinfo", "sid=" + getSid() + "&gid=" + currentGameId + "&sit=red",
+            onGameInfoUpdate, onGameInfoUpdateFailure);
+}
+
+function sitBlack() {
+    post("/gameinfo", "sid=" + getSid() + "&gid=" + currentGameId + "&sit=black",
+            onGameInfoUpdate, onGameInfoUpdateFailure);
 }
 
 function refreshPlayerList() {
@@ -55,6 +96,7 @@ function refreshPlayerList() {
         var a = document.createElement("a");
         a.setAttribute("href", "#");
         a.setAttribute("onclick", "sitRed()");
+        a.appendChild(document.createTextNode("sit here"));
         document.getElementById("red-player").appendChild(a);
     }
     if (gameInfo.black) {
@@ -64,6 +106,7 @@ function refreshPlayerList() {
         var a = document.createElement("a");
         a.setAttribute("href", "#");
         a.setAttribute("onclick", "sitBlack()");
+        a.appendChild(document.createTextNode("sit"));
         document.getElementById("black-player").appendChild(a);
     }
 }
@@ -76,4 +119,4 @@ function refreshGame() {
 
 // global: currentGameId, gameInfo, lastGameInfo
 refreshGame();
-window.setInterval(requestGameInfo(currentGameId), 500);
+window.setInterval(function() { requestGameInfo(currentGameId); }, 1000);

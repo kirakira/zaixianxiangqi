@@ -52,7 +52,7 @@ get /gameinfo:
     returns: "bad game id" or {id, creation, description, red = {uid, name}, black = {uid, name}, moves}
 
 post /gameinfo:
-    payload: sid, gid[, description][, moves]
+    payload: sid, gid[, description][, "sit=red" or "sit=black"[, moves]
     returns: {"ok" or "fail", {gameinfo}}
 
 get /userinfo:

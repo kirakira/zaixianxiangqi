@@ -99,7 +99,7 @@ def createGame(uid):
   gid = ''
   while True:
     gid = generateRandomString(6)
-    game = Game(id=generateRandomString(6), description=u'%s 创建的棋局' % getUserName(uid), moves='')
+    game = Game(id=generateRandomString(6), description=u'%s创建的棋局' % getUserName(uid), moves='')
     if random.randrange(0, 2) == 0:
       game.red = uid
       game.redActivity = datetime.datetime.utcnow()
@@ -111,6 +111,8 @@ def createGame(uid):
   return gid
 
 def getGame(gid):
+  if gid is None or len(gid) == 0:
+    return None
   return Game.get_by_id(gid)
 
 def formatDateTime(t):
@@ -125,10 +127,7 @@ def convertToGameJson(game):
     d['black'] = {'id': game.black, 'name': getUserName(game.black)}
   return json.dumps(d)
 
-def getGameInfoJs(gid):
-  if gid is None or len(gid) == 0:
-    return 'bad game id'
-  game = getGame(gid)
+def getGameInfoJs(game):
   if game is None:
     return 'bad game id'
   else:
@@ -146,7 +145,7 @@ class MainPage(webapp2.RequestHandler):
   def get(self):
     [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
     setNoCache(self.response)
-    self.response.headers.add_header('Set-Cookie', str('sid=%d;' % sid))
+    self.response.set_cookie('sid', str(sid))
 
     recentGames = getRecentGames(uid, 1)
     if len(recentGames) == 0:
@@ -159,24 +158,31 @@ class MainPage(webapp2.RequestHandler):
 
 class GamePage(webapp2.RequestHandler):
   def get(self, gid):
-    print('GID is ' + gid)
     [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
     setNoCache(self.response)
-    self.response.headers.add_header('Set-Cookie', str('sid=%d;' % sid))
+    self.response.set_cookie('sid', str(sid))
+
+    game = getGame(gid)
+    if game is None:
+      self.response.write('bad game id')
+      return
 
     template = JINJA_ENVIRONMENT.get_template('game.html')
     self.response.write(template.render({
       'playerName': getUserName(uid),
-      'jsCode': escapeJS(u'var currentGameId = "%s", gameInfo = "%s";' % (gid, getGameInfoJs(gid)))
+      'jsCode': escapeJS(u"var currentGameId = '%s', gameInfo = JSON.parse('%s');" % (gid, getGameInfoJs(game))),
+      'gameTitle': game.description,
     }))
 
 class GameInfoApi(webapp2.RequestHandler):
   def get(self):
     gid = self.request.get('gid')
-    self.response.write(getGameInfoJs(gid))
+    self.response.content_type = 'text/plain'
+    self.response.write(getGameInfoJs(getGame(gid)))
 
   def post(self):
-    pass
+    self.response.content_type = 'text/plain'
+    self.response.write("fail");
 
 class UserInfoApi(webapp2.RequestHandler):
   def get(self):
