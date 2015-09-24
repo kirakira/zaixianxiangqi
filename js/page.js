@@ -1,6 +1,6 @@
 var lastGameInfo;
 
-function ajax(method, url, payload, success, failure) {
+function ajax(method, url, contentType, payload, success, failure) {
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
         if (xmlhttp.readyState == 4) {
@@ -11,6 +11,8 @@ function ajax(method, url, payload, success, failure) {
         }
     }
     xmlhttp.open(method, url, true);
+    if (contentType)
+        xmlhttp.setRequestHeader("Content-type", contentType);
     if (payload)
         xmlhttp.send(payload);
     else
@@ -18,11 +20,11 @@ function ajax(method, url, payload, success, failure) {
 }
 
 function get(url, success, failure) {
-    ajax("GET", url, undefined, success, failure);
+    ajax("GET", url, undefined, undefined, success, failure);
 }
 
 function post(url, payload, success, failure) {
-    ajax("POST", url, payload, success, failure);
+    ajax("POST", url, "application/x-www-form-urlencoded; charset=UTF-8", payload, success, failure);
 }
 
 function onGameInfoUpdate(data) {
@@ -31,6 +33,8 @@ function onGameInfoUpdate(data) {
     else {
         try {
             var newGameInfo = JSON.parse(data);
+            if (newGameInfo.gameinfo)
+                newGameInfo = newGameInfo.gameinfo
             lastGameInfo = gameInfo;
             gameInfo = newGameInfo;
             refreshGame();
@@ -76,13 +80,8 @@ function getSid() {
     return getCookie("sid");
 }
 
-function sitRed() {
-    post("/gameinfo", "sid=" + getSid() + "&gid=" + currentGameId + "&sit=red",
-            onGameInfoUpdate, onGameInfoUpdateFailure);
-}
-
-function sitBlack() {
-    post("/gameinfo", "sid=" + getSid() + "&gid=" + currentGameId + "&sit=black",
+function sit(side) {
+    post("/gameinfo", "sid=" + getSid() + "&gid=" + currentGameId + "&sit=" + side,
             onGameInfoUpdate, onGameInfoUpdateFailure);
 }
 
@@ -95,7 +94,7 @@ function refreshPlayerList() {
     } else {
         var a = document.createElement("a");
         a.setAttribute("href", "#");
-        a.setAttribute("onclick", "sitRed()");
+        a.setAttribute("onclick", "sit('red')");
         a.appendChild(document.createTextNode("sit here"));
         document.getElementById("red-player").appendChild(a);
     }
@@ -105,7 +104,7 @@ function refreshPlayerList() {
     } else {
         var a = document.createElement("a");
         a.setAttribute("href", "#");
-        a.setAttribute("onclick", "sitBlack()");
+        a.setAttribute("onclick", "sit('black')");
         a.appendChild(document.createTextNode("sit"));
         document.getElementById("black-player").appendChild(a);
     }
@@ -119,4 +118,4 @@ function refreshGame() {
 
 // global: currentGameId, gameInfo, lastGameInfo
 refreshGame();
-window.setInterval(function() { requestGameInfo(currentGameId); }, 1000);
+//window.setInterval(function() { requestGameInfo(currentGameId); }, 1000);

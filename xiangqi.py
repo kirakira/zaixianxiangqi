@@ -118,20 +118,20 @@ def getGame(gid):
 def formatDateTime(t):
   return t.strftime('%Y-%m-%d %H:%M:%S.%f')
 
-def convertToGameJson(game):
+def convertToGameInfo(game):
   d = {'id': game.key.id(), 'creation': formatDateTime(game.creation),
       'description': game.description, 'moves': game.moves}
   if game.red is not None:
     d['red'] = {'id': game.red, 'name': getUserName(game.red)}
   if game.black is not None:
     d['black'] = {'id': game.black, 'name': getUserName(game.black)}
-  return json.dumps(d)
+  return d
 
 def getGameInfoJs(game):
   if game is None:
     return 'bad game id'
   else:
-    return convertToGameJson(game)
+    return json.dumps(convertToGameInfo(game))
 
 def setNoCache(response):
   response.headers.add_header('Cache-Control', 'no-cache, no-store, must-revalidate')
@@ -140,6 +140,24 @@ def setNoCache(response):
 
 def escapeJS(raw):
   return raw.replace('</', '<\\/')
+
+def sit(uid, game, side):
+  if side == 'red':
+    if game.red is None:
+      game.red = uid
+      if game.black == uid:
+        game.black = None
+    else:
+      raise ValueError('red has been taken')
+  elif side == 'black':
+    if game.black is None:
+      game.black = uid
+      if game.red == uid:
+        game.red = None
+    else:
+      raise ValueError('black has been taken')
+  else:
+    raise ValueError('unknown side to sit')
 
 class MainPage(webapp2.RequestHandler):
   def get(self):
@@ -178,11 +196,46 @@ class GameInfoApi(webapp2.RequestHandler):
   def get(self):
     gid = self.request.get('gid')
     self.response.content_type = 'text/plain'
+    setNoCache(self.response)
     self.response.write(getGameInfoJs(getGame(gid)))
 
   def post(self):
     self.response.content_type = 'text/plain'
-    self.response.write("fail");
+    setNoCache(self.response)
+    try:
+      # TODO: change this to a transaction
+      game = getGame(self.request.POST['gid'])
+      if game is None:
+        raise ValueError('bad gid ' + self.request.POST['gid'])
+      uid = getUid(self.request.POST['sid'])
+      if uid is None:
+        raise ValueError('bad sid ' + self.request.POST['sid'])
+      if game.red != uid and game.black != uid:
+        raise ValueError('user not in game')
+
+      operated = False
+      if self.request.POST['sit'] is not None and len(self.request.POST['sit']) > 0:
+        operated = True
+        side = self.request.POST['sit']
+        sit(uid, game, side)
+
+      if not operated:
+        raise ValueError('no operation specified')
+      else:
+        game.put()
+
+      self.response.write(json.dumps(
+        {'status': 'success', 'gameinfo': convertToGameInfo(game)}
+        ))
+
+    except ValueError as error:
+      if game is None:
+        self.response.write("fail");
+      else:
+        self.response.write(json.dumps(
+          {'status': 'fail', 'gameinfo': convertToGameInfo(game)}
+          ))
+      logging.info('setgameinfo failed on %s: %s' % (self.request.body, str(error)))
 
 class UserInfoApi(webapp2.RequestHandler):
   def get(self):
