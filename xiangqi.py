@@ -95,6 +95,12 @@ def getRecentGames(uid, count):
 def getUserName(uid):
   return User.get_by_id(uid).name
 
+def updateActivityTime(uid, game):
+  if game.red == uid:
+    game.redActivity = datetime.datetime.utcnow()
+  if game.black == uid:
+    game.blackActivity = datetime.datetime.utcnow()
+
 def createGame(uid):
   gid = ''
   while True:
@@ -102,10 +108,9 @@ def createGame(uid):
     game = Game(id=generateRandomString(6), description=u'%s创建的棋局' % getUserName(uid), moves='')
     if random.randrange(0, 2) == 0:
       game.red = uid
-      game.redActivity = datetime.datetime.utcnow()
     else:
       game.black = uid
-      game.blackActivity = datetime.datetime.utcnow()
+    updateActivityTime(uid, game)
     game.put() # TODO: try catch error
     break
   return gid
@@ -147,6 +152,7 @@ def sit(uid, game, side):
       game.red = uid
       if game.black == uid:
         game.black = None
+        game.blackActivity = None
     else:
       raise ValueError('red has been taken')
   elif side == 'black':
@@ -154,6 +160,7 @@ def sit(uid, game, side):
       game.black = uid
       if game.red == uid:
         game.red = None
+        game.redActivity = None
     else:
       raise ValueError('black has been taken')
   else:
@@ -222,6 +229,7 @@ class GameInfoApi(webapp2.RequestHandler):
       if not operated:
         raise ValueError('no operation specified')
       else:
+        updateActivityTime(uid, game)
         game.put()
 
       self.response.write(json.dumps(
