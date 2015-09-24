@@ -225,6 +225,9 @@ class GameInfoApi(webapp2.RequestHandler):
         operated = True
         side = self.request.POST['sit']
         sit(uid, game, side)
+      if self.request.POST['description'] is not None and len(self.request.POST['description']) > 0:
+        operated = True
+        game.description = self.request.POST['description']
 
       if not operated:
         raise ValueError('no operation specified')
