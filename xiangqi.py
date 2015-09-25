@@ -146,6 +146,9 @@ def setNoCache(response):
 def escapeJS(raw):
   return raw.replace('</', '<\\/')
 
+def userInGame(uid, game):
+  return game.red == uid or game.black == uid
+
 def sit(uid, game, side):
   if side == 'red':
     if game.red is None:
@@ -217,8 +220,6 @@ class GameInfoApi(webapp2.RequestHandler):
       uid = getUid(self.request.POST['sid'])
       if uid is None:
         raise ValueError('bad sid ' + self.request.POST['sid'])
-      if game.red != uid and game.black != uid:
-        raise ValueError('user not in game')
 
       operated = False
       if self.request.POST['sit'] is not None and len(self.request.POST['sit']) > 0:
@@ -226,6 +227,8 @@ class GameInfoApi(webapp2.RequestHandler):
         side = self.request.POST['sit']
         sit(uid, game, side)
       if self.request.POST['description'] is not None and len(self.request.POST['description']) > 0:
+        if not userInGame(uid, game):
+          raise ValueError('user not in game')
         operated = True
         game.description = self.request.POST['description']
 
