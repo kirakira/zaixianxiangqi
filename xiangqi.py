@@ -105,13 +105,15 @@ def createGame(uid):
   gid = ''
   while True:
     gid = generateRandomString(6)
-    game = Game(id=generateRandomString(6), description=u'%s创建的棋局' % getUserName(uid), moves='')
+    print('generated random gid: ' + gid)
+    game = Game(id=gid, description=u'%s创建的棋局' % getUserName(uid), moves='')
     if random.randrange(0, 2) == 0:
       game.red = uid
     else:
       game.black = uid
     updateActivityTime(uid, game)
     game.put() # TODO: try catch error
+    print('game.key: ' + game.key.id())
     break
   return gid
 
@@ -177,11 +179,14 @@ class MainPage(webapp2.RequestHandler):
 
     recentGames = getRecentGames(uid, 1)
     if len(recentGames) == 0:
+      print('no recent game')
       gid = None
     else:
       gid = recentGames[0].key.id()
+      print('recent game: ' + gid)
     if gid is None:
       gid = createGame(uid)
+      print('created game: ' + gid)
     self.redirect('/game/' + gid)
 
 class GamePage(webapp2.RequestHandler):
@@ -222,11 +227,11 @@ class GameInfoApi(webapp2.RequestHandler):
         raise ValueError('bad sid ' + self.request.POST['sid'])
 
       operated = False
-      if self.request.POST['sit'] is not None and len(self.request.POST['sit']) > 0:
+      if 'sit' in self.request.POST:
         operated = True
         side = self.request.POST['sit']
         sit(uid, game, side)
-      if self.request.POST['description'] is not None and len(self.request.POST['description']) > 0:
+      if 'description' in self.request.POST:
         if not userInGame(uid, game):
           raise ValueError('user not in game')
         operated = True

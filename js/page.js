@@ -118,4 +118,4 @@ function refreshGame() {
 
 // global: currentGameId, gameInfo, lastGameInfo
 refreshGame();
-//window.setInterval(function() { requestGameInfo(currentGameId); }, 1000);
+window.setInterval(function() { requestGameInfo(currentGameId); }, 1000);
