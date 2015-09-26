@@ -105,7 +105,7 @@ function refreshPlayerList() {
         var a = document.createElement("a");
         a.setAttribute("href", "#");
         a.setAttribute("onclick", "sit('black')");
-        a.appendChild(document.createTextNode("sit"));
+        a.appendChild(document.createTextNode("sit here"));
         document.getElementById("black-player").appendChild(a);
     }
 }
