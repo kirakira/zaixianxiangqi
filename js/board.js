@@ -100,6 +100,7 @@ function putPieceCover(i, j) {
     cover.setAttribute("stroke-width", "0");
     cover.setAttribute("fill-opacity", "0");
     cover.setAttribute("onmousedown", "pieceClicked(" + i.toString() + ", " + j.toString() + ")");
+    cover.setAttribute("touchend", "pieceClicked(" + i.toString() + ", " + j.toString() + ")");
     insertElement(cover);
 }
 
