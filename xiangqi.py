@@ -1,5 +1,6 @@
 # encoding=utf8
 
+from board import board
 import datetime
 import json
 import logging
@@ -171,6 +172,39 @@ def sit(uid, game, side):
   else:
     raise ValueError('unknown side to sit')
 
+def isRegularMove(move):
+  return len(move) == 4 and move.isdigit()
+
+def makeMove(game, red, newMoves):
+  oldMoves = game.moves.split('/')
+  newMoves = newMoves.split('/')
+  if len(newMoves) != len(oldMoves) + 1:
+    raise ValueError('new moves is not based on old moves')
+  for i in range(0, len(oldMoves)):
+    if newMoves[i] != oldMoves[i]:
+      raise ValueError('new moves diverged from old moves')
+
+  b = board()
+  for move in oldMoves:
+    if move == '':
+      continue
+    if isRegularMove(move):
+      b.move(int(move[0]), int(move[1]), int(move[2]), int(move[3]))
+    else:
+      logging.error('unknown move: ' + move)
+
+  newMove = newMoves[-1]
+  if isRegularMove(newMove):
+    if red != b.redToGo:
+      raise ValueError('player is not in move')
+
+    if not b.checkedMove(int(newMove[0]), int(newMove[1]), int(newMove[2]), int(newMove[3])):
+      raise ValueError('invalid move: ' + newMove)
+  else:
+    raise ValueError('unknown move: ' + newMove)
+
+  game.moves = newMoves
+
 class MainPage(webapp2.RequestHandler):
   def get(self):
     [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
@@ -191,14 +225,15 @@ class MainPage(webapp2.RequestHandler):
 
 class GamePage(webapp2.RequestHandler):
   def get(self, gid):
-    [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
     setNoCache(self.response)
-    self.response.set_cookie('sid', str(sid))
 
     game = getGame(gid)
     if game is None:
       self.response.write('bad game id')
       return
+
+    [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
+    self.response.set_cookie('sid', str(sid))
 
     template = JINJA_ENVIRONMENT.get_template('game.html')
     self.response.write(template.render({
@@ -236,6 +271,13 @@ class GameInfoApi(webapp2.RequestHandler):
           raise ValueError('user not in game')
         operated = True
         game.description = self.request.POST['description']
+      if 'moves' in self.request.POST:
+        if not userInGame(uid, game):
+          raise ValueError('user not in game')
+        if game.red is None or game.black is None:
+          raise ValueError('not enough players')
+        operated = True
+        makeMove(game, True if uid == game.red else False, self.request.POST['moves'])
 
       if not operated:
         raise ValueError('no operation specified')
