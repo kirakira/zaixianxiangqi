@@ -249,7 +249,7 @@ function generateCMoves(i, j) {
 
 function generateRPMoves(i, j) {
     var moves = [];
-    if (inRedBase(i, j))
+    if (inRedBase(i))
         moves.push(new Move(i, j, i - 1, j));
     else {
         if (inBoard(i - 1, j))
@@ -264,7 +264,7 @@ function generateRPMoves(i, j) {
 
 function generateBPMoves(i, j) {
     var moves = [];
-    if (!inRedBase(i, j))
+    if (!inRedBase(i))
         moves.push(new Move(i, j, i + 1, j));
     else {
         if (inBoard(i + 1, j))
