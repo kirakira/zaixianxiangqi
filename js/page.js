@@ -1,5 +1,9 @@
 var lastGameInfo;
 
+function endsWith(str, suffix) {
+    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
 function ajax(method, url, contentType, payload, success, failure) {
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
@@ -127,9 +131,9 @@ function updateStatus() {
     var se = document.getElementById("status");
     if (!gameStarted()) {
         se.appendChild(document.createTextNode("Waiting for players to join..."));
-    } else if (gameInfo.moves.endsWith("R")) {
+    } else if (endsWith(gameInfo.moves, "R")) {
         se.appendChild(document.createTextNode("Red won"));
-    } else if (gameInfo.moves.endsWith("B")) {
+    } else if (endsWith(gameInfo.moves, "B")) {
         se.appendChild(document.createTextNode("Black won"));
     } else {
         if (isRedToGo())
@@ -181,7 +185,7 @@ function gameStarted() {
 }
 
 function gameEnded() {
-    return gameInfo.moves.endsWith("r") || gameInfo.moves.endsWith("b");
+    return endsWith(gameInfo.moves, "r") || endsWith(gameInfo.moves, "b");
 }
 
 // global: currentGameId, myUid, gameInfo, lastGameInfo
