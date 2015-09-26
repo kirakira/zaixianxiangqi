@@ -13,6 +13,8 @@ function flipBoard() {
 }
 
 function getGridX(i, j) {
+    if (flipBoard())
+        j = 8 - j;
     return gridSize / 2 + j * gridSize;
 }
 
