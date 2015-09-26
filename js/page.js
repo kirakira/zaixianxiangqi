@@ -185,7 +185,7 @@ function gameStarted() {
 }
 
 function gameEnded() {
-    return endsWith(gameInfo.moves, "r") || endsWith(gameInfo.moves, "b");
+    return endsWith(gameInfo.moves, "R") || endsWith(gameInfo.moves, "B");
 }
 
 // global: currentGameId, myUid, gameInfo, lastGameInfo
