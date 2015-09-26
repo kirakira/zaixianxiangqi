@@ -8,11 +8,17 @@ function getSVG() {
     return document.getElementById("board");
 }
 
+function flipBoard() {
+    return inGame() && !amIRed();
+}
+
 function getGridX(i, j) {
     return gridSize / 2 + j * gridSize;
 }
 
 function getGridY(i, j) {
+    if (flipBoard())
+        i = 9 - i;
     if (j < 5)
         return gridSize / 2 + i * gridSize;
     else
@@ -210,11 +216,15 @@ function makeMove(i1, j1, i2, j2) {
 }
 
 function amIRed() {
-    // TODO
-    return isRedToGo();
+    if (gameInfo.red && gameInfo.red.id == myUid)
+        return true;
+    else
+        return false;
 }
 
 function pieceClicked(i, j) {
+    if (!inGame() || !gameStarted() || gameEnded())
+        return;
     if (board[i][j] != 0 && isRedPiece(board[i][j]) == isRedToGo() && amIRed() == isRedToGo()) {
         selected = true;
         select_i = i;
@@ -223,6 +233,8 @@ function pieceClicked(i, j) {
         putHighlight(i, j);
     } else if (selected && checkMove(select_i, select_j, i, j)) {
         makeMove(select_i, select_j, i, j);
-        // then send move to server..
+        gameInfo.moves += "/" + select_i + select_j + i + j;
+        post("/gameinfo", "sid=" + getSid() + "&gid=" + currentGameId + "&moves=" + gameInfo.moves,
+                onGameInfoUpdate, onGameInfoUpdateFailure);
     }
 }

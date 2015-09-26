@@ -33,8 +33,11 @@ function onGameInfoUpdate(data) {
     else {
         try {
             var newGameInfo = JSON.parse(data);
-            if (newGameInfo.gameinfo)
+            if (newGameInfo.gameinfo) {
+                if (newGameInfo.status !== "success")
+                    console.log("last update failed");
                 newGameInfo = newGameInfo.gameinfo
+            }
             lastGameInfo = gameInfo;
             gameInfo = newGameInfo;
             refreshGame();
@@ -110,12 +113,58 @@ function refreshPlayerList() {
     }
 }
 
-function refreshGame() {
-    if (playersChanged(lastGameInfo, gameInfo))
-        refreshPlayerList();
-    newGame();
+function playMove(move) {
+    if (move == "" || move == "R" || move == "B")
+        return;
+    makeMove(parseInt(move[0]), parseInt(move[1]),
+            parseInt(move[2]), parseInt(move[3]));
 }
 
-// global: currentGameId, gameInfo, lastGameInfo
+function refreshGame() {
+    if (playersChanged(lastGameInfo, gameInfo)) {
+        refreshPlayerList();
+        redrawBoard();
+    }
+
+    var replay = false;
+    var newMoves = gameInfo.moves.split("/");
+    if (!lastGameInfo)
+        replay = true;
+    else {
+        var oldMoves = lastGameInfo.moves.split("/");
+        if (oldMoves.length != newMoves.length && oldMoves.length + 1 != newMoves.length)
+            replay = true;
+        else {
+            for (var i = 0; i < oldMoves.length; ++i)
+                if (oldMoves[i] != newMoves[i])
+                    replay = true;
+            if (!replay && oldMoves.length + 1 == newMoves.length)
+                playMove(newMoves[newMoves.length - 1]);
+        }
+    }
+    if (replay) {
+        newGame();
+        redrawBoard();
+        for (var i = 0; i < newMoves.length; ++i)
+            playMove(newMoves[i]);
+    }
+}
+
+function inGame() {
+    return (gameInfo.red && gameInfo.red.id == myUid)
+        || (gameInfo.black && gameInfo.black.id == myUid);
+}
+
+function gameStarted() {
+    return gameInfo.red && gameInfo.black;
+}
+
+function gameEnded() {
+    return gameInfo.moves.endsWith("r") || gameInfo.moves.endsWith("b");
+}
+
+// global: currentGameId, myUid, gameInfo, lastGameInfo
+newGame();
+redrawBoard();
 refreshGame();
 window.setInterval(function() { requestGameInfo(currentGameId); }, 1000);

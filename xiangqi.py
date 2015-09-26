@@ -130,9 +130,9 @@ def convertToGameInfo(game):
   d = {'id': game.key.id(), 'creation': formatDateTime(game.creation),
       'description': game.description, 'moves': game.moves}
   if game.red is not None:
-    d['red'] = {'id': game.red, 'name': getUserName(game.red)}
+    d['red'] = {'id': str(game.red), 'name': getUserName(game.red)}
   if game.black is not None:
-    d['black'] = {'id': game.black, 'name': getUserName(game.black)}
+    d['black'] = {'id': str(game.black), 'name': getUserName(game.black)}
   return d
 
 def getGameInfoJs(game):
@@ -175,9 +175,9 @@ def sit(uid, game, side):
 def isRegularMove(move):
   return len(move) == 4 and move.isdigit()
 
-def makeMove(game, red, newMoves):
+def makeMove(game, red, newMovesString):
   oldMoves = game.moves.split('/')
-  newMoves = newMoves.split('/')
+  newMoves = newMovesString.split('/')
   if len(newMoves) != len(oldMoves) + 1:
     raise ValueError('new moves is not based on old moves')
   for i in range(0, len(oldMoves)):
@@ -200,10 +200,17 @@ def makeMove(game, red, newMoves):
 
     if not b.checkedMove(int(newMove[0]), int(newMove[1]), int(newMove[2]), int(newMove[3])):
       raise ValueError('invalid move: ' + newMove)
+
+    if b.hasWinningMove():
+      newMovesString += '/R' if b.redToGo else '/B'
+    elif b.isLosing():
+      newMovesString += '/B' if b.redToGo else '/R'
+  elif newMove == "B" or newMove == "R":
+    raise ValueError('user cannot declare result')
   else:
     raise ValueError('unknown move: ' + newMove)
 
-  game.moves = newMoves
+  game.moves = newMovesString
 
 class MainPage(webapp2.RequestHandler):
   def get(self):
@@ -238,7 +245,7 @@ class GamePage(webapp2.RequestHandler):
     template = JINJA_ENVIRONMENT.get_template('game.html')
     self.response.write(template.render({
       'playerName': getUserName(uid),
-      'jsCode': escapeJS(u"var currentGameId = '%s', gameInfo = JSON.parse('%s');" % (gid, getGameInfoJs(game))),
+      'jsCode': escapeJS(u"var currentGameId = '%s', myUid = '%s', gameInfo = JSON.parse('%s');" % (gid, uid, getGameInfoJs(game))),
       'gameTitle': game.description,
     }))
 
