@@ -93,8 +93,9 @@ function refreshPlayerList() {
     removeAllChildren("black-player");
     if (gameInfo.red) {
         document.getElementById("red-player").appendChild(
-                document.createTextNode(gameInfo.red.name));
+                document.createTextNode("Red: " + gameInfo.red.name));
     } else {
+        document.getElementById("red-player").appendChild(document.createTextNode("Red: "));
         var a = document.createElement("a");
         a.setAttribute("href", "#");
         a.setAttribute("onclick", "sit('red')");
@@ -103,8 +104,9 @@ function refreshPlayerList() {
     }
     if (gameInfo.black) {
         document.getElementById("black-player").appendChild(
-                document.createTextNode(gameInfo.black.name));
+                document.createTextNode("Black: " + gameInfo.black.name));
     } else {
+        document.getElementById("black-player").appendChild(document.createTextNode("Black: "));
         var a = document.createElement("a");
         a.setAttribute("href", "#");
         a.setAttribute("onclick", "sit('black')");
@@ -118,6 +120,23 @@ function playMove(move) {
         return;
     makeMove(parseInt(move[0]), parseInt(move[1]),
             parseInt(move[2]), parseInt(move[3]));
+}
+
+function updateStatus() {
+    removeAllChildren("status");
+    var se = document.getElementById("status");
+    if (!gameStarted()) {
+        se.appendChild(document.createTextNode("Waiting for players to join..."));
+    } else if (gameInfo.moves.endsWith("R")) {
+        se.appendChild(document.createTextNode("Red won"));
+    } else if (gameInfo.moves.endsWith("B")) {
+        se.appendChild(document.createTextNode("Black won"));
+    } else {
+        if (isRedToGo())
+            se.appendChild(document.createTextNode("Red to go"));
+        else
+            se.appendChild(document.createTextNode("Black to go"));
+    }
 }
 
 function refreshGame() {
@@ -148,6 +167,8 @@ function refreshGame() {
         for (var i = 0; i < newMoves.length; ++i)
             playMove(newMoves[i]);
     }
+
+    updateStatus();
 }
 
 function inGame() {
