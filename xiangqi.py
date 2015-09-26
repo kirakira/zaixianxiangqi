@@ -249,6 +249,38 @@ class GamePage(webapp2.RequestHandler):
       'gameTitle': game.description,
     }))
 
+@ndb.transactional
+def updateGameInfo(gid, uid, payload):
+  game = getGame(gid)
+  if game is None:
+    raise ValueError('game not found: ' + gid)
+
+  operated = False
+  if 'sit' in payload:
+    operated = True
+    side = payload['sit']
+    sit(uid, game, side)
+  if 'description' in payload:
+    if not userInGame(uid, game):
+      raise ValueError('user not in game')
+    operated = True
+    game.description = payload['description']
+  if 'moves' in payload:
+    if not userInGame(uid, game):
+      raise ValueError('user not in game')
+    if game.red is None or game.black is None:
+      raise ValueError('not enough players')
+    operated = True
+    makeMove(game, True if uid == game.red else False, payload['moves'])
+
+  if not operated:
+    raise ValueError('no operation specified')
+  else:
+    updateActivityTime(uid, game)
+    game.put()
+
+  return game
+
 class GameInfoApi(webapp2.RequestHandler):
   def get(self):
     gid = self.request.get('gid')
@@ -260,38 +292,17 @@ class GameInfoApi(webapp2.RequestHandler):
     self.response.content_type = 'text/plain'
     setNoCache(self.response)
     try:
-      # TODO: change this to a transaction
-      game = getGame(self.request.POST['gid'])
-      if game is None:
-        raise ValueError('bad gid ' + self.request.POST['gid'])
+      if 'gid' not in self.request.POST:
+        raise ValueError('gid not specified')
+      gid = self.request.POST['gid']
+
+      if 'sid' not in self.request.POST:
+        raise ValueError('sid not specified')
       uid = getUid(self.request.POST['sid'])
       if uid is None:
         raise ValueError('bad sid ' + self.request.POST['sid'])
 
-      operated = False
-      if 'sit' in self.request.POST:
-        operated = True
-        side = self.request.POST['sit']
-        sit(uid, game, side)
-      if 'description' in self.request.POST:
-        if not userInGame(uid, game):
-          raise ValueError('user not in game')
-        operated = True
-        game.description = self.request.POST['description']
-      if 'moves' in self.request.POST:
-        if not userInGame(uid, game):
-          raise ValueError('user not in game')
-        if game.red is None or game.black is None:
-          raise ValueError('not enough players')
-        operated = True
-        makeMove(game, True if uid == game.red else False, self.request.POST['moves'])
-
-      if not operated:
-        raise ValueError('no operation specified')
-      else:
-        updateActivityTime(uid, game)
-        game.put()
-
+      game = updateGameInfo(gid, uid, self.request.POST)
       self.response.write(json.dumps(
         {'status': 'success', 'gameinfo': convertToGameInfo(game)}
         ))
