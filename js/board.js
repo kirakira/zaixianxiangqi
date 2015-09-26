@@ -108,6 +108,7 @@ function putPieceCover(i, j) {
     cover.setAttribute("onmousedown", "pieceClicked(" + i.toString() + ", " + j.toString() + ")");
     cover.setAttribute("touchend", "pieceClicked(" + i.toString() + ", " + j.toString() + ")");
     insertElement(cover);
+    // FastClick.attach(cover);
 }
 
 function erasePieceCoverIfAny(i, j) {
