@@ -106,7 +106,7 @@ def createGame(uid):
   gid = ''
   while True:
     gid = generateRandomString(6)
-    print('generated random gid: ' + gid)
+    logging.debug('generated random gid: ' + gid)
     game = Game(id=gid, description=u'%s创建的棋局' % getUserName(uid), moves='')
     if random.randrange(0, 2) == 0:
       game.red = uid
@@ -114,7 +114,7 @@ def createGame(uid):
       game.black = uid
     updateActivityTime(uid, game)
     game.put() # TODO: try catch error
-    print('game.key: ' + game.key.id())
+    logging.debug('game.key: ' + game.key.id())
     break
   return gid
 
@@ -220,14 +220,14 @@ class MainPage(webapp2.RequestHandler):
 
     recentGames = getRecentGames(uid, 1)
     if len(recentGames) == 0:
-      print('no recent game')
+      logging.debug('no recent game')
       gid = None
     else:
       gid = recentGames[0].key.id()
-      print('recent game: ' + gid)
+      logging.debug('recent game: ' + gid)
     if gid is None:
       gid = createGame(uid)
-      print('created game: ' + gid)
+      logging.debug('created game: ' + gid)
     self.redirect('/game/' + gid)
 
 class GamePage(webapp2.RequestHandler):
