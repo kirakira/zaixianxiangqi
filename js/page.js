@@ -169,6 +169,8 @@ function refreshGame() {
                 else if (oldMoves.length == newMoves.length + 1) {
                     if (Date.now() - lastUpdateSent > 3000)
                         replay = true;
+                    else
+                        gameInfo.moves = lastGameInfo.moves;
                 }
             }
         }
