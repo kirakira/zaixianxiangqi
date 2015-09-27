@@ -1,4 +1,5 @@
 var lastGameInfo;
+var lastUpdateSent = 0;
 
 function endsWith(str, suffix) {
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
@@ -155,14 +156,21 @@ function refreshGame() {
         replay = true;
     else {
         var oldMoves = lastGameInfo.moves.split("/");
-        if (oldMoves.length != newMoves.length && oldMoves.length + 1 != newMoves.length)
+        if (oldMoves.length != newMoves.length && oldMoves.length + 1 != newMoves.length
+                && newMoves.length + 1 != oldMoves.length)
             replay = true;
         else {
-            for (var i = 0; i < oldMoves.length; ++i)
+            for (var i = 0; i < Math.min(oldMoves.length, newMoves.length); ++i)
                 if (oldMoves[i] != newMoves[i])
                     replay = true;
-            if (!replay && oldMoves.length + 1 == newMoves.length)
-                playMove(newMoves[newMoves.length - 1]);
+            if (!replay) {
+                if (oldMoves.length + 1 == newMoves.length)
+                    playMove(newMoves[newMoves.length - 1]);
+                else if (oldMoves.length == newMoves.length + 1) {
+                    if (Date.now() - lastUpdateSent > 3000)
+                        replay = true;
+                }
+            }
         }
     }
     if (replay) {

@@ -239,5 +239,6 @@ function pieceClicked(i, j) {
         gameInfo.moves += "/" + select_i + select_j + i + j;
         post("/gameinfo", "sid=" + getSid() + "&gid=" + currentGameId + "&moves=" + gameInfo.moves,
                 onGameInfoUpdate, onGameInfoUpdateFailure);
+        lastUpdateSent = Date.now();
     }
 }
