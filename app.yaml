@@ -12,6 +12,10 @@ handlers:
 - url: /css
   static_dir: css
 
+- url: /janitor
+  script: janitor.app
+  login: admin
+
 - url: /.*
   script: xiangqi.app
 # [END handlers]
