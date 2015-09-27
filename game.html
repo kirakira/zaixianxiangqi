@@ -16,7 +16,8 @@
         <div id="header">
             <span>Hello, {{ playerName }}!</span>
             <h3>{{ gameTitle }}</h3>
-            <ul id="player-list">
+            <ul id="info-list">
+                <li id="game-info">Game id: {{ gameId|safe }}. <a href="/new">new game</a>.</li>
                 <li id="red-player">Loading...</li>
                 <li id="black-player">Loading...</li>
                 <li id="status">Loading...</li>

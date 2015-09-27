@@ -212,12 +212,9 @@ def makeMove(game, red, newMovesString):
 
   game.moves = newMovesString
 
-class MainPage(webapp2.RequestHandler):
-  def get(self):
-    [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
-    setNoCache(self.response)
-    self.response.set_cookie('sid', str(sid))
-
+def createOrGetRecentGame(uid, create):
+  gid = None
+  if not create:
     recentGames = getRecentGames(uid, 1)
     if len(recentGames) == 0:
       logging.debug('no recent game')
@@ -225,9 +222,25 @@ class MainPage(webapp2.RequestHandler):
     else:
       gid = recentGames[0].key.id()
       logging.debug('recent game: ' + gid)
-    if gid is None:
-      gid = createGame(uid)
-      logging.debug('created game: ' + gid)
+  if gid is None:
+    gid = createGame(uid)
+    logging.debug('created game: ' + gid)
+  return gid
+
+class MainPage(webapp2.RequestHandler):
+  def get(self):
+    [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
+    setNoCache(self.response)
+    self.response.set_cookie('sid', str(sid))
+    gid = createOrGetRecentGame(uid, False)
+    self.redirect('/game/' + gid)
+
+class NewPage(webapp2.RequestHandler):
+  def get(self):
+    [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
+    setNoCache(self.response)
+    self.response.set_cookie('sid', str(sid))
+    gid = createOrGetRecentGame(uid, True)
     self.redirect('/game/' + gid)
 
 class GamePage(webapp2.RequestHandler):
@@ -247,6 +260,7 @@ class GamePage(webapp2.RequestHandler):
       'playerName': getUserName(uid),
       'jsCode': escapeJS(u"var currentGameId = '%s', myUid = '%s', gameInfo = JSON.parse('%s');" % (gid, uid, getGameInfoJs(game))),
       'gameTitle': game.description,
+      'gameId': gid,
     }))
 
 @ndb.transactional
@@ -324,6 +338,7 @@ class UserInfoApi(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
     (r'/', MainPage),
+    (r'/new', NewPage),
     (r'/game/([^/]+)', GamePage),
     (r'/gameinfo', GameInfoApi),
     (r'/userinfo', UserInfoApi),
