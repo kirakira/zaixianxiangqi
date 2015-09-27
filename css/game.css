@@ -1,4 +1,10 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
 #board {
     max-width: 100%;
-    height: auto;
+    min-height: 600px;
+    max-height: 90vh;
 }
