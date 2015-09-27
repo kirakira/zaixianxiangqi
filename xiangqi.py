@@ -106,7 +106,7 @@ def createGame(uid):
   gid = ''
   while True:
     gid = generateRandomString(6)
-    logging.debug('generated random gid: ' + gid)
+    logging.info('generated random gid: ' + gid)
     game = Game(id=gid, description=u'%s创建的棋局' % getUserName(uid), moves='')
     if random.randrange(0, 2) == 0:
       game.red = uid
@@ -114,7 +114,7 @@ def createGame(uid):
       game.black = uid
     updateActivityTime(uid, game)
     game.put() # TODO: try catch error
-    logging.debug('game.key: ' + game.key.id())
+    logging.info('game.key: ' + game.key.id())
     break
   return gid
 
@@ -217,14 +217,14 @@ def createOrGetRecentGame(uid, create):
   if not create:
     recentGames = getRecentGames(uid, 1)
     if len(recentGames) == 0:
-      logging.debug('no recent game')
+      logging.info('no recent game')
       gid = None
     else:
       gid = recentGames[0].key.id()
-      logging.debug('recent game: ' + gid)
+      logging.info('recent game: ' + gid)
   if gid is None:
     gid = createGame(uid)
-    logging.debug('created game: ' + gid)
+    logging.info('created game: ' + gid)
   return gid
 
 class MainPage(webapp2.RequestHandler):
@@ -306,6 +306,8 @@ class GameInfoApi(webapp2.RequestHandler):
     self.response.content_type = 'text/plain'
     setNoCache(self.response)
     try:
+      game = None
+
       if 'gid' not in self.request.POST:
         raise ValueError('gid not specified')
       gid = self.request.POST['gid']
@@ -328,7 +330,7 @@ class GameInfoApi(webapp2.RequestHandler):
         self.response.write(json.dumps(
           {'status': 'fail', 'gameinfo': convertToGameInfo(game)}
           ))
-      logging.info('setgameinfo failed on %s: %s' % (self.request.body, str(error)))
+      logging.warning('setgameinfo failed on %s: %s' % (self.request.body, str(error)))
 
 class UserInfoApi(webapp2.RequestHandler):
   def get(self):
