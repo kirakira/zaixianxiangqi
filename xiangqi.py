@@ -56,7 +56,7 @@ def getMostRecentSid(uid):
   return Session.query(Session.uid == uid).order(-Session.creation).fetch(1)[0].key.id()
 
 def pickRandomName():
-  names = ['养一狗', '猥男', '清晰知足', '周杰伦', 'SlaveMunde', 'zhaoweijie13', '啊啊啊', '大了', '巨大了', '求蠢', '求不蠢', '司马', '麻皮大意', '小地雷', '长考一秒', '將五进一', '缩了', '慌了', '窝心傌', 'Excited!', '闷声发大财', '王猛日', 'Kebe', '死妈达', '单小娟']
+  names = ['养一狗', '猥男', '清晰知足', '周杰伦', 'SlaveMunde', 'zhaoweijie13', '啊啊啊', '大了', '巨大了', '求蠢', '求不蠢', '司马', '麻皮大意', '小地雷', '长考一秒', '將五进一', '缩了', '慌了', '窝心傌', 'Excited!', '闷声发大财']
   return names[random.randrange(0, len(names))]
 
 def generateRandomString(length):
