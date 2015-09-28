@@ -1,5 +1,11 @@
+
 var lastGameInfo;
 var lastUpdateSent = 0;
+// global: currentGameId, myUid, gameInfo, lastGameInfo
+newGame();
+redrawBoard();
+refreshGame();
+window.setInterval(function() { requestGameInfo(currentGameId); }, 1000);
 
 function endsWith(str, suffix) {
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
@@ -96,7 +102,8 @@ function sit(side) {
 function refreshPlayerList() {
     removeAllChildren("red-player");
     removeAllChildren("black-player");
-    if (gameInfo.red) {
+    if (gameInfo.red !== undefined &&
+        gameInfo.red !== null) {
         document.getElementById("red-player").appendChild(
                 document.createTextNode("Red: " + gameInfo.red.name));
     } else {
@@ -107,7 +114,8 @@ function refreshPlayerList() {
         a.appendChild(document.createTextNode("sit here"));
         document.getElementById("red-player").appendChild(a);
     }
-    if (gameInfo.black) {
+    if (gameInfo.black !== undefined &&
+        gameInfo.black !== null) {
         document.getElementById("black-player").appendChild(
                 document.createTextNode("Black: " + gameInfo.black.name));
     } else {
@@ -197,9 +205,3 @@ function gameStarted() {
 function gameEnded() {
     return endsWith(gameInfo.moves, "R") || endsWith(gameInfo.moves, "B");
 }
-
-// global: currentGameId, myUid, gameInfo, lastGameInfo
-newGame();
-redrawBoard();
-refreshGame();
-window.setInterval(function() { requestGameInfo(currentGameId); }, 1000);
