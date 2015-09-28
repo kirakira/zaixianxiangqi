@@ -5,6 +5,5 @@ body {
 
 #board {
     max-width: 100%;
-    min-height: 600px;
     max-height: 90vh;
 }
