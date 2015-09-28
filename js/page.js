@@ -1,3 +1,15 @@
+// Define String.endsWith for Safari in order to comply with ECMA6
+if (!String.prototype.endsWith) {
+  String.prototype.endsWith = function(searchString, position) {
+      var subjectString = this.toString();
+      if (position === undefined || position > subjectString.length) {
+          position = subjectString.length;
+      }
+      position -= searchString.length;
+      var lastIndex = subjectString.indexOf(searchString, position);
+      return lastIndex !== -1 && lastIndex === position;
+  };
+}
 
 var lastGameInfo;
 var lastUpdateSent = 0;
@@ -6,10 +18,6 @@ newGame();
 redrawBoard();
 refreshGame();
 window.setInterval(function() { requestGameInfo(currentGameId); }, 1000);
-
-function endsWith(str, suffix) {
-    return str.indexOf(suffix, str.length - suffix.length) !== -1;
-}
 
 function ajax(method, url, contentType, payload, success, failure) {
     var xmlhttp = new XMLHttpRequest();
@@ -140,9 +148,9 @@ function updateStatus() {
     var se = document.getElementById("status");
     if (!gameStarted()) {
         se.appendChild(document.createTextNode("Waiting for players to join..."));
-    } else if (endsWith(gameInfo.moves, "R")) {
+    } else if (gameInfo.moves.endsWith("R")) {
         se.appendChild(document.createTextNode("Red won"));
-    } else if (endsWith(gameInfo.moves, "B")) {
+    } else if (gameInfo.moves.endsWith("B")) {
         se.appendChild(document.createTextNode("Black won"));
     } else {
         if (isRedToGo())
@@ -203,5 +211,5 @@ function gameStarted() {
 }
 
 function gameEnded() {
-    return endsWith(gameInfo.moves, "R") || endsWith(gameInfo.moves, "B");
+    return gameInfo.moves.endsWith("R") || gameInfo.moves.endsWith("B");
 }
