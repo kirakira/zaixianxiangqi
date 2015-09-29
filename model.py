@@ -21,4 +21,3 @@ class Message(ndb.Model):
   uid = ndb.IntegerProperty()
   creation = ndb.DateTimeProperty(auto_now_add=True)
   content = ndb.TextProperty()
-
