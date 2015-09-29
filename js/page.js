@@ -8,6 +8,7 @@
     app.page.getSid = getSid;
     app.page.onGameInfoUpdate = onGameInfoUpdate;
     app.page.onGameInfoUpdateFailure = onGameInfoUpdateFailure;
+    app.page.sit = sit;
 
     // init the board and game
     app.chess.newGame();
@@ -120,7 +121,7 @@
             document.getElementById("red-player").appendChild(document.createTextNode("Red: "));
             var a = document.createElement("a");
             a.setAttribute("href", "#");
-            a.setAttribute("onclick", "sit('red')");
+            a.setAttribute("onclick", "xiangqi.page.sit('red')");
             a.appendChild(document.createTextNode("sit here"));
             document.getElementById("red-player").appendChild(a);
         }
@@ -132,7 +133,7 @@
             document.getElementById("black-player").appendChild(document.createTextNode("Black: "));
             var a = document.createElement("a");
             a.setAttribute("href", "#");
-            a.setAttribute("onclick", "sit('black')");
+            a.setAttribute("onclick", "xiangqi.page.sit('black')");
             a.appendChild(document.createTextNode("sit here"));
             document.getElementById("black-player").appendChild(a);
         }
