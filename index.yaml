@@ -14,7 +14,17 @@ indexes:
   properties:
   - name: black
   - name: creation
+
+- kind: Game
+  properties:
+  - name: black
+  - name: creation
     direction: desc
+
+- kind: Game
+  properties:
+  - name: red
+  - name: creation
 
 - kind: Game
   properties:
