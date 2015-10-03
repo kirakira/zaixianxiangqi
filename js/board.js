@@ -234,12 +234,12 @@
     }
 
     function pieceClicked(i, j) {
-        if (!app.page.inGame() || 
-            !app.page.gameStarted() || 
+        if (!app.page.inGame() ||
+            !app.page.gameStarted() ||
             app.page.gameEnded())
             return;
         if (app.chess.board[i][j] != 0 && 
-            app.chess.isRedPiece(app.chess.board[i][j]) == app.chess.isRedToGo() && 
+            app.chess.isRedPiece(app.chess.board[i][j]) == app.chess.isRedToGo() &&
             amIRed() == app.chess.isRedToGo()) {
             selected = true;
             select_i = i;
@@ -250,10 +250,10 @@
             makeMove(select_i, select_j, i, j);
             gameInfo.moves += "/" + select_i + select_j + i + j;
             app.page.post("/gameinfo", 
-                "sid=" + app.page.getSid() + 
-                "&gid=" + currentGameId + 
+                "sid=" + app.page.getSid() +
+                "&gid=" + currentGameId +
                 "&moves=" + gameInfo.moves,
-                app.page.onGameInfoUpdate, 
+                app.page.onGameInfoUpdate,
                 app.page.onGameInfoUpdateFailure);
             lastUpdateSent = Date.now();
         }

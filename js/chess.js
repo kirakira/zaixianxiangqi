@@ -12,7 +12,6 @@
     var PIECE_BK = 1, PIECE_BA = 2, PIECE_BE = 3, PIECE_BH = 4, PIECE_BR = 5, PIECE_BC = 6, PIECE_BP = 7,
         PIECE_RK = 9, PIECE_RA = 10, PIECE_RE = 11, PIECE_RH = 12, PIECE_RR = 13, PIECE_RC = 14, PIECE_RP = 15;
 
-    
     var moveHistory = [];
     var redToGo = true;
 
