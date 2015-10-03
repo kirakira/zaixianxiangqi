@@ -128,6 +128,10 @@ def setNoCache(response):
   response.headers.add_header('Pragma', 'no-cache')
   response.headers.add_header('Expires', '0')
 
+def setSidInCookie(response, sid):
+  response.set_cookie('sid', str(sid), path='/', expires=datetime.datetime.now() + datetime.timedelta(weeks=52*100))
+  response.delete_cookie('sid', path='/game')
+
 def escapeJS(raw):
   return raw.replace('</', '<\\/')
 
@@ -213,7 +217,7 @@ class MainPage(webapp2.RequestHandler):
   def get(self):
     [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
     setNoCache(self.response)
-    self.response.set_cookie('sid', str(sid))
+    setSidInCookie(self.response, sid)
     gid = createOrGetRecentGame(uid, False)
     self.redirect('/game/' + gid)
 
@@ -221,7 +225,7 @@ class NewPage(webapp2.RequestHandler):
   def get(self):
     [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
     setNoCache(self.response)
-    self.response.set_cookie('sid', str(sid))
+    setSidInCookie(self.response, sid)
     gid = createOrGetRecentGame(uid, True)
     self.redirect('/game/' + gid)
 
@@ -235,7 +239,7 @@ class GamePage(webapp2.RequestHandler):
       return
 
     [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
-    self.response.set_cookie('sid', str(sid))
+    setSidInCookie(self.response, sid)
 
     template = JINJA_ENVIRONMENT.get_template('game.html')
     self.response.write(template.render({
