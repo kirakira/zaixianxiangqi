@@ -8,16 +8,20 @@ threadsafe: true
 handlers:
 - url: /js
   static_dir: js
+  secure: always
 
 - url: /css
   static_dir: css
+  secure: always
 
 - url: /janitor
   script: janitor.app
   login: admin
+  secure: always
 
 - url: /.*
   script: xiangqi.app
+  secure: always
 # [END handlers]
 
 # [START libraries]
