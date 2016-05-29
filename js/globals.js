@@ -1,4 +1,4 @@
-// Initialize app scope and define global variables;
+// Define app scope and global variables.
 var xiangqi = {
 	page: {}, 
 	board: {},

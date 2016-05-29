@@ -9,16 +9,14 @@
     app.page.onGameInfoUpdate = onGameInfoUpdate;
     app.page.onGameInfoUpdateFailure = onGameInfoUpdateFailure;
     app.page.sit = sit;
+    app.page.initApplication = initApplication;
 
-    // init the board and game
-    app.chess.newGame();
-    app.board.redrawBoard();
-    refreshGame();
-
-    // start live refresh
-    window.setInterval(function() { 
-        requestGameInfo(currentGameId); 
-    }, 1000);
+    // Init applicaiton when document is loaded.
+    document.onreadystatechange = function() {
+        if (document.readyState == "interactive") {
+            initApplication();
+        }
+    }
 
     /// Functions
 
@@ -216,5 +214,17 @@
 
     function gameEnded() {
         return gameInfo.moves.endsWith("R") || gameInfo.moves.endsWith("B");
+    }
+
+    function initApplication() {
+        // init the board and game
+        app.chess.newGame();
+        app.board.redrawBoard();
+        refreshGame();
+
+        // start live refresh
+        window.setInterval(function() { 
+            requestGameInfo(currentGameId); 
+        }, 1000);
     }
 })(xiangqi);
