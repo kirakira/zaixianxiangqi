@@ -69,7 +69,7 @@ function BoardUI(onSquareSelected) {
     }
 
     function createText(i, j, text, c, id) {
-        var x = getGridX(i, j) - 12, y = getGridY(i, j) + 7;
+        var x = getGridX(i, j) - 12, y = getGridY(i, j) + 7.5;
         var t = document.createElementNS(SVG_NS, "text");
         t.style.fontSize = 24;
         t.setAttribute("x", x);

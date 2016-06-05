@@ -13,26 +13,56 @@ if (!String.prototype.endsWith) {
 
 function Game(currentGameId, myUid, gameInfo) {
     var board_;
-    var ajaxSequence_ = 0;
+    // Updates with sequence number <= LWM have been resolved.
+    var ajaxSequenceLWM_ = 0;
+    // The latest update sent has sequence number == HWM.
+    var ajaxSequenceHWM_ = 0;
+    // The list of pending sequence numbers.
+    var pendingSequences_ = [];
 
     initApplication();
 
-    function ajax(method, url, contentType, payload, success, failure) {
-        var xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function(packetSequence) {
-            return function() {
-                if (xmlhttp.readyState == 4) {
-                    if (xmlhttp.status >= 200 && xmlhttp.status <= 299) {
-                        if (packetSequence >= ajaxSequence_) {
-                            success(xmlhttp.responseText);
-                        } else {
-                            console.log("Dropped an old packet.");
-                        }
-                    } else if (failure)
-                        failure(xmlhttp.responseText);
+    function addPendingRequest() {
+        ++ajaxSequenceHWM_;
+        pendingSequences_.push(ajaxSequenceHWM_);
+        return ajaxSequenceHWM_;
+    }
+
+    function resolveRequest(sequence) {
+        var index = pendingSequences_.indexOf(sequence);
+        if (index != -1) {
+            pendingSequences_.splice(index, 1);
+            for (var i = ajaxSequenceLWM_ + 1; i <= ajaxSequenceHWM_; ++i) {
+                index = pendingSequences_.indexOf(i);
+                if (index == -1) {
+                    ajaxSequenceLWM_ = i;
+                } else {
+                    break;
                 }
-            };
-        }(ajaxSequence_);
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    // sequence: the result from this request will represent the state of this
+    // sequence number.
+    function ajax(method, url, sequence, contentType, payload, success, failure) {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4) {
+                requestResolved = resolveRequest(sequence);
+                if (xmlhttp.status >= 200 && xmlhttp.status <= 299) {
+                    if (requestResolved || ajaxSequenceHWM_ == sequence) {
+                        success(xmlhttp.responseText);
+                    } else {
+                        console.log("Dropped response from an old request.");
+                    }
+                } else if (failure)
+                    failure(xmlhttp.responseText);
+            }
+        };
         xmlhttp.open(method, url, true);
         if (contentType)
             xmlhttp.setRequestHeader("Content-type", contentType);
@@ -43,12 +73,12 @@ function Game(currentGameId, myUid, gameInfo) {
     }
 
     function get(url, success, failure) {
-        ajax("GET", url, undefined, undefined, success, failure);
+        ajax("GET", url, ajaxSequenceLWM_, undefined, undefined, success, failure);
     }
 
     function post(url, payload, success, failure) {
-        ++ajaxSequence_;
-        ajax("POST", url, "application/x-www-form-urlencoded; charset=UTF-8", payload, success, failure);
+        ajax("POST", url, addPendingRequest(),
+                "application/x-www-form-urlencoded; charset=UTF-8", payload, success, failure);
     }
 
     function onGameInfoUpdate(data) {
@@ -127,7 +157,7 @@ function Game(currentGameId, myUid, gameInfo) {
         var parent = document.getElementById(side + "-player");
         var a = document.getElementById(side + "-sit-link");
         parent.removeChild(a);
-        parent.appendChild(document.createTextNode("sitting..."));
+        parent.appendChild(document.createTextNode("sitting down..."));
         post("/gameinfo", "sid=" + getSid() + "&gid=" + currentGameId + "&sit=" + side,
                 onGameInfoUpdate, onGameInfoUpdateFailure);
     }
@@ -148,7 +178,7 @@ function Game(currentGameId, myUid, gameInfo) {
             var a = document.createElement("a");
             a.id = "red-sit-link";
             a.href = "#";
-            a.onclick = function() { sit("red"); };
+            a.onclick = function() { sit("red"); return false; };
             a.appendChild(document.createTextNode("sit here"));
             document.getElementById("red-player").appendChild(a);
         }
@@ -165,7 +195,7 @@ function Game(currentGameId, myUid, gameInfo) {
             var a = document.createElement("a");
             a.id = "black-sit-link";
             a.href = "#";
-            a.onclick = function() { sit("black"); };
+            a.onclick = function() { sit("black"); return false; };
             a.appendChild(document.createTextNode("sit here"));
             document.getElementById("black-player").appendChild(a);
         }
