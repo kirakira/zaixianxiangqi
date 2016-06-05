@@ -1,27 +1,35 @@
-(function (app) {
+var PIECE_NONE = 0;
+var PIECE_K = 1, PIECE_A = 2, PIECE_E = 3, PIECE_H = 4, PIECE_R = 5, PIECE_C = 6, PIECE_P = 7;
+var PIECE_BK = 1, PIECE_BA = 2, PIECE_BE = 3, PIECE_BH = 4, PIECE_BR = 5, PIECE_BC = 6, PIECE_BP = 7,
+    PIECE_RK = 9, PIECE_RA = 10, PIECE_RE = 11, PIECE_RH = 12, PIECE_RR = 13, PIECE_RC = 14, PIECE_RP = 15;
 
-    app.chess.newGame = newGame;
-    app.chess.toPosition = toPosition;
-    app.chess.board = [];
-    app.chess.isRedPiece = isRedPiece;
-    app.chess.isRedToGo = isRedToGo;
-    app.chess.move = move;
-    app.chess.checkMove = checkMove;
+function isRedPiece(piece) {
+    return piece >= 8;
+}
 
-    var PIECE_K = 1, PIECE_A = 2, PIECE_E = 3, PIECE_H = 4, PIECE_R = 5, PIECE_C = 6, PIECE_P = 7;
-    var PIECE_BK = 1, PIECE_BA = 2, PIECE_BE = 3, PIECE_BH = 4, PIECE_BR = 5, PIECE_BC = 6, PIECE_BP = 7,
-        PIECE_RK = 9, PIECE_RA = 10, PIECE_RE = 11, PIECE_RH = 12, PIECE_RR = 13, PIECE_RC = 14, PIECE_RP = 15;
+function Move(i1, j1, i2, j2, piece, capture) {
+    this.i1 = i1;
+    this.j1 = j1;
+    this.i2 = i2;
+    this.j2 = j2;
+    this.piece = piece || PIECE_NONE;
+    this.capture = capture || PIECE_NONE;
+};
 
-    var moveHistory = [];
-    var redToGo = true;
+function Chess() {
+    this.reset = reset;
+    this.setMoves = setMoves;
+    this.move = move;
+    this.checkMove = checkMove;
+    this.moveHistory = moveHistory;
+    this.pieceAt = pieceAt;
+    this.isRedNext = isRedNext;
+    this.numMoves = numMoves;
 
-    var Move = function(i1, j1, i2, j2, capture) {
-        this.i1 = i1;
-        this.j1 = j1;
-        this.i2 = i2;
-        this.j2 = j2;
-        this.capture = capture || 0;
-    };
+    var board_ = [];
+    var moveHistory_ = [];
+
+    reset();
 
     function toPiece(c) {
         var isLower = (c == c.toLowerCase());
@@ -46,25 +54,16 @@
         return ans;
     }
 
+    function pieceAt(i, j) {
+        return board_[i][j];
+    }
+
+    function isRedNext() {
+        return moveHistory_.length % 2 == 0;
+    }
+
     function isDigit(c) {
         return c >= '0' && c <= '9';
-    }
-
-    function toPosition(i, j) {
-        var colNames = "abcdefghi";
-        return colNames[j] + (9 - i).toString();
-    }
-
-    function isRedPiece(piece) {
-        return piece >= 8;
-    }
-
-    function sameSide(piece1, piece2) {
-        return isRedPiece(piece1) == isRedPiece(piece2);
-    }
-
-    function oppositeSide(piece1, piece2) {
-        return !sameSide(piece1, piece2);
     }
 
     function pieceType(piece) {
@@ -74,7 +73,7 @@
             return piece;
     }
 
-    function setBoard(fen, redNext) {
+    function setBoard(fen) {
         var rows = fen.split("/");
         if (rows.length != 10)
             throw "Malformed fen string: " + fen;
@@ -86,22 +85,55 @@
                 if (isDigit(rows[i][k]))
                     j += parseInt(rows[i][k]);
                 else {
-                    app.chess.board[i][j] = toPiece(rows[i][k]);
+                    board_[i][j] = toPiece(rows[i][k]);
                     ++j;
                 }
             }
         }
-        redToGo = redNext;
     }
 
-    function newGame() {
-        app.chess.board = [];
-        for (i = 0; i < 10; ++i) {
-            app.chess.board.push([]);
-            for (j = 0; j < 9; ++j)
-                app.chess.board[i].push(0);
+    function moveHistory() {
+        var ans = [];
+        for (var i = 0; i < moveHistory_.length; ++i) {
+            ans.push(moveHistory_[i]);
         }
-        setBoard("rheakaehr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RHEAKAEHR", true);
+        return ans;
+    }
+
+    function numMoves() {
+        return moveHistory_.length;
+    }
+
+    function reset() {
+        board_ = [];
+        moveHistory_ = [];
+        for (var i = 0; i < 10; ++i) {
+            board_.push([]);
+            for (j = 0; j < 9; ++j)
+                board_[i].push(0);
+        }
+        setBoard("rheakaehr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RHEAKAEHR");
+    }
+
+    function setMoves(moves) {
+        var oldMoveHistory = moveHistory_;
+        reset();
+
+        var same = true;
+        var numSameMoves = 0;
+        for (var i = 0; i < moves.length; ++i) {
+            move(moves[i][0], moves[i][1], moves[i][2], moves[i][3]);
+            if (same && oldMoveHistory.length > i
+                    && oldMoveHistory[i].i1 == moves[i][0]
+                    && oldMoveHistory[i].j1 == moves[i][1]
+                    && oldMoveHistory[i].i2 == moves[i][2]
+                    && oldMoveHistory[i].j2 == moves[i][3]) {
+                ++numSameMoves;
+            } else {
+                same = false;
+            }
+        }
+        return numSameMoves;
     }
 
     function isKing(i, j, red) {
@@ -110,24 +142,24 @@
             target = PIECE_RK;
         else
             target = PIECE_BK;
-        return app.chess.board[i][j] == target;
+        return board_[i][j] == target;
     }
 
     function checkMove(i1, j1, i2, j2) {
-        var movingSide = isRedToGo();
+        var isRedToGo = isRedNext();
 
-        if (!generateAllMoves().find(function(m, idx, arr) {
+        if (!generateAllMoves(isRedToGo).find(function(m, idx, arr) {
             return m.i1 == i1 && m.j1 == j1 && m.i2 == i2 && m.j2 == j2;
         }))
             return false;
 
-        if (isKing(i2, j2, !movingSide))
+        if (isKing(i2, j2, !isRedToGo))
             return true;
 
         var suicide = false;
         move(i1, j1, i2, j2);
-        if (generateAllMoves().find(function(m, idx, arr) {
-            return isKing(m.i2, m.j2, movingSide);
+        if (generateAllMoves(!isRedToGo).find(function(m, idx, arr) {
+            return isKing(m.i2, m.j2, isRedToGo);
         }))
             suicide = true;
         unmove();
@@ -135,21 +167,16 @@
     }
 
     function move(i1, j1, i2, j2) {
-        moveHistory.push(new Move(i1, j1, i2, j2, app.chess.board[i2][j2]));
-        app.chess.board[i2][j2] = app.chess.board[i1][j1];
-        app.chess.board[i1][j1] = 0;
-        redToGo = !redToGo;
+        moveHistory_.push(new Move(i1, j1, i2, j2, board_[i1][j1], board_[i2][j2]));
+        board_[i2][j2] = board_[i1][j1];
+        board_[i1][j1] = 0;
+        return moveHistory_[moveHistory_.length - 1];
     }
 
     function unmove() {
-        var lastMove = moveHistory.pop();
-        app.chess.board[lastMove.i1][lastMove.j1] = app.chess.board[lastMove.i2][lastMove.j2];
-        app.chess.board[lastMove.i2][lastMove.j2] = lastMove.capture;
-        redToGo = !redToGo;
-    }
-
-    function isRedToGo() {
-        return redToGo;
+        var lastMove = moveHistory_.pop();
+        board_[lastMove.i1][lastMove.j1] = board_[lastMove.i2][lastMove.j2];
+        board_[lastMove.i2][lastMove.j2] = lastMove.capture;
     }
 
     function inBoard(i, j) {
@@ -176,9 +203,9 @@
                 moves.push(new Move(i, j, i + di[r], j + dj[r]));
         for (delta = -1; delta <= 1; delta += 2)
             for (ii = i + delta; ii >= 0 && ii < 10; ii += delta) {
-                if (pieceType(app.chess.board[ii][j]) == PIECE_K)
+                if (pieceType(board_[ii][j]) == PIECE_K)
                     moves.push(new Move(i, j, ii, j));
-                if (app.chess.board[ii][j] != 0)
+                if (board_[ii][j] != 0)
                     break;
             }
         return moves;
@@ -196,7 +223,7 @@
         var moves = [];
         for (r = 0; r < 4; ++r) {
             if (inBoard(i + 2 * ddi[r], j + 2 * ddj[r])
-                    && app.chess.board[i + ddi[r]][j + ddj[r]] == 0
+                    && board_[i + ddi[r]][j + ddj[r]] == 0
                     && inRedBase(i + ddi[r]))
                 moves.push(new Move(i, j, i + 2 * ddi[r], j + 2 * ddj[r]));
         }
@@ -207,7 +234,7 @@
         var moves = [];
         for (r = 0; r < 4; ++r) {
             if (inBoard(i + 2 * ddi[r], j + 2 * ddj[r])
-                    && app.chess.board[i + ddi[r]][j + ddj[r]] == 0
+                    && board_[i + ddi[r]][j + ddj[r]] == 0
                     && !inRedBase(i + ddi[r]))
                 moves.push(new Move(i, j, i + 2 * ddi[r], j + 2 * ddj[r]));
         }
@@ -218,7 +245,7 @@
         var moves = [];
         [[1, 2, 0, 1], [1, -2, 0, -1], [-1, 2, 0, 1], [-1, -2, 0, -1],
          [2, 1, 1, 0], [2, -1, 1, 0], [-2, 1, -1, 0], [-2, -1, -1, 0]].forEach(function(pattern) {
-             if (inBoard(i + pattern[0], j + pattern[1]) && app.chess.board[i + pattern[2]][j + pattern[3]] == 0)
+             if (inBoard(i + pattern[0], j + pattern[1]) && board_[i + pattern[2]][j + pattern[3]] == 0)
                  moves.push(new Move(i, j, i + pattern[0], j + pattern[1]));
         });
         return moves;
@@ -230,7 +257,7 @@
             var ii = i + di[r], jj = j + dj[4];
             for (ii = i + di[r], jj = j + dj[r]; inBoard(ii, jj); ii += di[r], jj += dj[r]) {
                 moves.push(new Move(i, j, ii, jj));
-                if (app.chess.board[ii][jj] != 0)
+                if (board_[ii][jj] != 0)
                     break;
             }
         }
@@ -243,11 +270,11 @@
             var ii = i + di[r], jj = j + dj[4];
             var met = false;
             for (ii = i + di[r], jj = j + dj[r]; inBoard(ii, jj); ii += di[r], jj += dj[r]) {
-                if (!met && app.chess.board[ii][jj] == 0)
+                if (!met && board_[ii][jj] == 0)
                     moves.push(new Move(i, j, ii, jj));
-                else if (!met && app.chess.board[ii][jj] != 0)
+                else if (!met && board_[ii][jj] != 0)
                     met = true;
-                else if (met && app.chess.board[ii][jj] != 0) {
+                else if (met && board_[ii][jj] != 0) {
                     moves.push(new Move(i, j, ii, jj));
                     break;
                 }
@@ -287,8 +314,8 @@
     }
 
     function generateMoves(i, j, moves) {
-        var type = pieceType(app.chess.board[i][j]);
-        var red = isRedPiece(app.chess.board[i][j]);
+        var type = pieceType(board_[i][j]);
+        var red = isRedPiece(board_[i][j]);
         var unfilteredMoves = [];
         if (type == 1)
             unfilteredMoves = generateKMoves(i, j);
@@ -313,17 +340,17 @@
                 unfilteredMoves = generateBPMoves(i, j);
         }
         unfilteredMoves.forEach(function(m) {
-            if (app.chess.board[m.i2][m.j2] == 0 || isRedPiece(app.chess.board[m.i2][m.j2]) != red)
+            if (board_[m.i2][m.j2] == 0 || isRedPiece(board_[m.i2][m.j2]) != red)
                 moves.push(m);
         });
     }
 
-    function generateAllMoves() {
+    function generateAllMoves(isRedToGo) {
         var moves = [];
         for (i = 0; i < 10; ++i)
             for (j = 0; j < 9; ++j)
-                if (app.chess.board[i][j] != 0 && isRedPiece(app.chess.board[i][j]) == isRedToGo())
+                if (board_[i][j] != 0 && isRedPiece(board_[i][j]) == isRedToGo)
                     generateMoves(i, j, moves);
         return moves;
     }
-})(xiangqi);
+}

@@ -1,35 +1,38 @@
-(function(app) {
+// Define String.endsWith for Safari in order to comply with ECMA6
+if (!String.prototype.endsWith) {
+  String.prototype.endsWith = function(searchString, position) {
+      var subjectString = this.toString();
+      if (position === undefined || position > subjectString.length) {
+          position = subjectString.length;
+      }
+      position -= searchString.length;
+      var lastIndex = subjectString.indexOf(searchString, position);
+      return lastIndex !== -1 && lastIndex === position;
+  };
+}
 
-    // globals
-    app.page.inGame = inGame;
-    app.page.gameStarted = gameStarted;
-    app.page.gameEnded = gameEnded;
-    app.page.post = post;
-    app.page.getSid = getSid;
-    app.page.onGameInfoUpdate = onGameInfoUpdate;
-    app.page.onGameInfoUpdateFailure = onGameInfoUpdateFailure;
-    app.page.sit = sit;
-    app.page.initApplication = initApplication;
+function Game(currentGameId, myUid, gameInfo) {
+    var board_;
+    var ajaxSequence_ = 0;
 
-    // Init applicaiton when document is loaded.
-    document.onreadystatechange = function() {
-        if (document.readyState == "interactive") {
-            initApplication();
-        }
-    }
-
-    /// Functions
+    initApplication();
 
     function ajax(method, url, contentType, payload, success, failure) {
         var xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function() {
-            if (xmlhttp.readyState == 4) {
-                if (xmlhttp.status >= 200 && xmlhttp.status <= 299)
-                    success(xmlhttp.responseText);
-                else if (failure)
-                    failure(xmlhttp.responseText);
-            }
-        }
+        xmlhttp.onreadystatechange = function(packetSequence) {
+            return function() {
+                if (xmlhttp.readyState == 4) {
+                    if (xmlhttp.status >= 200 && xmlhttp.status <= 299) {
+                        if (packetSequence >= ajaxSequence_) {
+                            success(xmlhttp.responseText);
+                        } else {
+                            console.log("Dropped an old packet.");
+                        }
+                    } else if (failure)
+                        failure(xmlhttp.responseText);
+                }
+            };
+        }(ajaxSequence_);
         xmlhttp.open(method, url, true);
         if (contentType)
             xmlhttp.setRequestHeader("Content-type", contentType);
@@ -44,6 +47,7 @@
     }
 
     function post(url, payload, success, failure) {
+        ++ajaxSequence_;
         ajax("POST", url, "application/x-www-form-urlencoded; charset=UTF-8", payload, success, failure);
     }
 
@@ -58,7 +62,6 @@
                         console.log("last update failed");
                     newGameInfo = newGameInfo.gameinfo
                 }
-                lastGameInfo = gameInfo;
                 gameInfo = newGameInfo;
                 refreshGame();
             } catch (err) {
@@ -67,25 +70,42 @@
         }
     }
 
+    function parseMoves(moves) {
+        var splitMoves = moves.split("/");
+        var parsedMoves = [];
+        for (var i = 1; i < splitMoves.length; ++i) {
+            var move = splitMoves[i];
+            if (move == "R" || move == "B")
+                break;
+            parsedMoves.push(
+                    [parseInt(move[0]), parseInt(move[1]), 
+                    parseInt(move[2]), parseInt(move[3])]);
+        }
+        return parsedMoves;
+    }
+
+    // move is an array of 4 elements: [i1, j1, i2, j2].
+    function moveToString(move) {
+        return "" + move[0] + move[1] + move[2] + move[3];
+    }
+
+
+    function onPlayerMove(i1, j1, i2, j2) {
+        gameInfo.moves += "/" + moveToString([i1, j1, i2, j2]);
+        post("/gameinfo", 
+                "sid=" + getSid() +
+                "&gid=" + currentGameId +
+                "&moves=" + gameInfo.moves,
+                onGameInfoUpdate,
+                onGameInfoUpdateFailure);
+    }
+
     function onGameInfoUpdateFailure(data) {
         console.log("Retrieve game info failed");
     }
 
     function requestGameInfo(gid) {
         get("/gameinfo?gid=" + gid, onGameInfoUpdate, onGameInfoUpdateFailure);
-    }
-
-    function playersChanged(oldGameInfo, newGameInfo) {
-        if (!oldGameInfo) {
-            return true;
-        }
-        if (newGameInfo) {
-            return (!oldGameInfo.black && newGameInfo.black)
-                || (!oldGameInfo.red && newGameInfo.red)
-                || (oldGameInfo.black && newGameInfo.black && oldGameInfo.black.id != newGameInfo.black.id)
-                || (oldGameInfo.red && newGameInfo.red && oldGameInfo.red.id != newGameInfo.red.id);
-        }
-        return false;
     }
 
     function getCookie(cname) {
@@ -104,49 +124,59 @@
     }
 
     function sit(side) {
+        var parent = document.getElementById(side + "-player");
+        var a = document.getElementById(side + "-sit-link");
+        parent.removeChild(a);
+        parent.appendChild(document.createTextNode("sitting..."));
         post("/gameinfo", "sid=" + getSid() + "&gid=" + currentGameId + "&sit=" + side,
                 onGameInfoUpdate, onGameInfoUpdateFailure);
     }
 
     function refreshPlayerList() {
-        app.board.removeAllChildren("red-player");
-        app.board.removeAllChildren("black-player");
+        removeAllChildren("red-player");
+        removeAllChildren("black-player");
         if (gameInfo.red !== undefined &&
             gameInfo.red !== null) {
+            var hintYou = "";
+            if (gameInfo.red.id == myUid) {
+                hintYou = " (you)";
+            }
             document.getElementById("red-player").appendChild(
-                    document.createTextNode("Red: " + gameInfo.red.name));
+                    document.createTextNode("Red: " + gameInfo.red.name + hintYou));
         } else {
             document.getElementById("red-player").appendChild(document.createTextNode("Red: "));
             var a = document.createElement("a");
-            a.setAttribute("href", "#");
-            a.setAttribute("onclick", "xiangqi.page.sit('red')");
+            a.id = "red-sit-link";
+            a.href = "#";
+            a.onclick = function() { sit("red"); };
             a.appendChild(document.createTextNode("sit here"));
             document.getElementById("red-player").appendChild(a);
         }
         if (gameInfo.black !== undefined &&
             gameInfo.black !== null) {
+            var hintYou = "";
+            if (gameInfo.black.id == myUid) {
+                hintYou = " (you)";
+            }
             document.getElementById("black-player").appendChild(
-                    document.createTextNode("Black: " + gameInfo.black.name));
+                    document.createTextNode("Black: " + gameInfo.black.name + hintYou));
         } else {
             document.getElementById("black-player").appendChild(document.createTextNode("Black: "));
             var a = document.createElement("a");
-            a.setAttribute("href", "#");
-            a.setAttribute("onclick", "xiangqi.page.sit('black')");
+            a.id = "black-sit-link";
+            a.href = "#";
+            a.onclick = function() { sit("black"); };
             a.appendChild(document.createTextNode("sit here"));
             document.getElementById("black-player").appendChild(a);
         }
     }
 
-    function playMove(move) {
-        if (move == "" || move == "R" || move == "B")
-            return;
-        app.board.makeMove(
-            parseInt(move[0]), parseInt(move[1]), 
-            parseInt(move[2]), parseInt(move[3]));
+    function gameStarted() {
+        return gameInfo.red && gameInfo.black;
     }
 
     function updateStatus() {
-        app.board.removeAllChildren("status");
+        removeAllChildren("status");
         var se = document.getElementById("status");
         if (!gameStarted()) {
             se.appendChild(document.createTextNode("Waiting for players to join..."));
@@ -155,71 +185,29 @@
         } else if (gameInfo.moves.endsWith("B")) {
             se.appendChild(document.createTextNode("Black won"));
         } else {
-            if (app.chess.isRedToGo())
+            if (board_.isRedNext())
                 se.appendChild(document.createTextNode("Red to go"));
             else
                 se.appendChild(document.createTextNode("Black to go"));
         }
     }
 
+    function gameInProgress() {
+        return gameStarted() && !gameInfo.moves.endsWith("R") && !gameInfo.moves.endsWith("B");
+    }
+
     function refreshGame() {
-        if (playersChanged(lastGameInfo, gameInfo)) {
-            refreshPlayerList();
-            app.board.redrawBoard();
-        }
-
-        var replay = false;
-        var newMoves = gameInfo.moves.split("/");
-        if (!lastGameInfo)
-            replay = true;
-        else {
-            var oldMoves = lastGameInfo.moves.split("/");
-            if (oldMoves.length != newMoves.length && oldMoves.length + 1 != newMoves.length
-                    && newMoves.length + 1 != oldMoves.length)
-                replay = true;
-            else {
-                for (var i = 0; i < Math.min(oldMoves.length, newMoves.length); ++i)
-                    if (oldMoves[i] != newMoves[i])
-                        replay = true;
-                if (!replay) {
-                    if (oldMoves.length + 1 == newMoves.length)
-                        playMove(newMoves[newMoves.length - 1]);
-                    else if (oldMoves.length == newMoves.length + 1) {
-                        if (Date.now() - lastUpdateSent > 3000)
-                            replay = true;
-                        else
-                            gameInfo.moves = lastGameInfo.moves;
-                    }
-                }
-            }
-        }
-        if (replay) {
-            app.chess.newGame();
-            app.board.redrawBoard();
-            for (var i = 0; i < newMoves.length; ++i)
-                playMove(newMoves[i]);
-        }
-
+        refreshPlayerList();
+        var mySide = "r";
+        if (gameInfo.black && gameInfo.black.id == myUid)
+            mySide = "b";
+        board_.setState(mySide, !gameInProgress(), parseMoves(gameInfo.moves));
         updateStatus();
-    }
-
-    function inGame() {
-        return (gameInfo.red && gameInfo.red.id == myUid)
-            || (gameInfo.black && gameInfo.black.id == myUid);
-    }
-
-    function gameStarted() {
-        return gameInfo.red && gameInfo.black;
-    }
-
-    function gameEnded() {
-        return gameInfo.moves.endsWith("R") || gameInfo.moves.endsWith("B");
     }
 
     function initApplication() {
         // init the board and game
-        app.chess.newGame();
-        app.board.redrawBoard();
+        board_ = new Board(onPlayerMove);
         refreshGame();
 
         // start live refresh
@@ -227,4 +215,12 @@
             requestGameInfo(currentGameId); 
         }, 1000);
     }
-})(xiangqi);
+}
+
+// global: currentGameId, myUid, gameInfo
+// Init applicaiton when document is loaded.
+document.onreadystatechange = function() {
+    if (document.readyState == "interactive") {
+        var game = new Game(currentGameId, myUid, gameInfo);
+    }
+}
