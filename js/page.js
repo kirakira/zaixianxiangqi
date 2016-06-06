@@ -286,11 +286,17 @@ function Game(currentGameId, myUid, gameInfo) {
             appendCellToRow(row, document.createTextNode("last"));
         }
 
-        appendCellToRow(row, createLink("move-history-fork", undefined,
+        div.appendChild(table);
+
+        var innerDiv = document.createElement("div");
+        innerDiv.id = "moveHistoryFork";
+        innerDiv.appendChild(
+                createLink("move-history-fork-link", undefined,
                     "/fork/" + currentGameId + "/" +
                     board_.numMovesShown().toString(),
-                    undefined, "fork from here"));
-        div.appendChild(table);
+                    undefined, "fork"));
+        innerDiv.appendChild(document.createTextNode(" this game from here"));
+        div.appendChild(innerDiv);
     }
 
     function refreshGame() {

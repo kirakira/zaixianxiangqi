@@ -14,3 +14,7 @@ body {
     border-collapse: separate;
     border-spacing: 10px 0px;
 }
+
+#moveHistoryFork {
+    text-align: center;
+}
