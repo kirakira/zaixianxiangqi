@@ -5,6 +5,8 @@ function Board(onMove) {
     this.setState = setState;
     this.showMove = showMove;
     this.isRedNext = isRedNext;
+    this.numMoves = numMoves;
+    this.numMovesShown = numMovesShown;
 
     var board_ = new Chess();
     var ui_ = new BoardUI(onSquareSelected);
@@ -147,7 +149,7 @@ function Board(onMove) {
         ui_.drawPiece(move.i1, move.j1, move.piece);
         ui_.erasePiece(move.i2, move.j2);
         if (move.capture) {
-            move.drawPiece(move.i2, move.j2. move.capture);
+            ui_.drawPiece(move.i2, move.j2, move.capture);
         }
 
         ui_.eraseHighlights();
@@ -156,5 +158,13 @@ function Board(onMove) {
             ui_.highlightSquare(previousMove.i2, previousMove.j2);
         }
         selection_ = null;
+    }
+
+    function numMoves() {
+        return board_.numMoves();
+    }
+
+    function numMovesShown() {
+        return numMovesShown_;
     }
 }

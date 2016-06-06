@@ -8,7 +8,7 @@ import webapp2
 @ndb.transactional
 def removeGame(gid):
   game = Game.get_by_id(gid)
-  if game is not None and (game.red is None or game.black is None) and game.moves == '':
+  if game is not None and (game.red is None or game.black is None):
     game.key.delete()
     return True
   return False

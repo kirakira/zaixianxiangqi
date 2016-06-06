@@ -131,6 +131,7 @@ function Game(currentGameId, myUid, gameInfo) {
                 "&moves=" + gameInfo.moves,
                 onGameInfoUpdate,
                 onGameInfoUpdateFailure);
+        refreshMoveHistoryControls();
     }
 
     function onGameInfoUpdateFailure(data) {
@@ -165,6 +166,20 @@ function Game(currentGameId, myUid, gameInfo) {
                 onGameInfoUpdate, onGameInfoUpdateFailure);
     }
 
+    function createLink(id, className, url, onclick, text) {
+        var a = document.createElement("a");
+        a.id = id;
+        if (className) {
+            a.className = className;
+        }
+        a.href = url;
+        if (onclick) {
+            a.onclick = onclick;
+        }
+        a.appendChild(document.createTextNode(text));
+        return a;
+    }
+
     function refreshPlayerList() {
         removeAllChildren("red-player");
         removeAllChildren("black-player");
@@ -178,11 +193,7 @@ function Game(currentGameId, myUid, gameInfo) {
                     document.createTextNode("Red: " + gameInfo.red.name + hintYou));
         } else {
             document.getElementById("red-player").appendChild(document.createTextNode("Red: "));
-            var a = document.createElement("a");
-            a.id = "red-sit-link";
-            a.href = "#";
-            a.onclick = function() { sit("red"); return false; };
-            a.appendChild(document.createTextNode("sit here"));
+            var a = createLink("red-sit-link", undefined, "#", function() { sit("red"); return false; }, "sit here");
             document.getElementById("red-player").appendChild(a);
         }
         if (gameInfo.black !== undefined &&
@@ -195,11 +206,7 @@ function Game(currentGameId, myUid, gameInfo) {
                     document.createTextNode("Black: " + gameInfo.black.name + hintYou));
         } else {
             document.getElementById("black-player").appendChild(document.createTextNode("Black: "));
-            var a = document.createElement("a");
-            a.id = "black-sit-link";
-            a.href = "#";
-            a.onclick = function() { sit("black"); return false; };
-            a.appendChild(document.createTextNode("sit here"));
+            var a = createLink("black-sit-link", undefined, "#", function() { sit("black"); return false; }, "sit here");
             document.getElementById("black-player").appendChild(a);
         }
     }
@@ -211,12 +218,12 @@ function Game(currentGameId, myUid, gameInfo) {
     function updateStatus() {
         removeAllChildren("status");
         var se = document.getElementById("status");
-        if (!gameStarted()) {
-            se.appendChild(document.createTextNode("Waiting for players to join..."));
-        } else if (gameInfo.moves.endsWith("R")) {
+        if (gameInfo.moves.endsWith("R")) {
             se.appendChild(document.createTextNode("Red won"));
         } else if (gameInfo.moves.endsWith("B")) {
             se.appendChild(document.createTextNode("Black won"));
+        } else if (!gameStarted()) {
+            se.appendChild(document.createTextNode("Waiting for players to join..."));
         } else {
             if (board_.isRedNext())
                 se.appendChild(document.createTextNode("Red to go"));
@@ -229,6 +236,63 @@ function Game(currentGameId, myUid, gameInfo) {
         return gameStarted() && !gameInfo.moves.endsWith("R") && !gameInfo.moves.endsWith("B");
     }
 
+    function appendCellToRow(row, cell) {
+        var td = document.createElement("td");
+        td.appendChild(cell);
+        row.appendChild(td);
+    }
+
+    function refreshMoveHistoryControls() {
+        removeAllChildren("move-history");
+        var div = document.getElementById("move-history");
+        var table = document.createElement("table");
+        table.id = "moveHistoryControls";
+        var row = document.createElement("tr");
+        table.appendChild(row);
+
+        if (board_.numMovesShown() > 0) {
+            appendCellToRow(row, createLink("move-history-first", undefined, "#", function() {
+                board_.showMove(0);
+                refreshMoveHistoryControls();
+                return false;
+            }, "first"));
+
+            appendCellToRow(row, createLink("move-history-prev", undefined, "#", function() {
+                board_.showMove(board_.numMovesShown() - 1);
+                refreshMoveHistoryControls();
+                return false;
+            }, "prev"));
+        } else {
+            appendCellToRow(row, document.createTextNode("first"));
+            appendCellToRow(row, document.createTextNode("prev"));
+        }
+
+        appendCellToRow(row, document.createTextNode("" + board_.numMovesShown() + " / " + board_.numMoves()));
+
+        if (board_.numMovesShown() < board_.numMoves()) {
+            appendCellToRow(row, createLink("move-history-next", undefined, "#", function() {
+                board_.showMove(board_.numMovesShown() + 1);
+                refreshMoveHistoryControls();
+                return false;
+            }, "next"));
+
+            appendCellToRow(row, createLink("move-history-last", undefined, "#", function() {
+                board_.showMove(board_.numMoves());
+                refreshMoveHistoryControls();
+                return false;
+            }, "last"));
+        } else {
+            appendCellToRow(row, document.createTextNode("next"));
+            appendCellToRow(row, document.createTextNode("last"));
+        }
+
+        appendCellToRow(row, createLink("move-history-fork", undefined,
+                    "/fork/" + currentGameId + "/" +
+                    board_.numMovesShown().toString(),
+                    undefined, "fork from here"));
+        div.appendChild(table);
+    }
+
     function refreshGame() {
         refreshPlayerList();
         var mySide = "r";
@@ -236,6 +300,7 @@ function Game(currentGameId, myUid, gameInfo) {
             mySide = "b";
         board_.setState(mySide, !gameInProgress(), parseMoves(gameInfo.moves));
         updateStatus();
+        refreshMoveHistoryControls();
     }
 
     function initApplication() {

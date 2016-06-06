@@ -100,6 +100,25 @@ def createGame(uid):
       logging.warning('createGame race condition detected: trying to insert gid %s' % gid)
   return gid
 
+def forkGame(uid, parentGid, forkedMoveCount, moves, useRed):
+  gid = ''
+  while True:
+    gid = generateRandomString(6)
+    logging.info('generated random gid: ' + gid)
+    game = Game(id=gid, description=u'从%s创建的分支棋局' % parentGid,
+        moves=moves, forkedFrom=parentGid, forkedMoveCount=forkedMoveCount)
+    if useRed:
+      game.red = uid
+    else:
+      game.black = uid
+    updateActivityTime(uid, game)
+    if insertGameIfNotExists(game):
+      logging.info('game.key: ' + game.key.id())
+      break
+    else:
+      logging.warning('createGame race condition detected: trying to insert gid %s' % gid)
+  return gid
+
 def getGame(gid):
   if gid is None or len(gid) == 0:
     return None
@@ -139,7 +158,9 @@ def userInGame(uid, game):
   return game.red == uid or game.black == uid
 
 def sit(uid, game, side):
-  if side == 'red':
+  if game.moves.endswith('R') or game.moves.endswith('B'):
+    raise ValueError('cannot sit on a finished game')
+  elif side == 'red':
     if game.red is None:
       game.red = uid
       if game.black == uid:
@@ -161,6 +182,26 @@ def sit(uid, game, side):
 def isRegularMove(move):
   return len(move) == 4 and move.isdigit()
 
+def buildBoardFromMoves(moves):
+  b = board()
+  for move in moves:
+    if move == '':
+      continue
+    if isRegularMove(move):
+      b.move(int(move[0]), int(move[1]), int(move[2]), int(move[3]))
+    else:
+      logging.error('unknown move: ' + move)
+  return b
+
+# return '/R' if red won, '/B' if black won, or '' if neither.
+def declareGameResult(board):
+  if board.hasWinningMove():
+    return '/R' if board.redToGo else '/B'
+  elif board.isLosing():
+    return '/B' if board.redToGo else '/R'
+  else:
+    return ''
+
 def makeMove(game, red, newMovesString):
   oldMoves = game.moves.split('/')
   newMoves = newMovesString.split('/')
@@ -170,15 +211,7 @@ def makeMove(game, red, newMovesString):
     if newMoves[i] != oldMoves[i]:
       raise ValueError('new moves diverged from old moves')
 
-  b = board()
-  for move in oldMoves:
-    if move == '':
-      continue
-    if isRegularMove(move):
-      b.move(int(move[0]), int(move[1]), int(move[2]), int(move[3]))
-    else:
-      logging.error('unknown move: ' + move)
-
+  b = buildBoardFromMoves(oldMoves)
   newMove = newMoves[-1]
   if isRegularMove(newMove):
     if red != b.redToGo:
@@ -187,10 +220,7 @@ def makeMove(game, red, newMovesString):
     if not b.checkedMove(int(newMove[0]), int(newMove[1]), int(newMove[2]), int(newMove[3])):
       raise ValueError('invalid move: ' + newMove)
 
-    if b.hasWinningMove():
-      newMovesString += '/R' if b.redToGo else '/B'
-    elif b.isLosing():
-      newMovesString += '/B' if b.redToGo else '/R'
+    newMovesString += declareGameResult(b)
   elif newMove == "B" or newMove == "R":
     raise ValueError('user cannot declare result')
   else:
@@ -324,10 +354,43 @@ class UserInfoApi(webapp2.RequestHandler):
   def post(self):
     pass
 
+class ForkPage(webapp2.RequestHandler):
+  def get(self, gid, moveCount):
+    [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
+    setNoCache(self.response)
+    setSidInCookie(self.response, sid)
+    self.response.content_type = 'text/plain'
+
+    game = getGame(gid)
+    if game is None:
+      self.response.write('bad game id')
+      return
+
+    moves = [move for move in game.moves.split('/') if isRegularMove(move)]
+
+    moveCount = long(moveCount)
+    if moveCount < 0 or moveCount > len(moves):
+      self.response.write('bad move count')
+      return
+
+    moves = moves[0:moveCount]
+    board = buildBoardFromMoves(moves)
+    newMoves = '/' + '/'.join(moves) + declareGameResult(board)
+
+    useRed = random.randrange(0, 2) == 0
+    if game.red == uid:
+      useRed = True
+    elif game.black == uid:
+      useRed = False
+
+    newGid = forkGame(uid, gid, moveCount, newMoves, useRed)
+    self.redirect('/game/' + newGid)
+
 app = webapp2.WSGIApplication([
     (r'/', MainPage),
     (r'/new', NewPage),
     (r'/game/([^/]+)', GamePage),
     (r'/gameinfo', GameInfoApi),
     (r'/userinfo', UserInfoApi),
+    (r'/fork/([^/]+)/(\d+)', ForkPage),
 ], debug=True)
