@@ -11,6 +11,9 @@ if (!String.prototype.endsWith) {
   };
 }
 
+/**
+ * @constructor
+ */
 function Game(currentGameId, myUid, gameInfo) {
     var board_;
     // Updates with sequence number <= LWM have been resolved.
@@ -108,8 +111,8 @@ function Game(currentGameId, myUid, gameInfo) {
             if (move == "R" || move == "B")
                 break;
             parsedMoves.push(
-                    [parseInt(move[0]), parseInt(move[1]), 
-                    parseInt(move[2]), parseInt(move[3])]);
+                    [parseInt(move[0], 10), parseInt(move[1], 10),
+                    parseInt(move[2], 10), parseInt(move[3], 10)]);
         }
         return parsedMoves;
     }

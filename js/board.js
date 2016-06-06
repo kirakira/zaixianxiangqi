@@ -1,3 +1,6 @@
+/**
+ * @constructor
+ */
 function Board(onMove) {
     this.setState = setState;
     this.showMove = showMove;

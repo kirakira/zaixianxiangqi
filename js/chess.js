@@ -7,6 +7,9 @@ function isRedPiece(piece) {
     return piece >= 8;
 }
 
+/**
+ * @constructor
+ */
 function Move(i1, j1, i2, j2, piece, capture) {
     this.i1 = i1;
     this.j1 = j1;
@@ -16,6 +19,9 @@ function Move(i1, j1, i2, j2, piece, capture) {
     this.capture = capture || PIECE_NONE;
 };
 
+/**
+ * @constructor
+ */
 function Chess() {
     this.reset = reset;
     this.setMoves = setMoves;
@@ -83,7 +89,7 @@ function Chess() {
                 if (j >= 9)
                     throw "Malformed fen string at row " + i + ": " + fen;
                 if (isDigit(rows[i][k]))
-                    j += parseInt(rows[i][k]);
+                    j += parseInt(rows[i][k], 10);
                 else {
                     board_[i][j] = toPiece(rows[i][k]);
                     ++j;

@@ -3,7 +3,11 @@ function removeAllChildren(id) {
     while (elem.lastChild) elem.removeChild(elem.lastChild);
 }
 
-// onSquareSelected(i, j) will be called when user selects square (i, j).
+/**
+ * onSquareSelected(i, j) will be called when user selects square (i, j).
+ *
+ * @constructor
+ */
 function BoardUI(onSquareSelected) {
     this.reset = reset;
     this.drawPiece = drawPiece;
@@ -148,7 +152,7 @@ function BoardUI(onSquareSelected) {
     }
 
     function drawGridLine(i1, j1, i2, j2) {
-        var line = createGridLine(i1, j1, i2, j2, "grid");
+        var line = createGridLine(i1, j1, i2, j2, "grid", undefined);
         line.style.strokeWidth = 1;
         line.style.stroke = "gray";
         insertElement(line);
@@ -187,21 +191,21 @@ function BoardUI(onSquareSelected) {
         var x = getGridX(i, j), y = getGridY(i, j);
         var offset = 23, len = gridSize_ / 6;
         for (var i = -1; i <= 1; i += 2) {
-            var line = createLine(x - offset, y + i * offset, x - offset + len, y + i * offset, "highlighter");
+            var line = createLine(x - offset, y + i * offset, x - offset + len, y + i * offset, "highlighter", undefined);
             line.style.strokeWidth = 2;
             line.style.stroke = "blue";
             insertElement(line);
-            line = createLine(x + offset - len, y + i * offset, x + offset, y + i * offset, "highlighter");
+            line = createLine(x + offset - len, y + i * offset, x + offset, y + i * offset, "highlighter", undefined);
             line.style.strokeWidth = 2;
             line.style.stroke = "blue";
             insertElement(line);
         }
         for (var i = -1; i <= 1; i += 2) {
-            var line = createLine(x + i * offset, y - offset, x + i * offset, y - offset + len, "highlighter");
+            var line = createLine(x + i * offset, y - offset, x + i * offset, y - offset + len, "highlighter", undefined);
             line.style.strokeWidth = 2;
             line.style.stroke = "blue";
             insertElement(line);
-            var line = createLine(x + i * offset, y + offset - len, x + i * offset, y + offset, "highlighter");
+            var line = createLine(x + i * offset, y + offset - len, x + i * offset, y + offset, "highlighter", undefined);
             line.style.strokeWidth = 2;
             line.style.stroke = "blue";
             insertElement(line);
