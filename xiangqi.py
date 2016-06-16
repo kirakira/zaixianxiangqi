@@ -13,6 +13,7 @@ from google.appengine.ext import ndb
 
 import jinja2
 import webapp2
+from webapp2_extras import routes
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -149,7 +150,6 @@ def setNoCache(response):
 
 def setSidInCookie(response, sid):
   response.set_cookie('sid', str(sid), path='/', expires=datetime.datetime.now() + datetime.timedelta(weeks=52*100))
-  response.delete_cookie('sid', path='/game')
 
 def escapeJS(raw):
   return raw.replace('</', '<\\/')
@@ -390,10 +390,13 @@ class ForkPage(webapp2.RequestHandler):
     self.redirect('/game/' + newGid)
 
 app = webapp2.WSGIApplication([
-    (r'/', MainPage),
-    (r'/new', NewPage),
-    (r'/game/([^/]+)', GamePage),
-    (r'/gameinfo', GameInfoApi),
-    (r'/userinfo', UserInfoApi),
-    (r'/fork/([^/]+)/(\d+)', ForkPage),
-], debug=True)
+  routes.DomainRoute('zaixianxiangqi.appspot.com', [
+    routes.RedirectRoute(r'/', redirect_to='//zaixianxiangqi.com/'),
+  ]),
+  (r'/', MainPage),
+  (r'/new', NewPage),
+  (r'/game/([^/]+)', GamePage),
+  (r'/gameinfo', GameInfoApi),
+  (r'/userinfo', UserInfoApi),
+  (r'/fork/([^/]+)/(\d+)', ForkPage),
+])
