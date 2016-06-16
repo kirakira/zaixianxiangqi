@@ -375,7 +375,10 @@ class ForkPage(webapp2.RequestHandler):
 
     moves = moves[0:moveCount]
     board = buildBoardFromMoves(moves)
-    newMoves = '/' + '/'.join(moves) + declareGameResult(board)
+    newMoves = ''
+    for move in moves:
+      newMoves += '/' + move
+    newMoves += declareGameResult(board)
 
     useRed = random.randrange(0, 2) == 0
     if game.red == uid:
