@@ -389,9 +389,24 @@ class ForkPage(webapp2.RequestHandler):
     newGid = forkGame(uid, gid, moveCount, newMoves, useRed)
     self.redirect('/game/' + newGid)
 
+class DomainSchemeHandler(webapp2.RequestHandler):
+  def get(self, path):
+    self.redirect('https://zaixianxiangqi.com' + self.request.path_qs,
+        permanent=True)
+
 app = webapp2.WSGIApplication([
+  # Redirect appspot to zaixianxiangqi.com.
   routes.DomainRoute('zaixianxiangqi.appspot.com', [
-    routes.RedirectRoute(r'/', redirect_to='//zaixianxiangqi.com/'),
+    webapp2.Route('<:.*>', handler=DomainSchemeHandler)
+  ]),
+  # Redirect to remove www.
+  routes.DomainRoute('www.zaixianxiangqi.com', [
+    webapp2.Route('<:.*>', handler=DomainSchemeHandler)
+  ]),
+  # Redirect to use https.
+  routes.DomainRoute('zaixianxiangqi.com', [
+    webapp2.Route('<:.*>', handler=DomainSchemeHandler,
+      schemes=['http']),
   ]),
   (r'/', MainPage),
   (r'/new', NewPage),
