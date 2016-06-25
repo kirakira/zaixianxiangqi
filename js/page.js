@@ -315,7 +315,7 @@ function Game(currentGameId, myUid, gameInfo) {
 
     function initApplication() {
         // init the board and game
-        board_ = new Board(onPlayerMove);
+        board_ = new Board(onPlayerMove, true /* enableSpecialText */);
         refreshGame();
 
         // start live refresh

@@ -18,6 +18,8 @@ function BoardUI(onSquareSelected) {
     var SVG_NS = "http://www.w3.org/2000/svg";
     var PIECE_TEXTS = ["", "將", "士", "象", "馬", "車", "砲", "卒",
                        "", "帥", "仕", "相", "傌", "俥", "炮", "兵"];
+    var PIECE_SPECIAL_TEXTS = ["", "將", "士", "象", "🐴", "車", "砲", "卒",
+                               "", "帥", "仕", "相", "🦄", "俥", "炮", "兵"];
     var gridSize_ = 50, middleGap_ = 0;
     var flippedView_ = false;
 
@@ -90,11 +92,12 @@ function BoardUI(onSquareSelected) {
         return colNames[j] + (9 - i).toString();
     }
 
-    function drawPiece(i, j, piece) {
+    function drawPiece(i, j, piece, useSpecialText) {
         erasePieceCoverIfAny(i, j);
         var outer = createCircle(i, j, 23, "piece-outer", "piece-outer-" + positionToString(i, j));
         var inner = createCircle(i, j, 20, "piece-inner", "piece-inner-" + positionToString(i, j));
-        var t = createText(i, j, PIECE_TEXTS[piece], "piece-text", "piece-text-" + positionToString(i, j));
+        var text = useSpecialText? PIECE_SPECIAL_TEXTS[piece] : PIECE_TEXTS[piece];
+        var t = createText(i, j, text, "piece-text", "piece-text-" + positionToString(i, j));
         if (isRedPiece(piece)) {
             outer.setAttribute("stroke", "red");
             inner.style.stroke = "red";
