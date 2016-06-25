@@ -125,6 +125,7 @@ function Game(currentGameId, myUid, gameInfo) {
 
     function onPlayerMove(i1, j1, i2, j2) {
         gameInfo.moves += "/" + moveToString([i1, j1, i2, j2]);
+        updateStatus();
         post("/gameinfo", 
                 "sid=" + getSid() +
                 "&gid=" + currentGameId +
@@ -304,7 +305,10 @@ function Game(currentGameId, myUid, gameInfo) {
         var mySide = "r";
         if (gameInfo.black && gameInfo.black.id == myUid)
             mySide = "b";
-        board_.setState(mySide, !gameInProgress(), parseMoves(gameInfo.moves));
+        var iAmPlaying =
+            (gameInfo.black && gameInfo.black.id == myUid) ||
+                (gameInfo.red && gameInfo.red.id == myUid);
+        board_.setState(mySide, !gameInProgress() || !iAmPlaying, parseMoves(gameInfo.moves));
         updateStatus();
         refreshMoveHistoryControls();
     }
