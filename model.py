@@ -3,8 +3,8 @@ from google.appengine.ext import ndb
 class User(ndb.Model):
   name = ndb.StringProperty()
 
+# This is child table of User.
 class Session(ndb.Model):
-  uid = ndb.IntegerProperty()
   creation = ndb.DateTimeProperty(auto_now_add=True)
 
 class Game(ndb.Model):

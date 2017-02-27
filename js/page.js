@@ -127,7 +127,8 @@ function Game(currentGameId, myUid, gameInfo) {
         gameInfo.moves += "/" + moveToString([i1, j1, i2, j2]);
         updateStatus();
         post("/gameinfo", 
-                "sid=" + getSid() +
+                "uid=" + myUid +
+                "&sid=" + getSid() +
                 "&gid=" + currentGameId +
                 "&moves=" + gameInfo.moves,
                 onGameInfoUpdate,
@@ -163,8 +164,9 @@ function Game(currentGameId, myUid, gameInfo) {
         var a = document.getElementById(side + "-sit-link");
         parent.removeChild(a);
         parent.appendChild(document.createTextNode("sitting down..."));
-        post("/gameinfo", "sid=" + getSid() + "&gid=" + currentGameId + "&sit=" + side,
-                onGameInfoUpdate, onGameInfoUpdateFailure);
+        post("/gameinfo", "uid=" + myUid + "&sid=" + getSid() + "&gid=" +
+                currentGameId + "&sit=" + side, onGameInfoUpdate,
+                onGameInfoUpdateFailure);
     }
 
     function createLink(id, className, url, onclick, text) {

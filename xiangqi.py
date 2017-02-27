@@ -22,17 +22,8 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 
 logging.getLogger().setLevel(logging.DEBUG)
 
-def getUid(sid):
-  if sid is None or len(sid) == 0:
-    return None
-  session = Session.get_by_id(long(sid))
-  if session is None:
-    return None
-  else:
-    return long(session.uid)
-
 def getMostRecentSid(uid):
-  return Session.query(Session.uid == uid).order(-Session.creation).fetch(1)[0].key.id()
+  return Session.query(ancestor=ndb.Key(User, uid)).order(-Session.creation).fetch(1)[0].key.id()
 
 def pickRandomName():
   names = ['养一狗', '猥男', '清晰知足', '周杰伦', 'SlaveMunde', 'zhaoweijie13', '啊啊啊', '大了', '巨大了', '求蠢', '求不蠢', '司马', '麻皮大意', '小地雷', '长考一秒', '將五进一', '缩了', '慌了', '窝心傌', 'Excited!', '闷声发大财', '王猛日', 'Kebe', '死妈达', '单小娟']
@@ -47,21 +38,26 @@ def generateRandomString(length):
 
 def createUser():
   user = User(name=pickRandomName())
-  user.put()
-  sid = createSessionForUser(user.key.id())
-  return [user.key.id(), sid]
+  uid = user.put().id()
+  sid = createSessionForUser(uid)
+  return uid, sid
 
 def createSessionForUser(uid):
-  session = Session(uid=uid)
+  session = Session(parent=ndb.Key(User, uid))
   return session.put().id()
 
-def getOrCreateUser(sid):
-  uid = getUid(sid)
-  if uid is None:
-    [uid, sid] = createUser()
+def isSidValid(uid, sid):
+  if uid is None or len(uid) == 0 or sid is None or len(sid) == 0:
+    return False
+  return ndb.Key(User, long(uid), Session, long(sid)).get() is not None
+
+def getOrCreateUser(uid, sid):
+  if not isSidValid(uid, sid):
+    uid, sid = createUser()
   else:
+    uid = long(uid)
     sid = getMostRecentSid(uid)
-  return [uid, sid]
+  return uid, sid
 
 def getRecentGames(uid, count):
   return Game.query(ndb.OR(Game.red == uid, Game.black == uid)).order(-Game.creation).fetch(count)
@@ -148,7 +144,8 @@ def setNoCache(response):
   response.headers.add_header('Pragma', 'no-cache')
   response.headers.add_header('Expires', '0')
 
-def setSidInCookie(response, sid):
+def setUidSidInCookie(response, uid, sid):
+  response.set_cookie('uid', str(uid), path='/', expires=datetime.datetime.now() + datetime.timedelta(weeks=52*100))
   response.set_cookie('sid', str(sid), path='/', expires=datetime.datetime.now() + datetime.timedelta(weeks=52*100))
 
 def escapeJS(raw):
@@ -245,17 +242,17 @@ def createOrGetRecentGame(uid, create):
 
 class MainPage(webapp2.RequestHandler):
   def get(self):
-    [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
+    uid, sid = getOrCreateUser(self.request.cookies.get('uid'), self.request.cookies.get('sid'))
     setNoCache(self.response)
-    setSidInCookie(self.response, sid)
+    setUidSidInCookie(self.response, uid, sid)
     gid = createOrGetRecentGame(uid, False)
     self.redirect('/game/' + gid)
 
 class NewPage(webapp2.RequestHandler):
   def get(self):
-    [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
+    uid, sid = getOrCreateUser(self.request.cookies.get('uid'), self.request.cookies.get('sid'))
     setNoCache(self.response)
-    setSidInCookie(self.response, sid)
+    setUidSidInCookie(self.response, uid, sid)
     gid = createOrGetRecentGame(uid, True)
     self.redirect('/game/' + gid)
 
@@ -268,8 +265,8 @@ class GamePage(webapp2.RequestHandler):
       self.response.write('bad game id')
       return
 
-    [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
-    setSidInCookie(self.response, sid)
+    uid, sid = getOrCreateUser(self.request.cookies.get('uid'), self.request.cookies.get('sid'))
+    setUidSidInCookie(self.response, uid, sid)
 
     template = JINJA_ENVIRONMENT.get_template('game.html')
     self.response.write(template.render({
@@ -328,15 +325,21 @@ class GameInfoApi(webapp2.RequestHandler):
         raise ValueError('gid not specified')
       gid = self.request.POST['gid']
 
+      if 'uid' not in self.request.POST:
+        raise ValueError('uid not specified')
+      uid = self.request.POST['uid']
+
       if 'sid' not in self.request.POST:
         raise ValueError('sid not specified')
-      uid = getUid(self.request.POST['sid'])
-      if uid is None:
-        raise ValueError('bad sid ' + self.request.POST['sid'])
+      sid = self.request.POST['sid']
+
+      if not isSidValid(uid, sid):
+        raise ValueError('bad uid or sid')
+      uid = long(uid)
 
       game = updateGameInfo(gid, uid, self.request.POST)
       self.response.write(json.dumps(
-        {'status': 'success', 'gameinfo': convertToGameInfo(game)}
+          {'status': 'success', 'gameinfo': convertToGameInfo(game)}
         ))
 
     except ValueError as error:
@@ -356,9 +359,9 @@ class UserInfoApi(webapp2.RequestHandler):
 
 class ForkPage(webapp2.RequestHandler):
   def get(self, gid, moveCount):
-    [uid, sid] = getOrCreateUser(self.request.cookies.get('sid'))
+    uid, sid = getOrCreateUser(self.request.cookies.get('uid'), self.request.cookies.get('sid'))
     setNoCache(self.response)
-    setSidInCookie(self.response, sid)
+    setUidSidInCookie(self.response, uid, sid)
     self.response.content_type = 'text/plain'
 
     game = getGame(gid)
