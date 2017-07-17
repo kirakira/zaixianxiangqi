@@ -19,6 +19,9 @@ handlers:
   login: admin
   secure: always
 
+- url: /.well-known
+  static_dir: well-known
+
 - url: /.*
   script: xiangqi.app
 # [END handlers]
