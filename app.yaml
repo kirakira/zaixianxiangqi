@@ -19,8 +19,12 @@ handlers:
   login: admin
   secure: always
 
-- url: /.well-known
-  static_dir: well-known
+- url: /store-acme-challenge.*
+  login: admin
+  script: acme.app
+
+- url: /\.well-known/.*
+  script: acme.app
 
 - url: /.*
   script: xiangqi.app
