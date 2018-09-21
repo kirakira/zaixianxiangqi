@@ -75,14 +75,17 @@ function BoardUI(onSquareSelected) {
     }
 
     function createText(i, j, text, c, id) {
-        var x = getGridX(i, j) - 12, y = getGridY(i, j) + 7.5;
+        var x = getGridX(i, j), y = getGridY(i, j);
         var t = document.createElementNS(SVG_NS, "text");
         t.style.fontFamily = "Roboto,monospace";
         t.style.fontSize = 24;
+        t.setAttribute("text-anchor", "middle");
+        t.setAttribute("alignment-baseline", "central");
         t.setAttribute("x", x);
         t.setAttribute("y", y);
         t.appendChild(document.createTextNode(text));
         t.setAttribute("class", c);
+        t.userSelect = "none";
         if (id)
             t.id = id;
         return t;
@@ -136,6 +139,7 @@ function BoardUI(onSquareSelected) {
         var cover = createCircle(i, j, 23, "piece-cover", "piece-cover-" + positionToString(i, j));
         cover.style.strokeWidth = 0;
         cover.style.fillOpacity = 0;
+        cover.userSelect = "none";
         cover.onmousedown = makeOnClickCallback(i, j);
         cover.touchend = cover.onmousedown;
         insertElement(cover);
