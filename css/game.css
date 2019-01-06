@@ -18,11 +18,17 @@ div.nav {
     flex-wrap: wrap;
     justify-content: space-around;
     align-items: baseline;
+    background-color: lightgray;
+    font-family: 'Roboto',arial,sans-serif
 }
 
 div.nav div.separator {
     padding-left: .08em;
     padding-right: .08em;
+}
+
+div.nav div.game-status-container {
+    font-style: italic;
 }
 
 span#gameId {
