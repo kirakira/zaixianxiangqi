@@ -4,14 +4,20 @@ body {
     font-family: 'Roboto',arial,sans-serif
 }
 
+div.layout {
+    display: grid;
+    grid-template-rows: auto auto;
+}
+
 div.vertical-layout {
     display: grid;
     grid-template-columns: auto auto auto;
 }
 
-div.layout {
+div.body-layout {
     display: grid;
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto auto;
+    grid-column-start: 2;
 }
 
 div.nav {
@@ -25,6 +31,12 @@ div.nav {
 div.nav div.separator {
     padding-left: .08em;
     padding-right: .08em;
+}
+
+div.game-info-container {
+    display: grid;
+    grid-template-columns: auto max-content max-content max-content;
+    align-items: center;
 }
 
 div.game-title-container {
@@ -53,12 +65,6 @@ span.gameStatus {
     display: none;
 }
 
-div.gameInfoContainer {
-    display: grid;
-    grid-template-columns: auto max-content max-content max-content;
-    align-items: center;
-}
-
 svg.colorIndicator {
     width: 1.6em;
     height: 1.6em;
@@ -74,7 +80,7 @@ svg.stopwatch {
 }
 
 svg#board {
-    max-width: 100%;
+    max-width: 100vw;
     max-height: 90vh;
     margin-left: auto;
     margin-right: auto;

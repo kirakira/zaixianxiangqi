@@ -333,6 +333,19 @@ function Game(currentGameId, myUid, gameInfo) {
         refreshMoveHistoryControls();
     }
 
+    function resizeElements() {
+        var boardSVG = document.getElementById("board");
+        if (window.innerHeight * 0.81 <= window.innerWidth) {
+            // wide screen
+            boardSVG.style.removeProperty("width");
+            boardSVG.style.height = "90vh";
+        } else {
+            // long screen
+            boardSVG.style.width = "100vw";
+            boardSVG.style.removeProperty("height");
+        }
+    }
+
     function initApplication() {
         // init stopwatches
         redWatch_ = new Stopwatch("redStopwatch");
@@ -341,6 +354,9 @@ function Game(currentGameId, myUid, gameInfo) {
             redWatch_.tick();
             blackWatch_.tick();
         }, 60000 / redWatch_.frequency());
+
+        window.onload = resizeElements;
+        window.onresize = resizeElements;
 
         // init the board and game
         board_ = new Board(onPlayerMove, false /* enableSpecialText */);
