@@ -18,6 +18,7 @@ div.body-layout {
     display: grid;
     grid-template-rows: auto auto auto;
     grid-column-start: 2;
+    justify-content: center;
 }
 
 div.nav {
