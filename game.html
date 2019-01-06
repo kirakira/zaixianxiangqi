@@ -8,7 +8,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="/css/game.css" type="text/css" media="screen" />
         <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-        <title>在线象棋对战</title>
+        <title>在线象棋对战 | {{ gameId|safe }}</title>
     </head>
     <body>
         <div class="vertical-layout">
@@ -20,11 +20,12 @@
                     <div>Game <span id="gameId">{{ gameId|safe }}</span></div>
                     <div class="separator">|</div>
                     <div><a href="/new">new game</a></div>
-                    <div class="separator">|</div>
-                    <div class="game-status-container"><span id="waitingStatus" class="gameStatus">waiting to start</span><span id="playingStatus" class="gameStatus">game in progress</span><span id="redWonStatus" class="gameStatus">red won</span><span id="blackWonStatus" class="gameStatus">black won</span></div>
                 </div>
                 <div class="gameInfoContainer">
-                  <div id="gameTitle"><h2>{{ gameTitle }}</h2></div>
+                  <div class="game-title-container">
+                    <div id="gameTitle"><h3>{{ gameTitle }}</h3></div>
+                    <div class="game-status-container"><span id="waitingStatus" class="gameStatus">waiting to start</span><span id="playingStatus" class="gameStatus">game in progress</span><span id="redWonStatus" class="gameStatus">red won</span><span id="blackWonStatus" class="gameStatus">black won</span></div>
+                  </div>
                   <div class="colorIndicatorContainer"><svg xmlns="http://www.w3.org/2000/svg" id="redIndicator" class="colorIndicator" viewbox="0 0 50 50"></svg></div>
                   <div id="red-player" class="playerName">Loading...</div>
                   <div class="stopWatchContainer"><svg xmlns="http://www.w3.org/2000/svg" id="redStopwatch" class="stopwatch" viewbox="-21 -35 42 56"></svg></div>

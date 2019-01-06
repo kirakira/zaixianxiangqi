@@ -184,31 +184,40 @@ function Game(currentGameId, myUid, gameInfo) {
         return a;
     }
 
+    function createHintYou(dummy) {
+        var hintYou = document.createElement("sub");
+        hintYou.className = "hint-you";
+        if (!dummy) {
+            hintYou.appendChild(document.createTextNode(" you"));
+        } else {
+            hintYou.appendChild(document.createTextNode(" "));
+        }
+        return hintYou;
+    }
+
     function refreshPlayerList() {
         removeAllChildren("red-player");
         removeAllChildren("black-player");
         if (gameInfo.red !== undefined &&
             gameInfo.red !== null) {
-            var hintYou = "";
-            if (gameInfo.red.id == myUid) {
-                hintYou = " (you)";
-            }
-            document.getElementById("red-player").appendChild(
-                    document.createTextNode(gameInfo.red.name + hintYou));
+            var redPlayerNode = document.getElementById("red-player");
+            var nameSpan = document.createElement("span");
+            nameSpan.appendChild(document.createTextNode(gameInfo.red.name));
+            redPlayerNode.appendChild(nameSpan);
+            redPlayerNode.appendChild(createHintYou(gameInfo.red.id != myUid));
         } else {
-            var a = createLink("red-sit-link", undefined, "#", function() { sit("red"); return false; }, "sit here");
+            var a = createLink("red-sit-link", "sit-link", "#", function() { sit("red"); return false; }, "sit here");
             document.getElementById("red-player").appendChild(a);
         }
         if (gameInfo.black !== undefined &&
             gameInfo.black !== null) {
-            var hintYou = "";
-            if (gameInfo.black.id == myUid) {
-                hintYou = " (you)";
-            }
-            document.getElementById("black-player").appendChild(
-                    document.createTextNode(gameInfo.black.name + hintYou));
+            var blackPlayerNode = document.getElementById("black-player");
+            var nameSpan = document.createElement("span");
+            nameSpan.appendChild(document.createTextNode(gameInfo.black.name));
+            blackPlayerNode.appendChild(nameSpan);
+            blackPlayerNode.appendChild(createHintYou(gameInfo.black.id != myUid));
         } else {
-            var a = createLink("black-sit-link", undefined, "#", function() { sit("black"); return false; }, "sit here");
+            var a = createLink("black-sit-link", "sit-link", "#", function() { sit("black"); return false; }, "sit here");
             document.getElementById("black-player").appendChild(a);
         }
     }

@@ -1,6 +1,7 @@
 body {
     margin: 0;
     padding: 0;
+    font-family: 'Roboto',arial,sans-serif
 }
 
 div.vertical-layout {
@@ -18,8 +19,7 @@ div.nav {
     flex-wrap: wrap;
     justify-content: space-around;
     align-items: baseline;
-    background-color: lightgray;
-    font-family: 'Roboto',arial,sans-serif
+    background-color: gainsboro;
 }
 
 div.nav div.separator {
@@ -27,7 +27,21 @@ div.nav div.separator {
     padding-right: .08em;
 }
 
-div.nav div.game-status-container {
+div.game-title-container {
+    display: grid;
+    grid-template-rows: auto auto;
+    grid-row-start: 1;
+    grid-row-end: 3;
+    justify-items: center;
+    align-items: center;
+}
+
+div#gameTitle h3 {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+div.game-status-container {
     font-style: italic;
 }
 
@@ -43,15 +57,6 @@ div.gameInfoContainer {
     display: grid;
     grid-template-columns: auto max-content max-content max-content;
     align-items: center;
-}
-
-div#gameTitle {
-    grid-row-start: 1;
-    grid-row-end: 3;
-}
-
-div#gameTitle h2 {
-    text-align: center;
 }
 
 svg.colorIndicator {
@@ -84,4 +89,12 @@ svg#board {
 
 #moveHistoryFork {
     text-align: center;
+}
+
+a.sit-link {
+    font-style: italic;
+}
+
+.hint-you {
+    font-style: italic;
 }
