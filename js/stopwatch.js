@@ -8,7 +8,7 @@ function Stopwatch(watchId) {
     this.frequency = frequency;
 
     var SVG_NS = "http://www.w3.org/2000/svg";
-    var FREQUENCY = 250;
+    var FREQUENCY = 60;
     var RADIUS = 20;
     var active_ = false;
     var tick_ = 0;
@@ -96,7 +96,7 @@ function Stopwatch(watchId) {
         hand.setAttribute("y1", 0);
         hand.setAttribute("x2", 0);
         hand.setAttribute("y2", -RADIUS * 0.8);
-        hand.style.strokeWidth = 1;
+        hand.style.strokeWidth = 1.5;
         hand.style.stroke = "black";
         getSVG().appendChild(hand);
 

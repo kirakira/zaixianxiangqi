@@ -185,10 +185,10 @@ function Game(currentGameId, myUid, gameInfo) {
     }
 
     function createHintYou(dummy) {
-        var hintYou = document.createElement("sub");
+        var hintYou = document.createElement("sup");
         hintYou.className = "hint-you";
         if (!dummy) {
-            hintYou.appendChild(document.createTextNode(" you"));
+            hintYou.appendChild(document.createTextNode("you"));
         } else {
             hintYou.appendChild(document.createTextNode(" "));
         }
@@ -316,7 +316,7 @@ function Game(currentGameId, myUid, gameInfo) {
                     "/fork/" + currentGameId + "/" +
                     board_.numMovesShown().toString(),
                     undefined, "fork"));
-        innerDiv.appendChild(document.createTextNode(" this game from here"));
+        innerDiv.appendChild(document.createTextNode(" current position"));
         div.appendChild(innerDiv);
     }
 
