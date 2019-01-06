@@ -1,31 +1,41 @@
 <!DOCTYPE html>
 {% autoescape true %}
-<html>
+<html lang="zh">
     <head>
         <meta charset="UTF-8">
-        <script type="text/javascript" src="/js/zaixianxiangqi.js"></script>
-        <script type="text/javascript">{{ jsCode|safe }}</script>
+        <script src="/js/zaixianxiangqi.js"></script>
+        <script>{{ jsCode|safe }}</script>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="/css/game.css" type="text/css" media="screen" />
         <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
         <title>在线象棋对战</title>
     </head>
     <body>
-        <div id="header">
-            <span>Hello, {{ playerName }}!</span>
-            <h3>{{ gameTitle }}</h3>
-            <ul id="info-list">
-                <li id="game-info">Game id: {{ gameId|safe }}. <a href="/new">new game</a>.</li>
-                <li id="red-player">Loading...</li>
-                <li id="black-player">Loading...</li>
-                <li id="status">Loading...</li>
-            </ul>
-        </div>
-        <div>
-            <svg xmlns="http://www.w3.org/2000/svg" id="board" viewbox="0 0 450 500"></svg>
-        </div>
-        <div id="move-history"></div>
-        <div id="chat">
+        <div class="vertical-layout">
+            <div></div>
+            <div class="layout">
+                <div class="nav">
+                    <div>Hello, {{ playerName }}</div>
+                    <div class="separator">|</div>
+                    <div>Game <span id="gameId">{{ gameId|safe }}</span></div>
+                    <div class="separator">|</div>
+                    <div><span id="waitingStatus" class="gameStatus">waiting to start</span><span id="playingStatus" class="gameStatus">game in progress</span><span id="redWonStatus" class="gameStatus">red won</span><span id="blackWonStatus" class="gameStatus">black won</span></div>
+                    <div class="separator">|</div>
+                    <div><a href="/new">new game</a></div>
+                </div>
+                <div class="gameInfoContainer">
+                  <div id="gameTitle"><h2>{{ gameTitle }}</h2></div>
+                  <div class="colorIndicatorContainer"><svg xmlns="http://www.w3.org/2000/svg" id="redIndicator" class="colorIndicator" viewbox="0 0 50 50"></svg></div>
+                  <div id="red-player" class="playerName">Loading...</div>
+                  <div class="stopWatchContainer"><svg xmlns="http://www.w3.org/2000/svg" id="redStopwatch" class="stopwatch" viewbox="-21 -35 42 56"></svg></div>
+                  <div class="colorIndicatorContainer"><svg xmlns="http://www.w3.org/2000/svg" id="blackIndicator" class="colorIndicator" viewbox="0 0 50 50"></svg></div>
+                  <div id="black-player" class="playerName">Loading...</div>
+                  <div class="stopWatchContainer"><svg xmlns="http://www.w3.org/2000/svg" id="blackStopwatch" class="stopwatch" viewbox="-21 -35 42 56"></svg></div>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" id="board" viewbox="0 0 450 500"></svg>
+                <div id="move-history"></div>
+            </div>
+            <div></div>
         </div>
     </body>
 </html>

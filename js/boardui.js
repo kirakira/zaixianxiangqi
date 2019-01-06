@@ -10,8 +10,9 @@ function removeAllChildren(id) {
  */
 function BoardUI(onSquareSelected) {
     this.reset = reset;
-    this.drawPiece = drawPiece;
+    this.drawPieceWithCover = drawPieceWithCover;
     this.erasePiece = erasePiece;
+    this.drawColorIndicator = drawColorIndicator;
     this.highlightSquare = highlightSquare;
     this.eraseHighlights = eraseHighlights;
 
@@ -81,6 +82,7 @@ function BoardUI(onSquareSelected) {
         t.style.fontSize = 24;
         t.setAttribute("text-anchor", "middle");
         t.setAttribute("alignment-baseline", "central");
+        t.setAttribute("dominant-baseline", "middle");
         t.setAttribute("x", x);
         t.setAttribute("y", y);
         t.appendChild(document.createTextNode(text));
@@ -96,11 +98,11 @@ function BoardUI(onSquareSelected) {
         return colNames[j] + (9 - i).toString();
     }
 
-    function drawPiece(i, j, piece, useSpecialText) {
+    function drawPiece(svg, i, j, piece, useSpecialText) {
         erasePieceCoverIfAny(i, j);
         var outer = createCircle(i, j, 23, "piece-outer", "piece-outer-" + positionToString(i, j));
         var inner = createCircle(i, j, 20, "piece-inner", "piece-inner-" + positionToString(i, j));
-        var text = useSpecialText? PIECE_SPECIAL_TEXTS[piece] : PIECE_TEXTS[piece];
+        var text = useSpecialText ? PIECE_SPECIAL_TEXTS[piece] : PIECE_TEXTS[piece];
         var t = createText(i, j, text, "piece-text", "piece-text-" + positionToString(i, j));
         if (isRedPiece(piece)) {
             outer.setAttribute("stroke", "red");
@@ -115,10 +117,20 @@ function BoardUI(onSquareSelected) {
         inner.style.strokeWidth = 2;
         outer.style.fill = "white";
         inner.style.fillOpacity = 0;
-        insertElement(outer);
-        insertElement(inner);
-        insertElement(t);
+        insertElementToSVG(svg, outer);
+        insertElementToSVG(svg, inner);
+        insertElementToSVG(svg, t);
+    }
+
+    function drawPieceWithCover(i, j, piece, useSpecialText) {
+        drawPiece(getSVG(), i, j, piece, useSpecialText);
         putPieceCover(i, j);
+    }
+
+    function drawColorIndicator(svg, isRed) {
+        var piece = 1;
+        if (isRed) piece += 8;
+        drawPiece(svg, 0, 0, piece, false);
     }
 
     function erasePiece(i, j) {
@@ -152,7 +164,11 @@ function BoardUI(onSquareSelected) {
     }
 
     function insertElement(e) {
-        getSVG().appendChild(e);
+        insertElementToSVG(getSVG(), e);
+    }
+
+    function insertElementToSVG(svg, e) {
+        svg.appendChild(e);
     }
 
     function removeElement(id) {
@@ -167,7 +183,6 @@ function BoardUI(onSquareSelected) {
     }
 
     function drawGrid() {
-        var svg = getSVG();
         for (i = 0; i < 9; ++i) {
             drawGridLine(0, i, 4, i);
             if (i == 0 || i == 8)

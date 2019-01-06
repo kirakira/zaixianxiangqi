@@ -3,9 +3,70 @@ body {
     padding: 0;
 }
 
-#board {
+div.vertical-layout {
+    display: grid;
+    grid-template-columns: auto auto auto;
+}
+
+div.layout {
+    display: grid;
+    grid-template-rows: auto auto auto auto;
+}
+
+div.nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: baseline;
+}
+
+div.nav div.separator {
+    padding-left: .08em;
+    padding-right: .08em;
+}
+
+span#gameId {
+    font-family: monospace;
+}
+
+span.gameStatus {
+    display: none;
+}
+
+div.gameInfoContainer {
+    display: grid;
+    grid-template-columns: auto max-content max-content max-content;
+    align-items: center;
+}
+
+div#gameTitle {
+    grid-row-start: 1;
+    grid-row-end: 3;
+}
+
+div#gameTitle h2 {
+    text-align: center;
+}
+
+svg.colorIndicator {
+    width: 1.6em;
+    height: 1.6em;
+}
+
+div.playerName {
+    padding-left: 0.3em;
+}
+
+svg.stopwatch {
+    width: 2em;
+    height: 2em;
+}
+
+svg#board {
     max-width: 100%;
     max-height: 90vh;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 #moveHistoryControls {

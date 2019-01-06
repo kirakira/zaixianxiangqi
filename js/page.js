@@ -15,6 +15,8 @@ if (!String.prototype.endsWith) {
  * @constructor
  */
 function Game(currentGameId, myUid, gameInfo) {
+    var redWatch_;
+    var blackWatch_;
     var board_;
     // Updates with sequence number <= LWM have been resolved.
     var ajaxSequenceLWM_ = 0;
@@ -122,7 +124,6 @@ function Game(currentGameId, myUid, gameInfo) {
         return "" + move[0] + move[1] + move[2] + move[3];
     }
 
-
     function onPlayerMove(i1, j1, i2, j2) {
         gameInfo.moves += "/" + moveToString([i1, j1, i2, j2]);
         updateStatus();
@@ -193,9 +194,8 @@ function Game(currentGameId, myUid, gameInfo) {
                 hintYou = " (you)";
             }
             document.getElementById("red-player").appendChild(
-                    document.createTextNode("Red: " + gameInfo.red.name + hintYou));
+                    document.createTextNode(gameInfo.red.name + hintYou));
         } else {
-            document.getElementById("red-player").appendChild(document.createTextNode("Red: "));
             var a = createLink("red-sit-link", undefined, "#", function() { sit("red"); return false; }, "sit here");
             document.getElementById("red-player").appendChild(a);
         }
@@ -206,9 +206,8 @@ function Game(currentGameId, myUid, gameInfo) {
                 hintYou = " (you)";
             }
             document.getElementById("black-player").appendChild(
-                    document.createTextNode("Black: " + gameInfo.black.name + hintYou));
+                    document.createTextNode(gameInfo.black.name + hintYou));
         } else {
-            document.getElementById("black-player").appendChild(document.createTextNode("Black: "));
             var a = createLink("black-sit-link", undefined, "#", function() { sit("black"); return false; }, "sit here");
             document.getElementById("black-player").appendChild(a);
         }
@@ -219,19 +218,29 @@ function Game(currentGameId, myUid, gameInfo) {
     }
 
     function updateStatus() {
-        removeAllChildren("status");
-        var se = document.getElementById("status");
+        var ws = document.getElementById("waitingStatus");
+        var ps = document.getElementById("playingStatus");
+        var rw = document.getElementById("redWonStatus");
+        var bw = document.getElementById("blackWonStatus");
+        ws.style.display = "none";
+        ps.style.display = "none";
+        rw.style.display = "none";
+        bw.style.display = "none";
         if (gameInfo.moves.endsWith("R")) {
-            se.appendChild(document.createTextNode("Red won"));
+            rw.style.display = "inline-block";
         } else if (gameInfo.moves.endsWith("B")) {
-            se.appendChild(document.createTextNode("Black won"));
+            bw.style.display = "inline-block";
         } else if (!gameStarted()) {
-            se.appendChild(document.createTextNode("Waiting for players to join..."));
+            ws.style.display = "inline-block";
         } else {
-            if (board_.isRedNext())
-                se.appendChild(document.createTextNode("Red to go"));
-            else
-                se.appendChild(document.createTextNode("Black to go"));
+            ps.style.display = "inline-block";
+            if (board_.isRedNext()) {
+                redWatch_.start();
+                blackWatch_.stop();
+            } else {
+                blackWatch_.start();
+                redWatch_.stop();
+            }
         }
     }
 
@@ -316,6 +325,14 @@ function Game(currentGameId, myUid, gameInfo) {
     }
 
     function initApplication() {
+        // init stopwatches
+        redWatch_ = new Stopwatch("redStopwatch");
+        blackWatch_ = new Stopwatch("blackStopwatch");
+        window.setInterval(function() {
+            redWatch_.tick();
+            blackWatch_.tick();
+        }, 60000 / redWatch_.frequency());
+
         // init the board and game
         board_ = new Board(onPlayerMove, false /* enableSpecialText */);
         refreshGame();
