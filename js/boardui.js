@@ -98,12 +98,26 @@ function BoardUI(onSquareSelected) {
         return colNames[j] + (9 - i).toString();
     }
 
-    function drawPiece(svg, i, j, piece, useSpecialText) {
-        erasePieceCoverIfAny(i, j);
-        var outer = createCircle(i, j, 23, "piece-outer", "piece-outer-" + positionToString(i, j));
-        var inner = createCircle(i, j, 20, "piece-inner", "piece-inner-" + positionToString(i, j));
+    function drawPiece(svg, i, j, piece, assignId, useSpecialText) {
+        if (assignId) {
+          erasePieceCoverIfAny(i, j);
+        }
+        var outerId = undefined;
+        if (assignId) {
+            outerId = "piece-outer-" + positionToString(i, j);
+        }
+        var outer = createCircle(i, j, 23, "piece-outer", outerId);
+        var innerId = undefined;
+        if (assignId) {
+            innerId = "piece-inner-" + positionToString(i, j);
+        }
+        var inner = createCircle(i, j, 20, "piece-inner", innerId);
         var text = useSpecialText ? PIECE_SPECIAL_TEXTS[piece] : PIECE_TEXTS[piece];
-        var t = createText(i, j, text, "piece-text", "piece-text-" + positionToString(i, j));
+        var textId = undefined;
+        if (assignId) {
+            textId = "piece-text-" + positionToString(i, j);
+        }
+        var t = createText(i, j, text, "piece-text", textId);
         if (isRedPiece(piece)) {
             outer.setAttribute("stroke", "red");
             inner.style.stroke = "red";
@@ -123,14 +137,14 @@ function BoardUI(onSquareSelected) {
     }
 
     function drawPieceWithCover(i, j, piece, useSpecialText) {
-        drawPiece(getSVG(), i, j, piece, useSpecialText);
+        drawPiece(getSVG(), i, j, piece, true, useSpecialText);
         putPieceCover(i, j);
     }
 
     function drawColorIndicator(svg, isRed) {
         var piece = 1;
         if (isRed) piece += 8;
-        drawPiece(svg, 0, 0, piece, false);
+        drawPiece(svg, 0, 0, piece, false, false);
     }
 
     function erasePiece(i, j) {
