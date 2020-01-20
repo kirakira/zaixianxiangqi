@@ -1,0 +1,3 @@
+[submodule "engine_server/engines/deep-blur"]
+	path = engine_server/engines/deep-blur
+	url = git@github.com:kirakira/deep-blur.git
