@@ -1,7 +1,7 @@
 /**
  * @constructor
  */
-function Board(onMove, enableSpecialText) {
+function Board(onMove) {
     this.setState = setState;
     this.showMove = showMove;
     this.isRedNext = isRedNext;
@@ -22,7 +22,7 @@ function Board(onMove, enableSpecialText) {
         for (var i = 0; i < 10; ++i)
             for (var j = 0; j < 9; ++j) {
                 if (board_.pieceAt(i, j) != PIECE_NONE) {
-                    ui_.drawPieceWithCover(i, j, board_.pieceAt(i, j), false);
+                    ui_.drawPieceWithCover(i, j, board_.pieceAt(i, j));
                 }
             }
         numMovesShown_ = board_.numMoves();
@@ -138,12 +138,10 @@ function Board(onMove, enableSpecialText) {
     // Will not update: board_, numMovesShown_
     function makeUIMove(move) {
         ui_.erasePiece(move.i1, move.j1);
-        var useSpecialText = false;
         if (move.capture) {
             ui_.erasePiece(move.i2, move.j2);
-            if (enableSpecialText) useSpecialText = true;
         }
-        ui_.drawPieceWithCover(move.i2, move.j2, move.piece, useSpecialText);
+        ui_.drawPieceWithCover(move.i2, move.j2, move.piece);
 
         ui_.eraseHighlights();
         ui_.highlightSquare(move.i1, move.j1);
@@ -154,10 +152,10 @@ function Board(onMove, enableSpecialText) {
     // Will update: ui (including highlights), selection_
     // Will not update: board_, numMovesShown_
     function unmakeUIMove(move, previousMove) {
-        ui_.drawPieceWithCover(move.i1, move.j1, move.piece, false);
+        ui_.drawPieceWithCover(move.i1, move.j1, move.piece);
         ui_.erasePiece(move.i2, move.j2);
         if (move.capture) {
-            ui_.drawPieceWithCover(move.i2, move.j2, move.capture, false);
+            ui_.drawPieceWithCover(move.i2, move.j2, move.capture);
         }
 
         ui_.eraseHighlights();

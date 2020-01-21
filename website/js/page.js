@@ -359,7 +359,7 @@ function Game(currentGameId, myUid, gameInfo) {
         window.onresize = resizeElements;
 
         // init the board and game
-        board_ = new Board(onPlayerMove, false /* enableSpecialText */);
+        board_ = new Board(onPlayerMove);
         refreshGame();
 
         // start live refresh

@@ -19,8 +19,6 @@ function BoardUI(onSquareSelected) {
     var SVG_NS = "http://www.w3.org/2000/svg";
     var PIECE_TEXTS = ["", "將", "士", "象", "馬", "車", "砲", "卒",
                        "", "帥", "仕", "相", "傌", "俥", "炮", "兵"];
-    var PIECE_SPECIAL_TEXTS = ["", "將", "士", "象", "🐴", "車", "砲", "卒",
-                               "", "帥", "仕", "相", "🦄", "俥", "炮", "兵"];
     var gridSize_ = 50, middleGap_ = 0;
     var flippedView_ = false;
 
@@ -79,7 +77,7 @@ function BoardUI(onSquareSelected) {
         var x = getGridX(i, j), y = getGridY(i, j);
         var t = document.createElementNS(SVG_NS, "text");
         t.style.fontFamily = "Roboto,monospace";
-        t.style.fontSize = 24;
+        t.style.fontSize = 24 + "px";
         t.setAttribute("text-anchor", "middle");
         t.setAttribute("alignment-baseline", "central");
         t.setAttribute("dominant-baseline", "middle");
@@ -98,7 +96,7 @@ function BoardUI(onSquareSelected) {
         return colNames[j] + (9 - i).toString();
     }
 
-    function drawPiece(svg, i, j, piece, assignId, useSpecialText) {
+    function drawPiece(svg, i, j, piece, assignId) {
         if (assignId) {
           erasePieceCoverIfAny(i, j);
         }
@@ -112,7 +110,7 @@ function BoardUI(onSquareSelected) {
             innerId = "piece-inner-" + positionToString(i, j);
         }
         var inner = createCircle(i, j, 20, "piece-inner", innerId);
-        var text = useSpecialText ? PIECE_SPECIAL_TEXTS[piece] : PIECE_TEXTS[piece];
+        var text = PIECE_TEXTS[piece];
         var textId = undefined;
         if (assignId) {
             textId = "piece-text-" + positionToString(i, j);
@@ -136,15 +134,15 @@ function BoardUI(onSquareSelected) {
         insertElementToSVG(svg, t);
     }
 
-    function drawPieceWithCover(i, j, piece, useSpecialText) {
-        drawPiece(getSVG(), i, j, piece, true, useSpecialText);
+    function drawPieceWithCover(i, j, piece) {
+        drawPiece(getSVG(), i, j, piece, true);
         putPieceCover(i, j);
     }
 
     function drawColorIndicator(svg, isRed) {
         var piece = 1;
         if (isRed) piece += 8;
-        drawPiece(svg, 0, 0, piece, false, false);
+        drawPiece(svg, 0, 0, piece, false);
     }
 
     function erasePiece(i, j) {
