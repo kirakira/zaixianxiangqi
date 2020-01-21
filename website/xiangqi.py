@@ -71,6 +71,16 @@ def updateActivityTime(uid, game):
   if game.black == uid:
     game.blackActivity = datetime.datetime.utcnow()
 
+def updateNextToMove(game):
+  if not game.red or not game.black:
+    game.nextToMove = None
+  elif game.moves.endswith('R') or game.moves.endswith('B'):
+    game.nextToMove = None
+  elif len(game.moves.split('/')) % 2 == 1:
+    game.nextToMove = game.red
+  else:
+    game.nextToMove = game.black
+
 @ndb.transactional
 def insertGameIfNotExists(game):
   if Game.get_by_id(game.key.id()) is None:
@@ -175,6 +185,7 @@ def sit(uid, game, side):
       raise ValueError('black has been taken')
   else:
     raise ValueError('unknown side to sit')
+  updateNextToMove(game)
 
 def isRegularMove(move):
   return len(move) == 4 and move.isdigit()
@@ -224,6 +235,7 @@ def makeMove(game, red, newMovesString):
     raise ValueError('unknown move: ' + newMove)
 
   game.moves = newMovesString
+  updateNextToMove(game)
 
 def createOrGetRecentGame(uid, create):
   gid = None

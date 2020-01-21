@@ -17,6 +17,7 @@ class Game(ndb.Model):
   blackActivity = ndb.DateTimeProperty()
   forkedFrom = ndb.StringProperty() # gid of its parent game, or empty
   forkedMoveCount = ndb.IntegerProperty() # how many moves from its parent game are forked
+  nextToMove = ndb.IntegerProperty() # gid of the player to move next, or empty for new or ended games
 
 class Message(ndb.Model):
   gid = ndb.StringProperty()
