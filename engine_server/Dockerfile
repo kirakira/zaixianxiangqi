@@ -11,8 +11,7 @@ COPY go.* ./
 RUN go mod download
 COPY . ./
 # Build the server.
-# RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o server
-RUN CGO_ENABLED=0 go build -v -o server
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o server
 
 #
 # Build game engine.
