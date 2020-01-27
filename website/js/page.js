@@ -309,15 +309,13 @@ function Game(currentGameId, myUid, gameInfo) {
 
         div.appendChild(table);
 
-        var innerDiv = document.createElement("div");
-        innerDiv.id = "moveHistoryFork";
-        innerDiv.appendChild(
+        var forkGameDiv = document.getElementById("forkGame");
+        removeAllChildren("forkGame");
+        forkGame.appendChild(
                 createLink("move-history-fork-link", undefined,
                     "/fork/" + currentGameId + "/" +
                     board_.numMovesShown().toString(),
-                    undefined, "fork"));
-        innerDiv.appendChild(document.createTextNode(" current position"));
-        div.appendChild(innerDiv);
+                    undefined, "fork at move " + board_.numMovesShown()));
     }
 
     function refreshGame() {

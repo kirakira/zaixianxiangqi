@@ -1,61 +1,83 @@
+html, body, .layout {
+    height: 100%;
+}
+
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Roboto',arial,sans-serif
+    font-family: 'Roboto',arial,sans-serif;
 }
 
 div.layout {
-    display: grid;
-    grid-template-rows: auto auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
-div.vertical-layout {
+div.nav {
     display: grid;
     grid-template-columns: auto auto auto;
+    justify-content: space-between;
+    align-items: stretch;
+}
+
+div.nav, .menu {
+    background-color: gainsboro;
+}
+
+div.menu-content {
+    display: none;
+    position: absolute;
+    z-index: 1;
+}
+
+div.menu:hover div.menu-content {
+    display: grid;
+    grid-template-columns: auto;
+    align-items: stretch;
+    right: 0;
+}
+
+.menu-content div {
+    line-height: 3em;
 }
 
 div.body-layout {
     display: grid;
-    grid-template-rows: auto auto auto;
-    grid-column-start: 2;
-    justify-content: center;
-}
-
-div.nav {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    align-items: baseline;
-    background-color: gainsboro;
-}
-
-div.nav div.separator {
-    padding-left: .08em;
-    padding-right: .08em;
+    grid-template-columns: auto auto auto;
+    grid-template-areas:
+      ".   game-info  ."
+      ".    board     ."
+      ". move-history .";
 }
 
 div.game-info-container {
-    display: grid;
-    grid-template-columns: auto max-content max-content max-content;
-    align-items: center;
+    grid-area: game-info;
+    display: flex;
+    justify-content: space-around;
 }
 
 div.game-title-container {
     display: grid;
     grid-template-rows: auto auto;
-    grid-row-start: 1;
-    grid-row-end: 3;
     justify-items: center;
     align-items: center;
+}
+
+div.game-status-container {
+    font-style: italic;
+}
+
+div.player-info-container {
+    display: grid;
+    grid-template-columns: max-content max-content max-content;
+    align-items: center;
+    justify-content: center;
 }
 
 div#gameTitle h3 {
     margin-top: 0;
     margin-bottom: 0;
-}
-
-div.game-status-container {
-    font-style: italic;
 }
 
 span#gameId {
@@ -81,10 +103,15 @@ svg.stopwatch {
 }
 
 svg#board {
+    grid-area: board;
     max-width: 100vw;
     max-height: 90vh;
     margin-left: auto;
     margin-right: auto;
+}
+
+div#move-history {
+    grid-area: move-history;
 }
 
 #moveHistoryControls {
@@ -92,10 +119,6 @@ svg#board {
     margin-right: auto;
     border-collapse: separate;
     border-spacing: 10px 0px;
-}
-
-#moveHistoryFork {
-    text-align: center;
 }
 
 a.sit-link {
