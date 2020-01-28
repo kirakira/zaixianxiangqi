@@ -19,27 +19,37 @@ div.nav {
     grid-template-columns: auto auto auto;
     justify-content: space-between;
     align-items: stretch;
+    line-height: 2em;
 }
 
-div.nav, .menu {
+div.nav, .menu, .menu-content div:nth-child(even) {
     background-color: gainsboro;
+}
+
+.menu {
+    user-select: none;
+}
+
+.menu-content div:nth-child(odd) {
+    background-color: #e9e9e9e9;
 }
 
 div.menu-content {
     display: none;
-    position: absolute;
-    z-index: 1;
-}
-
-div.menu:hover div.menu-content {
-    display: grid;
     grid-template-columns: auto;
     align-items: stretch;
     right: 0;
+    position: absolute;
+    z-index: 1;
+    line-height: 3em;
 }
 
-.menu-content div {
-    line-height: 3em;
+div.menu-content div {
+    padding: 1em;
+}
+
+span.menu-toggle {
+    font-family: monospace;
 }
 
 div.body-layout {
