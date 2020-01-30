@@ -135,6 +135,11 @@ a.sit-link {
     font-style: italic;
 }
 
+.disabled-link {
+    font-style: italic;
+    color: gray;
+}
+
 .hint-you {
     font-style: italic;
 }

@@ -163,11 +163,15 @@ function Game(currentGameId, myUid, gameInfo) {
     function sit(side) {
         var parent = document.getElementById(side + "-player");
         var a = document.getElementById(side + "-sit-link");
+        var linkText = a.innerText;
         parent.removeChild(a);
-        parent.appendChild(document.createTextNode("sitting down..."));
+        var span = document.createElement("span");
+        span.className = "disabled-link";
+        span.appendChild(document.createTextNode(linkText));
+        parent.appendChild(span);
         post("/gameinfo", "uid=" + myUid + "&sid=" + getSid() + "&gid=" +
-                currentGameId + "&sit=" + side, onGameInfoUpdate,
-                onGameInfoUpdateFailure);
+                  currentGameId + "&sit=" + side, onGameInfoUpdate,
+                  onGameInfoUpdateFailure);
     }
 
     function createLink(id, className, url, onclick, text) {
