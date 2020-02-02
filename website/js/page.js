@@ -160,17 +160,42 @@ function Game(currentGameId, myUid, gameInfo) {
         return getCookie("sid");
     }
 
-    function sit(side) {
-        var parent = document.getElementById(side + "-player");
-        var a = document.getElementById(side + "-sit-link");
+    function createInviteAILink(enabled) {
+        removeAllChildren("invite-ai-container");
+        var a = createLink("invite-ai-link", null, "#", function() { inviteAI(); return false; }, "invite Blur");
+        document.getElementById("invite-ai-container").appendChild(a);
+        if (!enabled) {
+          disableLink("invite-ai-link");
+        }
+    }
+
+    function disableLink(id) {
+        var a = document.getElementById(id);
+        var parent = a.parentElement;
+
         var linkText = a.innerText;
+        var classList = a.classList;
         parent.removeChild(a);
+
         var span = document.createElement("span");
-        span.className = "disabled-link";
+        span.classList = classList;
+        span.classList.add("disabled-link");
         span.appendChild(document.createTextNode(linkText));
+
         parent.appendChild(span);
+    }
+
+    function sit(side) {
+        disableLink(side + "-sit-link");
         post("/gameinfo", "uid=" + myUid + "&sid=" + getSid() + "&gid=" +
                   currentGameId + "&sit=" + side, onGameInfoUpdate,
+                  onGameInfoUpdateFailure);
+    }
+
+    function inviteAI() {
+        disableLink("invite-ai-link");
+        post("/invite_ai", "uid=" + myUid + "&sid=" + getSid() + "&gid=" +
+                  currentGameId, onGameInfoUpdate,
                   onGameInfoUpdateFailure);
     }
 
@@ -333,6 +358,8 @@ function Game(currentGameId, myUid, gameInfo) {
         board_.setState(mySide, !gameInProgress() || !iAmPlaying, parseMoves(gameInfo.moves));
         updateStatus();
         refreshMoveHistoryControls();
+        var ai_invitable = iAmPlaying && (!gameInfo.black || !gameInfo.red);
+        createInviteAILink(ai_invitable);
     }
 
     function resizeElements() {

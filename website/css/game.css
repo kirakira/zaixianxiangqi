@@ -131,15 +131,18 @@ div#move-history {
     border-spacing: 10px 0px;
 }
 
-a.sit-link {
+.sit-link {
     font-style: italic;
 }
 
 .disabled-link {
-    font-style: italic;
     color: gray;
 }
 
 .hint-you {
     font-style: italic;
+}
+
+div#invite-ai-container {
+    display: none;
 }

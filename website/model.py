@@ -2,6 +2,7 @@ from google.appengine.ext import ndb
 
 class User(ndb.Model):
   name = ndb.StringProperty()
+  ai = ndb.BooleanProperty()
 
 # This is child table of User.
 class Session(ndb.Model):

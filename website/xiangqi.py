@@ -59,6 +59,19 @@ def getOrCreateUser(uid, sid):
     sid = getMostRecentSid(uid)
   return uid, sid
 
+def getOrCreateAIUser():
+  ai_uid = None
+  for user in User.query(User.ai == True).fetch(1):
+    ai_uid = user.key.id()
+    break
+  if ai_uid is None:
+    user = User(name='Blur')
+    user.ai = True
+    ai_uid = user.put().id()
+    createSessionForUser(ai_uid)
+  return ai_uid
+
+
 def getRecentGames(uid, count):
   return Game.query(ndb.OR(Game.red == uid, Game.black == uid)).order(-Game.creation).fetch(count)
 
@@ -320,6 +333,48 @@ def updateGameInfo(gid, uid, payload):
 
   return game
 
+@ndb.transactional
+def addAIToGame(uid, gid, ai_uid):
+  game = getGame(gid)
+  if game is None:
+    raise ValueError('game not found: ' + gid)
+
+  if game.red != uid and game.black != uid:
+    raise ValueError('user is not in game')
+
+  if game.red is not None and game.black is not None:
+    raise ValueError('game already started')
+
+  if game.red is None:
+    sit(ai_uid, game, 'red')
+  else:
+    sit(ai_uid, game, 'black')
+
+  updateActivityTime(uid, game)
+  game.put()
+
+  return game
+
+def ValidatePostRequest(payload):
+  if 'gid' not in payload:
+    raise ValueError('gid not specified')
+  gid = payload['gid']
+
+  if 'uid' not in payload:
+    raise ValueError('uid not specified')
+  uid = payload['uid']
+
+  if 'sid' not in payload:
+    raise ValueError('sid not specified')
+  sid = payload['sid']
+
+  if not isSidValid(uid, sid):
+    raise ValueError('bad uid or sid')
+  uid = long(uid)
+
+  return uid, gid
+
+
 class GameInfoApi(webapp2.RequestHandler):
   def get(self):
     gid = self.request.get('gid')
@@ -333,22 +388,7 @@ class GameInfoApi(webapp2.RequestHandler):
     try:
       game = None
 
-      if 'gid' not in self.request.POST:
-        raise ValueError('gid not specified')
-      gid = self.request.POST['gid']
-
-      if 'uid' not in self.request.POST:
-        raise ValueError('uid not specified')
-      uid = self.request.POST['uid']
-
-      if 'sid' not in self.request.POST:
-        raise ValueError('sid not specified')
-      sid = self.request.POST['sid']
-
-      if not isSidValid(uid, sid):
-        raise ValueError('bad uid or sid')
-      uid = long(uid)
-
+      uid, gid = ValidatePostRequest(self.request.POST)
       game = updateGameInfo(gid, uid, self.request.POST)
       self.response.write(json.dumps(
           {'status': 'success', 'gameinfo': convertToGameInfo(game)}
@@ -404,6 +444,35 @@ class ForkPage(webapp2.RequestHandler):
     newGid = forkGame(uid, gid, moveCount, newMoves, useRed)
     self.redirect('/game/' + newGid)
 
+
+class InviteAIAPI(webapp2.RequestHandler):
+  def post(self):
+    self.response.content_type = 'text/plain'
+    setNoCache(self.response)
+    try:
+      game = None
+
+      uid, gid = ValidatePostRequest(self.request.POST)
+
+      ai_uid = getOrCreateAIUser()
+      if uid == ai_uid:
+        raise ValueError('bad user id (ai)')
+
+      game = addAIToGame(uid, gid, ai_uid)
+      self.response.write(json.dumps(
+          {'status': 'success', 'gameinfo': convertToGameInfo(game)}
+        ))
+
+    except ValueError as error:
+      if game is None:
+        self.response.write("fail");
+      else:
+        self.response.write(json.dumps(
+          {'status': 'fail', 'gameinfo': convertToGameInfo(game)}
+          ))
+      logging.warning('inviteai failed on %s: %s' % (self.request.body, str(error)))
+
+
 class DomainSchemeHandler(webapp2.RequestHandler):
   def get(self, path):
     self.redirect('https://zaixianxiangqi.com' + self.request.path_qs,
@@ -429,4 +498,5 @@ app = webapp2.WSGIApplication([
   (r'/gameinfo', GameInfoApi),
   (r'/userinfo', UserInfoApi),
   (r'/fork/([^/]+)/(\d+)', ForkPage),
+  (r'/invite_ai', InviteAIAPI),
 ])
