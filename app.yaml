@@ -1,0 +1,17 @@
+runtime: go113
+
+main: ./cmd/zaixianxiangqi
+
+handlers:
+- url: /css
+  secure: always
+  static_dir: website2/css
+
+- url: /js
+  secure: always
+  static_dir: website2/js
+
+- url: /.*
+  secure: always
+  redirect_http_response_code: 301
+  script: auto
