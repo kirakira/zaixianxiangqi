@@ -5,11 +5,11 @@ main: ./cmd/zaixianxiangqi
 handlers:
 - url: /css
   secure: always
-  static_dir: website2/css
+  static_dir: web/css
 
 - url: /js
   secure: always
-  static_dir: website2/js
+  static_dir: web/js
 
 - url: /.*
   secure: always
