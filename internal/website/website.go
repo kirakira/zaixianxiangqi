@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"sort"
@@ -290,7 +291,7 @@ type PlayerInfo struct {
 type GameInfo struct {
 	ID    string      `json:"id"`
 	Moves string      `json:"moves"`
-	Red   *PlayerInfo `json:"red",omitempty`
+	Red   *PlayerInfo `json:"red,omitempty"`
 	Black *PlayerInfo `json:"black,omitempty"`
 }
 
@@ -375,6 +376,49 @@ func maybeServeStaticFiles() {
 	}
 }
 
+func getFormValue(form url.Values, key string) *string {
+	v, found := form[key]
+	if !found || len(v) == 0 {
+		return nil
+	}
+	return &v[0]
+}
+
+func setPlainTextContent(w http.ResponseWriter) {
+	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+}
+
+func getGameInfo(ctx Context, w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		log.Fatalf("Failed to parse request form: %v", err)
+	}
+
+	gid := getFormValue(r.Form, "gid")
+	if gid == nil {
+		http.Error(w, "Missing 'gid'.", http.StatusBadRequest)
+		return
+	}
+
+	game := getGame(ctx, *gid)
+	if game == nil {
+		http.Error(w, "Bad gid.", http.StatusNotFound)
+		return
+	}
+
+	setPlainTextContent(w)
+	setNoCache(w)
+	w.Write(getGameInfoJs(ctx, game))
+}
+
+func gameInfoAPI(ctx Context, w http.ResponseWriter, r *http.Request) {
+	if r.Method == "" || r.Method == "GET" {
+		getGameInfo(ctx, w, r)
+		return
+	} else {
+		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
+	}
+}
+
 func RegisterHandlers(ctx Context) {
 	maybeServeStaticFiles()
 	t := template.Must(template.ParseFiles("web/game.html"))
@@ -392,5 +436,8 @@ func RegisterHandlers(ctx Context) {
 	})
 	http.HandleFunc("/game/", func(w http.ResponseWriter, r *http.Request) {
 		gamePage(ctx, t, w, r)
+	})
+	http.HandleFunc("/gameinfo", func(w http.ResponseWriter, r *http.Request) {
+		gameInfoAPI(ctx, w, r)
 	})
 }

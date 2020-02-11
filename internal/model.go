@@ -19,13 +19,11 @@ type Session struct {
 }
 
 type Game struct {
-	Creation time.Time
-	// This should be a "noindex" field. Not marking so due to Datastore bug.
-	Description string
-	Red         *datastore.Key
-	Black       *datastore.Key
-	// This should be a "noindex" field. Not marking so due to Datastore bug.
-	Moves           string
+	Creation        time.Time
+	Description     string `datastore:",noindex"`
+	Red             *datastore.Key
+	Black           *datastore.Key
+	Moves           string `datastore:",noindex"`
 	RedActivity     *time.Time
 	BlackActivity   *time.Time
 	ForkedFrom      *string
