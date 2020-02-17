@@ -30,7 +30,7 @@ type Game struct {
 	// key of its parent game, or empty
 	ForkedFrom *datastore.Key
 	// how many moves from its parent game are forked
-	ForkedMoveCount *int64
+	ForkedMoveCount *int
 	// key of the player to move next, or empty for new or ended games
 	NextToMove *datastore.Key
 	Key        *datastore.Key `datastore:"__key__"`
