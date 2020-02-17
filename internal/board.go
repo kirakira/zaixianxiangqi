@@ -6,35 +6,6 @@ import (
 	"unicode"
 )
 
-var di = [...]int{0, 1, 0, -1}
-var dj = [...]int{1, 0, -1, 0}
-var ddi = [...]int{1, 1, -1, -1}
-var ddj = [...]int{1, -1, -1, 1}
-
-func isRedPiece(piece string) bool {
-	return unicode.IsUpper(rune(piece[0]))
-}
-
-func isKing(piece string) bool {
-	return piece == "k" || piece == "K"
-}
-
-func inBoard(pos Position) bool {
-	return pos.Row >= 0 && pos.Row < 10 && pos.Col >= 0 && pos.Col < 9
-}
-
-func inPalace(pos Position) bool {
-	return ((pos.Row >= 0 && pos.Row <= 2) || (pos.Row >= 7 && pos.Row <= 9)) && pos.Col >= 3 && pos.Col <= 5
-}
-
-func inRedBase(pos Position) bool {
-	return inBoard(pos) && pos.Row >= 5
-}
-
-func inBlackBase(pos Position) bool {
-	return inBoard(pos) && pos.Row < 5
-}
-
 type HistoryMove struct {
 	Move    Move
 	Capture string
@@ -124,7 +95,7 @@ func (board *Board) CheckedMove(move Move) bool {
 	}
 
 	board.Move(move)
-	if board.HasWinningMove() {
+	if board.hasWinningMove() {
 		board.Unmove()
 		return false
 	}
@@ -132,13 +103,22 @@ func (board *Board) CheckedMove(move Move) bool {
 	return true
 }
 
-func (board *Board) HasWinningMove() bool {
+func (board *Board) IsLosing() bool {
 	for _, move := range board.GenerateAllMoves() {
 		if isKing(*board.At(move.To)) {
-			return true
+			return false
+		}
+		board.Move(move)
+		notLosing := false
+		if !board.hasWinningMove() {
+			notLosing = true
+		}
+		board.Unmove()
+		if notLosing {
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 func (board *Board) GenerateAllMoves() []Move {
@@ -156,6 +136,44 @@ func (board *Board) GenerateAllMoves() []Move {
 
 func (board *Board) At(pos Position) *string {
 	return &board.Board[pos.Row][pos.Col]
+}
+
+var di = [...]int{0, 1, 0, -1}
+var dj = [...]int{1, 0, -1, 0}
+var ddi = [...]int{1, 1, -1, -1}
+var ddj = [...]int{1, -1, -1, 1}
+
+func isRedPiece(piece string) bool {
+	return unicode.IsUpper(rune(piece[0]))
+}
+
+func isKing(piece string) bool {
+	return piece == "k" || piece == "K"
+}
+
+func inBoard(pos Position) bool {
+	return pos.Row >= 0 && pos.Row < 10 && pos.Col >= 0 && pos.Col < 9
+}
+
+func inPalace(pos Position) bool {
+	return ((pos.Row >= 0 && pos.Row <= 2) || (pos.Row >= 7 && pos.Row <= 9)) && pos.Col >= 3 && pos.Col <= 5
+}
+
+func inRedBase(pos Position) bool {
+	return inBoard(pos) && pos.Row >= 5
+}
+
+func inBlackBase(pos Position) bool {
+	return inBoard(pos) && pos.Row < 5
+}
+
+func (board *Board) hasWinningMove() bool {
+	for _, move := range board.GenerateAllMoves() {
+		if isKing(*board.At(move.To)) {
+			return true
+		}
+	}
+	return false
 }
 
 func (board *Board) generatePieceMoves(piece string, pos Position) []Move {

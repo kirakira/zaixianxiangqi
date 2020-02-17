@@ -42,6 +42,61 @@ func TestGenerateAllMoves(t *testing.T) {
 	}
 }
 
+func TestPastGames(t *testing.T) {
+	file, err := os.Open("../testdata/past_games.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		movesString := scanner.Text()
+		if movesString == "" {
+			continue
+		}
+		moves := strings.Split(movesString, "/")
+		moves = moves[1:]
+
+		board := MakeInitialBoard()
+		for i, moveString := range moves {
+			if moveString == "R" {
+				if board.RedToGo {
+					t.Errorf("not black to move for game %s", movesString)
+					break
+				}
+				if !board.IsLosing() {
+					t.Errorf("not losing for game %s", movesString)
+					break
+				}
+			} else if moveString == "B" {
+				if !board.RedToGo {
+					t.Errorf("not red to move for game %s", movesString)
+					break
+				}
+				if !board.IsLosing() {
+					t.Errorf("not losing for game %s", movesString)
+					break
+				}
+			} else {
+				move, err := ParseNumericMove(moveString)
+				if err != nil {
+					t.Errorf("fail to parse move %s for game %s", moveString, movesString)
+					break
+				}
+				if !board.CheckedMove(move) {
+					t.Errorf("fail to make move %s for game %s", moveString, movesString)
+					break
+				}
+				if i != len(moves)-2 && board.IsLosing() {
+					t.Errorf("game %s is losing at %d (%s)", movesString, i, moveString)
+					break
+				}
+			}
+		}
+	}
+}
+
 func TestCheckedMove(t *testing.T) {
 	var board Board
 	board.SetBoard("1heakae1r/r4c1C1/9/p1p1p3p/9/2P3p2/P3P1P1P/1C2E2cR/9/RH1AKAEH1", false)
