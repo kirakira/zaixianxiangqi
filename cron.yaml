@@ -1,0 +1,6 @@
+# [START crons]
+cron:
+- description: garbage collect expired games, sessions, and users
+  url: /janitor
+  schedule: every 24 hours
+# [END crons]
