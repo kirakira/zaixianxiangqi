@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/datastore"
@@ -27,7 +28,6 @@ type UserSession struct {
 func isSessionValid(ctx Context, sessionKey *datastore.Key) bool {
 	if err := ctx.Client.Get(ctx.Ctx, sessionKey, &Session{}); err != nil {
 		if err == datastore.ErrNoSuchEntity {
-			log.Printf("Session key %v", sessionKey)
 			return false
 		} else {
 			log.Fatalf("Failed to query for session: %v", err)
@@ -100,7 +100,6 @@ func getOrCreateUser(ctx Context, uid, sid string) UserSession {
 		}
 	}
 	userSession := createUser(ctx)
-	log.Printf("Invalid uid %d sid %d; created %v", uidParsed, sidParsed, userSession)
 	return userSession
 }
 
@@ -169,9 +168,17 @@ func generateRandomString(length int) string {
 	return string(ret)
 }
 
-func getUserName(ctx Context, userKey *datastore.Key) string {
+func getUser(ctx Context, userKey *datastore.Key) *User {
 	var user User
 	if err := ctx.Client.Get(ctx.Ctx, userKey, &user); err != nil {
+		return nil
+	}
+	return &user
+}
+
+func getUserName(ctx Context, userKey *datastore.Key) string {
+	user := getUser(ctx, userKey)
+	if user == nil {
 		return "烫烫烫"
 	} else {
 		return user.Name
@@ -180,10 +187,10 @@ func getUserName(ctx Context, userKey *datastore.Key) string {
 
 func updateActivityTime(user *datastore.Key, game *Game) {
 	t := time.Now()
-	if game.Red == user {
+	if game.Red != nil && *game.Red == *user {
 		game.RedActivity = &t
 	}
-	if game.Black == user {
+	if game.Black != nil && *game.Black == *user {
 		game.BlackActivity = &t
 	}
 }
@@ -242,7 +249,6 @@ func createOrGetRecentGame(ctx Context, user *datastore.Key, force_create bool) 
 	}
 	if gameKey == nil {
 		gameKey = createGame(ctx, user)
-		log.Printf("%s created game %s", user, gameKey.Name)
 	}
 	return gameKey
 }
@@ -295,7 +301,12 @@ type GameInfo struct {
 	Black *PlayerInfo `json:"black,omitempty"`
 }
 
-func convertToGameInfo(ctx Context, game *Game) GameInfo {
+type GameInfoResponse struct {
+	Success  bool      `json:"success"`
+	GameInfo *GameInfo `json:"gameinfo,omitempty"`
+}
+
+func convertToGameInfo(ctx Context, game *Game) *GameInfo {
 	gameinfo := GameInfo{
 		ID:    game.Key.Name,
 		Moves: game.Moves,
@@ -312,11 +323,11 @@ func convertToGameInfo(ctx Context, game *Game) GameInfo {
 			Name: getUserName(ctx, game.Black),
 		}
 	}
-	return gameinfo
+	return &gameinfo
 }
 
 func getGameInfoJs(ctx Context, game *Game) []byte {
-	encoded, err := json.Marshal(convertToGameInfo(ctx, game))
+	encoded, err := json.Marshal(*convertToGameInfo(ctx, game))
 	if err != nil {
 		log.Fatalf("Failed to convert gameinfo to json: %v", err)
 	}
@@ -389,8 +400,12 @@ func setPlainTextContent(w http.ResponseWriter) {
 }
 
 func getGameInfo(ctx Context, w http.ResponseWriter, r *http.Request) {
+	setPlainTextContent(w)
+	setNoCache(w)
+
 	if err := r.ParseForm(); err != nil {
-		log.Fatalf("Failed to parse request form: %v", err)
+		http.Error(w, fmt.Sprintf("Invalid request form: %v", err), http.StatusBadRequest)
+		return
 	}
 
 	gid := getFormValue(r.Form, "gid")
@@ -405,15 +420,252 @@ func getGameInfo(ctx Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Write(getGameInfoJs(ctx, game))
+}
+
+func validateSid(ctx Context, uid, sid string) *datastore.Key {
+	uidParsed, err := strconv.ParseInt(uid, 10, 64)
+	if err != nil {
+		return nil
+	}
+	userKey := datastore.IDKey("User", uidParsed, nil)
+
+	sidParsed, err := strconv.ParseInt(sid, 10, 64)
+	if err != nil {
+		return nil
+	}
+	sessionKey := datastore.IDKey("Session", sidParsed, userKey)
+
+	if !isSessionValid(ctx, sessionKey) {
+		return nil
+	}
+
+	return userKey
+}
+
+func validatePostRequest(ctx Context, form url.Values) (userKey *datastore.Key, gid *string, err error) {
+	uid := getFormValue(form, "uid")
+	sid := getFormValue(form, "sid")
+	if uid == nil || sid == nil {
+		return nil, nil, errors.New("Missing uid and/or sid.")
+	}
+
+	userKey = validateSid(ctx, *uid, *sid)
+	if userKey == nil {
+		return nil, nil, errors.New("Bad uid or sid.")
+	}
+
+	gid = getFormValue(form, "gid")
+	if gid == nil {
+		return nil, nil, errors.New("Missing gid.")
+	}
+
+	return userKey, gid, nil
+}
+
+func postGameInfo(ctx Context, w http.ResponseWriter, r *http.Request) {
 	setPlainTextContent(w)
 	setNoCache(w)
-	w.Write(getGameInfoJs(ctx, game))
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid request form: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	game, err := updateGame(ctx, r.Form)
+	var response GameInfoResponse
+	if err != nil {
+		response.Success = false
+		log.Printf("Failed to update game info: %v", err)
+	} else {
+		response.Success = true
+	}
+	if game != nil {
+		response.GameInfo = convertToGameInfo(ctx, game)
+	}
+
+	encoded, err := json.Marshal(response)
+	w.Write(encoded)
+}
+
+func gameHasEnded(game *Game) bool {
+	return strings.HasSuffix(game.Moves, "R") || strings.HasSuffix(game.Moves, "B")
+}
+
+func updateNextToMove(game *Game) {
+	if game.Red == nil || game.Black == nil {
+		game.NextToMove = nil
+	} else if gameHasEnded(game) {
+		game.NextToMove = nil
+	} else if len(strings.Split(game.Moves, "/"))%2 == 1 {
+		game.NextToMove = game.Red
+	} else {
+		game.NextToMove = game.Black
+	}
+}
+
+func sit(userKey *datastore.Key, game *Game, side string) error {
+	if gameHasEnded(game) {
+		return errors.New("cannot sit on a finished game")
+	} else if side == "red" {
+		if game.Red == nil {
+			game.Red = userKey
+			if game.Black != nil && *game.Black == *userKey {
+				game.Black = nil
+				game.BlackActivity = nil
+			}
+		} else {
+			return errors.New("red has been taken")
+		}
+	} else if side == "black" {
+		if game.Black == nil {
+			game.Black = userKey
+			if game.Red != nil && *game.Red == *userKey {
+				game.Red = nil
+				game.RedActivity = nil
+			}
+		} else {
+			return errors.New("black has been taken")
+		}
+	} else {
+		return errors.New("unknown side to sit")
+	}
+	updateNextToMove(game)
+	return nil
+}
+
+func userInGame(userKey *datastore.Key, game *Game) bool {
+	return (game.Red != nil && *game.Red == *userKey) || (game.Black != nil && *game.Black == *userKey)
+}
+
+func buildBoardFromTrustedMoves(moves []string) *Board {
+	board := MakeInitialBoard()
+	for _, moveString := range moves {
+		if moveString == "" {
+			continue
+		}
+		move, err := ParseNumericMove(moveString)
+		if err != nil {
+			log.Fatalf("unknown move: %v", moveString)
+		}
+		board.Move(move)
+	}
+	return board
+}
+
+func declareGameResult(board *Board) string {
+	if board.IsLosing() {
+		if board.RedToGo {
+			return "/B"
+		} else {
+			return "/R"
+		}
+	} else {
+		return ""
+	}
+}
+
+func makeMove(game *Game, redToGo bool, newMovesString string) error {
+	oldMoves := strings.Split(game.Moves, "/")
+	newMoves := strings.Split(newMovesString, "/")
+	if len(newMoves) != len(oldMoves)+1 {
+		return errors.New("new moves is not based on old moves")
+	}
+	for i := 0; i < len(oldMoves); i++ {
+		if newMoves[i] != oldMoves[i] {
+			return errors.New("new moves diverged from old moves")
+		}
+	}
+
+	if gameHasEnded(game) {
+		return errors.New("game has ended")
+	}
+	b := buildBoardFromTrustedMoves(oldMoves)
+	newMoveString := newMoves[len(newMoves)-1]
+	if newMoveString == "R" || newMoveString == "B" {
+		return errors.New("user cannot declare result")
+	}
+
+	newMove, err := ParseNumericMove(newMoveString)
+	if err != nil {
+		return errors.New(fmt.Sprintf("malformed move: %s", newMoveString))
+	}
+	if redToGo != b.RedToGo {
+		return errors.New(fmt.Sprintf("player is not in move: expected red %v actual red %v", b.RedToGo, redToGo))
+	}
+	if !b.CheckedMove(newMove) {
+		return errors.New(fmt.Sprintf("invalid move: %s", newMoveString))
+	}
+
+	newMovesString += declareGameResult(b)
+
+	game.Moves = newMovesString
+	updateNextToMove(game)
+	return nil
+}
+
+func updateGame(ctx Context, form url.Values) (*Game, error) {
+	userKey, gid, err := validatePostRequest(ctx, form)
+	if err != nil {
+		return nil, err
+	}
+
+	var resolvedGame *Game
+	_, err = ctx.Client.RunInTransaction(ctx.Ctx, func(tx *datastore.Transaction) error {
+		operated := false
+		resolvedGame = nil
+
+		var game Game
+		if err := tx.Get(datastore.NameKey("Game", *gid, nil), &game); err != nil {
+			return err
+		}
+		resolvedGame = new(Game)
+		*resolvedGame = game
+
+		if seat := getFormValue(form, "sit"); seat != nil {
+			operated = true
+			if err := sit(userKey, &game, *seat); err != nil {
+				return err
+			}
+		}
+		if moves := getFormValue(form, "moves"); moves != nil {
+			operated = true
+			if !userInGame(userKey, &game) {
+				return errors.New("User not in game")
+			}
+			if game.Red == nil || game.Black == nil {
+				return errors.New("Game not started")
+			}
+			redToGo := true
+			if *userKey == *game.Black {
+				redToGo = false
+			}
+			if err := makeMove(&game, redToGo, *moves); err != nil {
+				return err
+			}
+		}
+
+		if !operated {
+			return errors.New("No operation specified")
+		} else {
+			updateActivityTime(userKey, &game)
+			if _, err := tx.Put(game.Key, &game); err != nil {
+				return err
+			}
+			*resolvedGame = game
+			return nil
+		}
+	})
+
+	return resolvedGame, err
 }
 
 func gameInfoAPI(ctx Context, w http.ResponseWriter, r *http.Request) {
 	if r.Method == "" || r.Method == "GET" {
 		getGameInfo(ctx, w, r)
 		return
+	} else if r.Method == "POST" {
+		postGameInfo(ctx, w, r)
 	} else {
 		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
 	}
