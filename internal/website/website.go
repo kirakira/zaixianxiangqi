@@ -764,60 +764,6 @@ func forkPage(ctx Context, w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/game/"+newGid, http.StatusFound)
 }
 
-func janitorPage(ctx Context, w http.ResponseWriter, r *http.Request) {
-	if !(r.Method == "" || r.Method == "GET") {
-		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
-		return
-	}
-	if _, ok := r.Header["X-Appengine-Cron"]; !ok {
-		http.Error(w, "Not cron.", http.StatusNotFound)
-		return
-	}
-
-	log.Println("janitor starting")
-
-	duration_4d, err := time.ParseDuration(fmt.Sprintf("%dh", 24*4))
-	if err != nil {
-		log.Fatalf("failed to parse duration: %v", err)
-	}
-	date_lb := time.Now().Add(-duration_4d)
-	duration_2d, err := time.ParseDuration(fmt.Sprintf("%dh", 24*2))
-	if err != nil {
-		log.Fatalf("failed to parse duration: %v", err)
-	}
-	date_ub := time.Now().Add(-duration_2d)
-	q := datastore.NewQuery("Game").Filter("Creation >= ", date_lb).Filter("Creation <= ", date_ub)
-
-	var games []Game
-	_, err = ctx.Client.GetAll(ctx.Ctx, q, &games)
-	if err != nil {
-		log.Fatalf("Failed to query for past games: %v", err)
-	}
-	browsedCnt := 0
-	removedCnt := 0
-	for _, game := range games {
-		browsedCnt += 1
-		if game.Red != nil && game.Black != nil {
-			continue
-		}
-		if _, err := ctx.Client.RunInTransaction(ctx.Ctx, func(tx *datastore.Transaction) error {
-			var currentGame Game
-			if err := tx.Get(game.Key, &currentGame); err != nil {
-				return err
-			}
-			if currentGame.Red != nil && currentGame.Black != nil {
-				return nil
-			}
-
-			return tx.Delete(game.Key)
-		}); err == nil {
-			removedCnt += 1
-			log.Printf("garbage collected game %s", game.Key.Name)
-		}
-	}
-	log.Printf("janitor GCed %d games after browsing %d", removedCnt, browsedCnt)
-}
-
 func RegisterHandlers(ctx Context) {
 	maybeServeStaticFiles()
 	t := template.Must(template.ParseFiles("web/game.html"))
