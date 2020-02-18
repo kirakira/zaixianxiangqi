@@ -1,6 +1,7 @@
 # Run dev test server (Linux)
 
 ```
+$ gcloud beta emulators datastore start
 $ ./dev_zaixianxiangqi.sh
 ```
 
