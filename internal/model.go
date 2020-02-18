@@ -39,29 +39,3 @@ type Game struct {
 	GameFork   *GameFork
 	Key        *datastore.Key `datastore:"__key__"`
 }
-
-type OldUser struct {
-	Name string         `datastore:"name"`
-	AI   bool           `datastore:"ai"`
-	Key  *datastore.Key `datastore:"__key__"`
-}
-
-type OldSession struct {
-	Creation time.Time      `datastore:"creation"`
-	Key      *datastore.Key `datastore:"__key__"`
-}
-
-// The old game model used in Python zaixianxiangqi.
-type OldGame struct {
-	Creation        time.Time      `datastore:"creation"`
-	Description     string         `datastore:"description,noindex"`
-	Red             int64          `datastore:"red"`
-	Black           int64          `datastore:"black"`
-	Moves           string         `datastore:"moves,noindex"`
-	RedActivity     time.Time      `datastore:"redActivity"`
-	BlackActivity   time.Time      `datastore:"blackActivity"`
-	ForkedFrom      string         `datastore:"forkedFrom"`
-	ForkedMoveCount int64          `datastore:"forkedMoveCount"`
-	NextToMove      int64          `datastore:"nextToMove"`
-	Key             *datastore.Key `datastore:"__key__"`
-}

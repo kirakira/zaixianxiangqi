@@ -10,14 +10,18 @@ import (
 )
 
 func initDatastore() (Context, error) {
-	datastore_project_id := os.Getenv("GOOGLE_CLOUD_PROJECT")
-	if datastore_project_id == "" {
+	datastoreProjectId := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	if datastoreProjectId == "" {
 		return Context{},
 			errors.New("Environment variable GOOGLE_CLOUD_PROJECT not set.")
 	}
 
+	return InitDatastoreWithProjectId(datastoreProjectId)
+}
+
+func InitDatastoreWithProjectId(projectId string) (Context, error) {
 	ctx := context.Background()
-	client, err := datastore.NewClient(ctx, datastore_project_id)
+	client, err := datastore.NewClient(ctx, projectId)
 	return Context{
 		Ctx:    ctx,
 		Client: client,
