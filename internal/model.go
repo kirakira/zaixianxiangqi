@@ -18,6 +18,13 @@ type Session struct {
 	Key      *datastore.Key `datastore:"__key__"`
 }
 
+type GameFork struct {
+	// key of its parent game
+	ParentGame *datastore.Key
+	// the number of moves from its parent this game is forked
+	ForkedMoveCount int
+}
+
 type Game struct {
 	// if game is forked, this is the time when it is forked
 	Creation      time.Time
@@ -27,12 +34,9 @@ type Game struct {
 	Moves         string `datastore:",noindex"`
 	RedActivity   *time.Time
 	BlackActivity *time.Time
-	// key of its parent game, or empty
-	ForkedFrom *datastore.Key
-	// how many moves from its parent game are forked
-	ForkedMoveCount *int
 	// key of the player to move next, or empty for new or ended games
 	NextToMove *datastore.Key
+	GameFork   *GameFork
 	Key        *datastore.Key `datastore:"__key__"`
 }
 

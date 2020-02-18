@@ -679,10 +679,11 @@ func forkGame(ctx Context, user *datastore.Key, parentGame *datastore.Key, forke
 			Key:         datastore.NameKey("Game", gid, nil),
 			Description: fmt.Sprintf("从%s创建的分支棋局", parentGame.Name),
 			Moves:       newMoves,
-			ForkedFrom:  parentGame,
+			GameFork: &GameFork{
+				ParentGame:      parentGame,
+				ForkedMoveCount: forkedMoveCount,
+			},
 		}
-		game.ForkedMoveCount = new(int)
-		*game.ForkedMoveCount = forkedMoveCount
 		if useRed {
 			game.Red = user
 		} else {
