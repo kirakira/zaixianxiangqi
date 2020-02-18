@@ -302,7 +302,7 @@ type GameInfo struct {
 }
 
 type GameInfoResponse struct {
-	Success  bool      `json:"success"`
+	Status   string    `json:"status"`
 	GameInfo *GameInfo `json:"gameinfo,omitempty"`
 }
 
@@ -461,31 +461,6 @@ func validatePostRequest(ctx Context, form url.Values) (userKey *datastore.Key, 
 	}
 
 	return userKey, gid, nil
-}
-
-func postGameInfo(ctx Context, w http.ResponseWriter, r *http.Request) {
-	setPlainTextContent(w)
-	setNoCache(w)
-
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, fmt.Sprintf("Invalid request form: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	game, err := updateGame(ctx, r.Form)
-	var response GameInfoResponse
-	if err != nil {
-		response.Success = false
-		log.Printf("Failed to update game info: %v", err)
-	} else {
-		response.Success = true
-	}
-	if game != nil {
-		response.GameInfo = convertToGameInfo(ctx, game)
-	}
-
-	encoded, err := json.Marshal(response)
-	w.Write(encoded)
 }
 
 func gameHasEnded(game *Game) bool {
@@ -665,7 +640,7 @@ func gameInfoAPI(ctx Context, w http.ResponseWriter, r *http.Request) {
 		getGameInfo(ctx, w, r)
 		return
 	} else if r.Method == "POST" {
-		postGameInfo(ctx, w, r)
+		postAPIWrapper(ctx, w, r, updateGame)
 	} else {
 		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
 	}
@@ -764,6 +739,105 @@ func forkPage(ctx Context, w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/game/"+newGid, http.StatusFound)
 }
 
+func getOrCreateAIUser(ctx Context) *datastore.Key {
+	q := datastore.NewQuery("User").Filter("AI = ", true).KeysOnly().Limit(1)
+	keys, err := ctx.Client.GetAll(ctx.Ctx, q, nil)
+	if err != nil {
+		log.Fatalf("Failed to query for AI user: %v", err)
+	}
+	if len(keys) > 0 {
+		return keys[0]
+	} else {
+		user := User{
+			Name: "Blur",
+			AI:   true,
+		}
+		aiKey, err := ctx.Client.Put(ctx.Ctx, datastore.IncompleteKey("User", nil), &user)
+		if err != nil {
+			log.Fatalf("Failed to create AI user: %v", err)
+		}
+		return aiKey
+	}
+}
+
+func inviteAI(ctx Context, form url.Values) (*Game, error) {
+	userKey, gid, err := validatePostRequest(ctx, form)
+	if err != nil {
+		return nil, err
+	}
+
+	aiUser := getOrCreateAIUser(ctx)
+	if *aiUser == *userKey {
+		return nil, errors.New("bad user id (ai)")
+	}
+
+	var resolvedGame *Game
+	_, err = ctx.Client.RunInTransaction(ctx.Ctx, func(tx *datastore.Transaction) error {
+		resolvedGame = nil
+
+		var game Game
+		if err := tx.Get(datastore.NameKey("Game", *gid, nil), &game); err != nil {
+			return err
+		}
+		resolvedGame = new(Game)
+		*resolvedGame = game
+
+		if !userInGame(userKey, &game) {
+			return errors.New("user not in game")
+		}
+
+		if game.Red != nil && game.Black != nil {
+			return errors.New("game already started")
+		}
+
+		if game.Red == nil {
+			sit(aiUser, &game, "red")
+		} else {
+			sit(aiUser, &game, "black")
+		}
+
+		updateActivityTime(userKey, &game)
+		updateActivityTime(aiUser, &game)
+		if _, err := tx.Put(game.Key, &game); err != nil {
+			return err
+		}
+		*resolvedGame = game
+		return nil
+	})
+
+	return resolvedGame, err
+}
+
+func postAPIWrapper(ctx Context, w http.ResponseWriter, r *http.Request, handler func(Context, url.Values) (*Game, error)) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
+		return
+	}
+
+	setPlainTextContent(w)
+	setNoCache(w)
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid request form: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	game, err := handler(ctx, r.Form)
+	var response GameInfoResponse
+	if err != nil {
+		response.Status = "fail"
+		log.Printf("Failed to update game info: %v", err)
+	} else {
+		response.Status = "success"
+	}
+	if game != nil {
+		response.GameInfo = convertToGameInfo(ctx, game)
+	}
+
+	encoded, err := json.Marshal(response)
+	w.Write(encoded)
+}
+
 func RegisterHandlers(ctx Context) {
 	maybeServeStaticFiles()
 	t := template.Must(template.ParseFiles("web/game.html"))
@@ -787,6 +861,9 @@ func RegisterHandlers(ctx Context) {
 	})
 	http.HandleFunc("/fork/", func(w http.ResponseWriter, r *http.Request) {
 		forkPage(ctx, w, r)
+	})
+	http.HandleFunc("/invite_ai", func(w http.ResponseWriter, r *http.Request) {
+		postAPIWrapper(ctx, w, r, inviteAI)
 	})
 	http.HandleFunc("/janitor", func(w http.ResponseWriter, r *http.Request) {
 		janitorPage(ctx, w, r)
