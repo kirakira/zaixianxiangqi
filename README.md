@@ -4,6 +4,13 @@
 $ ./dev_zaixianxiangqi.sh
 ```
 
+# Compile Javascript files
+
+```
+$ cd web
+$ make js/zaixianxiangqi.js
+```
+
 # Deploy a new version
 
 ```
