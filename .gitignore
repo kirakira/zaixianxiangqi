@@ -2,3 +2,4 @@
 cmd/get_games_from_datastore/get_games_from_datastore
 cmd/zaixianxiangqi/zaixianxiangqi
 cmd/migrate_old_db/migrate_old_db
+cmd/engine_server/engine_server

@@ -25,3 +25,4 @@
 *.out
 
 /testdata/
+third_party/deep-blur/bin/

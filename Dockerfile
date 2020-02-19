@@ -11,7 +11,7 @@ COPY go.* ./
 RUN go mod download
 COPY . ./
 # Build the server.
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o server
+RUN cd cmd/engine_server && CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o server
 
 #
 # Build game engine.
@@ -19,7 +19,7 @@ FROM gcc:7.5 as engine_builder
 WORKDIR /app
 COPY . ./
 # Build engine code.
-RUN cd engines/deep-blur && make o && cp bin/deep-blur ../../engine
+RUN cd third_party/deep-blur && mkdir bin && make o
 
 #
 # Build container image.
@@ -29,7 +29,7 @@ RUN cd engines/deep-blur && make o && cp bin/deep-blur ../../engine
 FROM alpine:3
 RUN apk add --no-cache ca-certificates libstdc++ libgcc libc6-compat
 # Copy the binary to the production image from the builder stages.
-COPY --from=server_builder /app/server /server
-COPY --from=engine_builder /app/engine /engine
+COPY --from=server_builder /app/cmd/engine_server/server /server
+COPY --from=engine_builder /app/third_party/deep-blur/bin/deep-blur /engine
 # Run the web service on container startup.
 CMD ["/server"]

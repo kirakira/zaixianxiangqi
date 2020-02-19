@@ -387,14 +387,6 @@ func maybeServeStaticFiles() {
 	}
 }
 
-func getFormValue(form url.Values, key string) *string {
-	v, found := form[key]
-	if !found || len(v) == 0 {
-		return nil
-	}
-	return &v[0]
-}
-
 func setPlainTextContent(w http.ResponseWriter) {
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 }
@@ -408,7 +400,7 @@ func getGameInfo(ctx Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gid := getFormValue(r.Form, "gid")
+	gid := GetFormValue(r.Form, "gid")
 	if gid == nil {
 		http.Error(w, "Missing 'gid'.", http.StatusBadRequest)
 		return
@@ -444,8 +436,8 @@ func validateSid(ctx Context, uid, sid string) *datastore.Key {
 }
 
 func validatePostRequest(ctx Context, form url.Values) (userKey *datastore.Key, gid *string, err error) {
-	uid := getFormValue(form, "uid")
-	sid := getFormValue(form, "sid")
+	uid := GetFormValue(form, "uid")
+	sid := GetFormValue(form, "sid")
 	if uid == nil || sid == nil {
 		return nil, nil, errors.New("Missing uid and/or sid.")
 	}
@@ -455,7 +447,7 @@ func validatePostRequest(ctx Context, form url.Values) (userKey *datastore.Key, 
 		return nil, nil, errors.New("Bad uid or sid.")
 	}
 
-	gid = getFormValue(form, "gid")
+	gid = GetFormValue(form, "gid")
 	if gid == nil {
 		return nil, nil, errors.New("Missing gid.")
 	}
@@ -597,13 +589,13 @@ func updateGame(ctx Context, form url.Values) (*Game, error) {
 		resolvedGame = new(Game)
 		*resolvedGame = game
 
-		if seat := getFormValue(form, "sit"); seat != nil {
+		if seat := GetFormValue(form, "sit"); seat != nil {
 			operated = true
 			if err := sit(userKey, &game, *seat); err != nil {
 				return err
 			}
 		}
-		if moves := getFormValue(form, "moves"); moves != nil {
+		if moves := GetFormValue(form, "moves"); moves != nil {
 			operated = true
 			if !userInGame(userKey, &game) {
 				return errors.New("User not in game")
