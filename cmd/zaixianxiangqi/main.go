@@ -12,13 +12,13 @@ import (
 )
 
 func main() {
-	port, ctx, err := internal.InitXiangqi()
-	rand.Seed(time.Now().UnixNano())
+	ctx, err := internal.InitXiangqi(internal.InitOptions{InitDatastoreClient: true})
 	if err != nil {
 		log.Fatalf("Error during initialization: %v", err)
 	}
+	rand.Seed(time.Now().UnixNano())
 
-	log.Printf("Starting server on port %s.\n", port)
+	log.Printf("Starting server on port %s.\n", ctx.Port)
 	website.RegisterHandlers(ctx)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", ctx.Port), nil))
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	_, ctx, err := internal.InitXiangqi()
+	ctx, err := internal.InitXiangqi(internal.InitOptions{InitDatastoreClient: true})
 	if err != nil {
 		log.Fatalf("Error during initialization: %v", err)
 	}

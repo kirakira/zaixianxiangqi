@@ -9,33 +9,50 @@ import (
 	"cloud.google.com/go/datastore"
 )
 
-func initDatastore() (Context, error) {
-	datastoreProjectId := os.Getenv("GOOGLE_CLOUD_PROJECT")
-	if datastoreProjectId == "" {
-		return Context{},
-			errors.New("Environment variable GOOGLE_CLOUD_PROJECT not set.")
-	}
-
-	return InitDatastoreWithProjectId(datastoreProjectId)
+type Context struct {
+	Port       string
+	ProjectID  string
+	LocationID string
+	Ctx        context.Context
+	Client     *datastore.Client
 }
 
-func InitDatastoreWithProjectId(projectId string) (Context, error) {
-	ctx := context.Background()
-	client, err := datastore.NewClient(ctx, projectId)
-	return Context{
-		Ctx:    ctx,
-		Client: client,
-	}, err
+type InitOptions struct {
+	InitDatastoreClient bool
+	ProjectIdOverride   *string
 }
 
-func InitXiangqi() (port string, ctx Context, err error) {
+func InitXiangqi(options InitOptions) (Context, error) {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Llongfile)
 
-	port = os.Getenv("PORT")
+	var ctx Context
+
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
+	ctx.Port = port
 
-	ctx, err = initDatastore()
-	return
+	if options.ProjectIdOverride != nil {
+		ctx.ProjectID = *options.ProjectIdOverride
+	} else if projectId, exists := os.LookupEnv("GOOGLE_CLOUD_PROJECT"); exists {
+		ctx.ProjectID = projectId
+	} else if options.InitDatastoreClient {
+		return Context{},
+			errors.New("Unable to initialize datastore because environment variable GOOGLE_CLOUD_PROJECT not set.")
+	}
+
+	ctx.LocationID = "us-central1"
+
+	ctx.Ctx = context.Background()
+
+	if options.InitDatastoreClient {
+		client, err := datastore.NewClient(ctx.Ctx, ctx.ProjectID)
+		if err != nil {
+			return Context{}, err
+		}
+		ctx.Client = client
+	}
+
+	return ctx, nil
 }

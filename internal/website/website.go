@@ -16,9 +16,14 @@ import (
 	"strings"
 	"time"
 
+	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/datastore"
 	. "github.com/kirakira/zaixianxiangqi/internal"
+	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 )
+
+const queueID string = "play-ai-move"
+const blurURL string = "https://blur.zaixianxiangqi.com/play"
 
 type UserSession struct {
 	User    *datastore.Key
@@ -415,12 +420,19 @@ func getGameInfo(ctx Context, w http.ResponseWriter, r *http.Request) {
 	w.Write(getGameInfoJs(ctx, game))
 }
 
-func validateSid(ctx Context, uid, sid string) *datastore.Key {
+func uidToUserKey(uid string) *datastore.Key {
 	uidParsed, err := strconv.ParseInt(uid, 10, 64)
 	if err != nil {
 		return nil
 	}
-	userKey := datastore.IDKey("User", uidParsed, nil)
+	return datastore.IDKey("User", uidParsed, nil)
+}
+
+func validateSid(ctx Context, uid, sid string) *datastore.Key {
+	userKey := uidToUserKey(uid)
+	if userKey == nil {
+		return nil
+	}
 
 	sidParsed, err := strconv.ParseInt(sid, 10, 64)
 	if err != nil {
@@ -435,16 +447,44 @@ func validateSid(ctx Context, uid, sid string) *datastore.Key {
 	return userKey
 }
 
-func validatePostRequest(ctx Context, form url.Values) (userKey *datastore.Key, gid *string, err error) {
+func isWhiteListedEmail(email string) bool {
+	return email == "engine-server@zaixianxiangqi4.iam.gserviceaccount.com"
+}
+
+func validatePostRequest(ctx Context, header http.Header, form url.Values) (userKey *datastore.Key, gid *string, err error) {
 	uid := GetFormValue(form, "uid")
-	sid := GetFormValue(form, "sid")
-	if uid == nil || sid == nil {
-		return nil, nil, errors.New("Missing uid and/or sid.")
+	if uid == nil {
+		return nil, nil, errors.New("Missing uid.")
 	}
 
-	userKey = validateSid(ctx, *uid, *sid)
-	if userKey == nil {
-		return nil, nil, errors.New("Bad uid or sid.")
+	sid := GetFormValue(form, "sid")
+	if sid == nil {
+		auth := GetFormValue(header, "Authorization")
+		const bearerPrefix string = "Bearer "
+		if auth == nil || !strings.HasPrefix(*auth, bearerPrefix) {
+			return nil, nil, errors.New("Missing sid.")
+		}
+		token := strings.TrimPrefix(*auth, bearerPrefix)
+
+		tokenInfo, err := VerifyIdToken(token)
+		if err != nil {
+			log.Fatal("Failed to get tokeninfo for %s: %v", token, err)
+		}
+		if !isWhiteListedEmail(tokenInfo.Email) {
+			log.Printf("Access denied to %s", tokenInfo.Email)
+			return nil, nil, errors.New("Missing sid.")
+		}
+		log.Printf("Access granted to %s", tokenInfo.Email)
+
+		userKey = uidToUserKey(*uid)
+		if userKey == nil {
+			return nil, nil, errors.New("Bad uid.")
+		}
+	} else {
+		userKey = validateSid(ctx, *uid, *sid)
+		if userKey == nil {
+			return nil, nil, errors.New("Bad uid or sid.")
+		}
 	}
 
 	gid = GetFormValue(form, "gid")
@@ -571,8 +611,8 @@ func makeMove(game *Game, redToGo bool, newMovesString string) error {
 	return nil
 }
 
-func updateGame(ctx Context, form url.Values) (*Game, error) {
-	userKey, gid, err := validatePostRequest(ctx, form)
+func updateGame(ctx Context, header http.Header, form url.Values) (*Game, error) {
+	userKey, gid, err := validatePostRequest(ctx, header, form)
 	if err != nil {
 		return nil, err
 	}
@@ -623,6 +663,12 @@ func updateGame(ctx Context, form url.Values) (*Game, error) {
 			return nil
 		}
 	})
+
+	if err != nil {
+		return resolvedGame, err
+	}
+
+	maybePushAIMoveTask(ctx, resolvedGame)
 
 	return resolvedGame, err
 }
@@ -752,8 +798,53 @@ func getOrCreateAIUser(ctx Context) *datastore.Key {
 	}
 }
 
-func inviteAI(ctx Context, form url.Values) (*Game, error) {
-	userKey, gid, err := validatePostRequest(ctx, form)
+func maybePushAIMoveTask(ctx Context, game *Game) {
+	if game.NextToMove == nil {
+		return
+	}
+	nextMoveUser := getUser(ctx, game.NextToMove)
+	if !nextMoveUser.AI {
+		return
+	}
+
+	client, err := cloudtasks.NewClient(ctx.Ctx)
+	if err != nil {
+		log.Fatalf("Failed to create cloud tasks client: %v", err)
+	}
+
+	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s", ctx.ProjectID, ctx.LocationID, queueID)
+	req := &taskspb.CreateTaskRequest{
+		Parent: queuePath,
+		Task: &taskspb.Task{
+			// https://godoc.org/google.golang.org/genproto/googleapis/cloud/tasks/v2#HttpRequest
+			MessageType: &taskspb.Task_HttpRequest{
+				HttpRequest: &taskspb.HttpRequest{
+					HttpMethod: taskspb.HttpMethod_POST,
+					Url:        blurURL,
+					Headers: map[string]string{
+						"Content-Type": "application/x-www-form-urlencoded",
+					},
+				},
+			},
+		},
+	}
+
+	req.Task.GetHttpRequest().Body = []byte(
+		url.Values{
+			"uid":          {strconv.FormatInt(nextMoveUser.Key.ID, 10)},
+			"gid":          {game.Key.Name},
+			"moves":        {game.Moves},
+			"callback_url": {"https://20200228t000159-dot-zaixianxiangqi4.appspot.com"},
+		}.Encode())
+
+	_, err = client.CreateTask(ctx.Ctx, req)
+	if err != nil {
+		log.Fatalf("cloudtasks.CreateTask: %v", err)
+	}
+}
+
+func inviteAI(ctx Context, _ http.Header, form url.Values) (*Game, error) {
+	userKey, gid, err := validatePostRequest(ctx, http.Header{}, form)
 	if err != nil {
 		return nil, err
 	}
@@ -797,10 +888,16 @@ func inviteAI(ctx Context, form url.Values) (*Game, error) {
 		return nil
 	})
 
+	if err != nil {
+		return resolvedGame, err
+	}
+
+	maybePushAIMoveTask(ctx, resolvedGame)
+
 	return resolvedGame, err
 }
 
-func postAPIWrapper(ctx Context, w http.ResponseWriter, r *http.Request, handler func(Context, url.Values) (*Game, error)) {
+func postAPIWrapper(ctx Context, w http.ResponseWriter, r *http.Request, handler func(Context, http.Header, url.Values) (*Game, error)) {
 	if r.Method != "POST" {
 		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
 		return
@@ -814,7 +911,7 @@ func postAPIWrapper(ctx Context, w http.ResponseWriter, r *http.Request, handler
 		return
 	}
 
-	game, err := handler(ctx, r.Form)
+	game, err := handler(ctx, r.Header, r.Form)
 	var response GameInfoResponse
 	if err != nil {
 		response.Status = "fail"

@@ -19,7 +19,7 @@ FROM gcc:7.5 as engine_builder
 WORKDIR /app
 COPY . ./
 # Build engine code.
-RUN cd third_party/deep-blur && mkdir bin && make o
+RUN cd third_party/deep-blur && mkdir -p bin && make o
 
 #
 # Build container image.

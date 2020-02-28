@@ -4,12 +4,13 @@ import (
 	"log"
 	"os"
 
+	"cloud.google.com/go/datastore"
 	"github.com/kirakira/zaixianxiangqi/internal"
 	"github.com/kirakira/zaixianxiangqi/internal/tools"
 )
 
 func main() {
-	_, srcCtx, err := internal.InitXiangqi()
+	srcCtx, err := internal.InitXiangqi(internal.InitOptions{InitDatastoreClient: true})
 	if err != nil {
 		log.Fatalf("Error during initialization: %v", err)
 	}
@@ -19,10 +20,16 @@ func main() {
 		log.Fatalf(
 			"Environment variable DST_GOOGLE_CLOUD_PROJECT not set.")
 	}
-	dstCtx, err := internal.InitDatastoreWithProjectId(dstProject)
+	dstClient, err := datastore.NewClient(srcCtx.Ctx, dstProject)
 	if err != nil {
 		log.Fatalf("Error during initialization: %v", err)
 	}
 
-	tools.MigrateDB(srcCtx, dstCtx)
+	tools.MigrateDB(srcCtx, internal.Context{
+		Port:       srcCtx.Port,
+		ProjectId:  dstProject,
+		LocationId: srcCtx.LocationId,
+		Ctx:        srcCtx.Ctx,
+		Client:     dstClient,
+	})
 }
