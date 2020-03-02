@@ -266,8 +266,12 @@ function Game(currentGameId, myUid, gameInfo) {
         bw.style.display = "none";
         if (gameInfo.moves.endsWith("R")) {
             rw.style.display = "inline-block";
+            redWatch_.stop();
+            blackWatch_.stop();
         } else if (gameInfo.moves.endsWith("B")) {
             bw.style.display = "inline-block";
+            redWatch_.stop();
+            blackWatch_.stop();
         } else if (!gameStarted()) {
             ws.style.display = "inline-block";
         } else {

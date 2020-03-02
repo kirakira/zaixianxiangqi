@@ -571,7 +571,7 @@ func declareGameResult(board *Board) string {
 	}
 }
 
-func makeMove(game *Game, redToGo bool, newMovesString string) error {
+func makeMove(game *Game, redSide bool, newMovesString string) error {
 	oldMoves := strings.Split(game.Moves, "/")
 	newMoves := strings.Split(newMovesString, "/")
 	if len(newMoves) != len(oldMoves)+1 {
@@ -589,21 +589,23 @@ func makeMove(game *Game, redToGo bool, newMovesString string) error {
 	b := buildBoardFromTrustedMoves(oldMoves)
 	newMoveString := newMoves[len(newMoves)-1]
 	if newMoveString == "R" || newMoveString == "B" {
-		return errors.New("user cannot declare result")
+		// Resignation.
+		if (redSide && newMoveString == "R") || (!redSide && newMoveString == "B") {
+			return errors.New("user cannot declare result for the opponent")
+		}
+	} else {
+		newMove, err := ParseNumericMove(newMoveString)
+		if err != nil {
+			return errors.New(fmt.Sprintf("malformed move: %s", newMoveString))
+		}
+		if redSide != b.RedToGo {
+			return errors.New(fmt.Sprintf("player is not in move: expected red %v actual red %v", b.RedToGo, redSide))
+		}
+		if !b.CheckedMove(newMove) {
+			return errors.New(fmt.Sprintf("invalid move: %s", newMoveString))
+		}
+		newMovesString += declareGameResult(b)
 	}
-
-	newMove, err := ParseNumericMove(newMoveString)
-	if err != nil {
-		return errors.New(fmt.Sprintf("malformed move: %s", newMoveString))
-	}
-	if redToGo != b.RedToGo {
-		return errors.New(fmt.Sprintf("player is not in move: expected red %v actual red %v", b.RedToGo, redToGo))
-	}
-	if !b.CheckedMove(newMove) {
-		return errors.New(fmt.Sprintf("invalid move: %s", newMoveString))
-	}
-
-	newMovesString += declareGameResult(b)
 
 	game.Moves = newMovesString
 	updateNextToMove(game)
@@ -642,11 +644,11 @@ func updateGame(ctx Context, header http.Header, form url.Values) (*Game, error)
 			if game.Red == nil || game.Black == nil {
 				return errors.New("Game not started")
 			}
-			redToGo := true
+			redSide := true
 			if *userKey == *game.Black {
-				redToGo = false
+				redSide = false
 			}
-			if err := makeMove(&game, redToGo, *moves); err != nil {
+			if err := makeMove(&game, redSide, *moves); err != nil {
 				return err
 			}
 		}
@@ -827,7 +829,7 @@ func maybePushAIMove(ctx Context, game *Game) {
 		Uid:         newInt64(nextMoveUser.Key.ID),
 		Gid:         newString(game.Key.Name),
 		Moves:       newString(game.Moves),
-		CallbackUrl: newString("https://20200301t155209-dot-zaixianxiangqi4.appspot.com"),
+		CallbackUrl: newString("https://20200301t161432-dot-zaixianxiangqi4.appspot.com"),
 	}
 	jsonEncoded, err := json.Marshal(gameToPlay)
 	if err != nil {

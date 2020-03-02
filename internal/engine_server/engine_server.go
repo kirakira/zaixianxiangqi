@@ -67,7 +67,7 @@ func callEngine(commands []string, writer io.Writer) {
 	}
 }
 
-func extractEngineMove(engine_output string) (Move, bool) {
+func extractEngineMove(engine_output string) (string, bool) {
 	lines := strings.Split(engine_output, "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
 		if strings.HasPrefix(lines[i], "move ") {
@@ -75,18 +75,22 @@ func extractEngineMove(engine_output string) (Move, bool) {
 			if err != nil {
 				log.Fatalf("bad move received from engine: %s", err)
 			}
-			return move, true
+			return move.NumericNotation(), true
+		} else if strings.HasPrefix(lines[i], "0-1") {
+			return "B", true
+		} else if strings.HasPrefix(lines[i], "1-0") {
+			return "R", true
 		}
 	}
-	return Move{}, false
+	return "", false
 }
 
-func sendEngineMove(game GameToPlay, move Move) {
+func sendEngineMove(game GameToPlay, move string) {
 	req, err := http.NewRequest("POST", *game.CallbackUrl+kGameInfoPath, strings.NewReader(
 		url.Values{
 			"uid":   {strconv.FormatInt(*game.Uid, 10)},
 			"gid":   {*game.Gid},
-			"moves": {*game.Moves + "/" + move.NumericNotation()},
+			"moves": {*game.Moves + "/" + move},
 		}.Encode()))
 	if err != nil {
 		log.Fatal("%v", err)
@@ -137,7 +141,7 @@ func playGame(game GameToPlay) {
 		log.Println("Failed to extract engine move from engine output.")
 		return
 	}
-	log.Println("Extracted engine move: ", engine_move.NumericNotation())
+	log.Println("Extracted engine move: ", engine_move)
 
 	sendEngineMove(game, engine_move)
 }
