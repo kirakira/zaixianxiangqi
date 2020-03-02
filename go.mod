@@ -5,6 +5,7 @@ go 1.13
 require (
 	cloud.google.com/go v0.53.0
 	cloud.google.com/go/datastore v1.1.0
+	cloud.google.com/go/pubsub v1.2.0
 	github.com/golang/protobuf v1.3.4 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect

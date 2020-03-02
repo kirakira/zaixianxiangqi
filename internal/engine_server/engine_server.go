@@ -2,12 +2,14 @@ package engine_server
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -18,18 +20,9 @@ import (
 
 const engine_command string = "./engine"
 
-var kXiangqiUrl string = getXiangqiUrl()
+var kXiangqiUrl string = "https://zaixianxiangqi.com"
 
 const kGameInfoPath = "/gameinfo"
-
-func getXiangqiUrl() string {
-	url, found := os.LookupEnv("XIANGQI_URL_OVERRIDE")
-	if found {
-		return url
-	}
-	const kDefaultXiangqiUrl = "https://zaixianxiangqi.com"
-	return kDefaultXiangqiUrl
-}
 
 func requestWithAuthToken(serviceURL string, req *http.Request) (*http.Response, error) {
 	// query the id_token with ?audience as the serviceURL
@@ -74,13 +67,6 @@ func callEngine(commands []string, writer io.Writer) {
 	}
 }
 
-type GameToPlay struct {
-	uid          int64
-	gid          string
-	moves        string
-	callback_url string
-}
-
 func extractEngineMove(engine_output string) (Move, bool) {
 	lines := strings.Split(engine_output, "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
@@ -96,26 +82,28 @@ func extractEngineMove(engine_output string) (Move, bool) {
 }
 
 func sendEngineMove(game GameToPlay, move Move) {
-	req, err := http.NewRequest("POST", game.callback_url+kGameInfoPath, strings.NewReader(
+	req, err := http.NewRequest("POST", *game.CallbackUrl+kGameInfoPath, strings.NewReader(
 		url.Values{
-			"uid":   {strconv.FormatInt(game.uid, 10)},
-			"gid":   {game.gid},
-			"moves": {game.moves + "/" + move.NumericNotation()},
+			"uid":   {strconv.FormatInt(*game.Uid, 10)},
+			"gid":   {*game.Gid},
+			"moves": {*game.Moves + "/" + move.NumericNotation()},
 		}.Encode()))
 	if err != nil {
 		log.Fatal("%v", err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := requestWithAuthToken(game.callback_url, req)
+	resp, err := requestWithAuthToken(*game.CallbackUrl, req)
 	if err != nil {
 		log.Println("Error sending engine move: ", err)
 		return
 	}
 	if resp.StatusCode != http.StatusOK {
-		var buffer bytes.Buffer
-		buffer.ReadFrom(resp.Body)
-		log.Println("Request error sending engine move: ", buffer.String())
+		buffer, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalf("Failed to read from response: %v", err)
+		}
+		log.Printf("Request error sending engine move: %s", buffer)
 		resp.Body.Close()
 		return
 	}
@@ -123,15 +111,15 @@ func sendEngineMove(game GameToPlay, move Move) {
 }
 
 func playGame(game GameToPlay) {
-	log.Print(fmt.Sprintf("Playing %s...\n", game.gid))
+	log.Printf("Playing %s...\n", *game.Gid)
 	commands := []string{"xboard", "force", "time 500"}
-	for _, move_string := range strings.Split(game.moves, "/") {
+	for _, move_string := range strings.Split(*game.Moves, "/") {
 		if len(move_string) == 0 {
 			continue
 		}
 		move, err := ParseNumericMove(move_string)
 		if err != nil {
-			log.Printf("Failed to parse move %s in game %s\n", move_string, game.gid)
+			log.Printf("Failed to parse move '%s' in game %s\n", move_string, *game.Gid)
 			return
 		}
 		commands = append(commands, move.XboardNotation())
@@ -155,41 +143,40 @@ func playGame(game GameToPlay) {
 }
 
 func HandlePlay(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
-		return
-	}
-
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, fmt.Sprintf("Invalid request form: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	uid := GetFormValue(r.Form, "uid")
-	gid := GetFormValue(r.Form, "gid")
-	moves := GetFormValue(r.Form, "moves")
-	if uid == nil || gid == nil || moves == nil {
-		http.Error(w, "Missing required parameters", http.StatusBadRequest)
-		return
-	}
-
-	uidParsed, err := strconv.ParseInt(*uid, 10, 64)
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Bad uid", http.StatusBadRequest)
+		log.Printf("Error read engine server message: %v", err)
+		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-
-	callback_url := GetFormValue(r.Form, "callback_url")
-	if callback_url == nil {
-		callback_url = new(string)
-		*callback_url = kXiangqiUrl
+	var m EngineServerRequest
+	if err := json.Unmarshal(body, &m); err != nil {
+		log.Printf("json.Unmarshal fails on %s: %v", body, err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	decoded, err := base64.StdEncoding.DecodeString(m.Message.Data)
+	if err != nil {
+		log.Printf("base64 deocde fails on %s: %v", m.Message.Data, err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	var game GameToPlay
+	if err := json.Unmarshal(decoded, &game); err != nil {
+		log.Printf("json decode GameToPlay fails on %s: %v", decoded, err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	if game.Uid == nil || game.Gid == nil || game.Moves == nil {
+		log.Printf("Missing required arguments: decoded %s uid %v gid %v moves %v", decoded,
+			game.Uid == nil, game.Gid == nil, game.Moves == nil)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	if game.CallbackUrl == nil {
+		game.CallbackUrl = new(string)
+		*game.CallbackUrl = kXiangqiUrl
 	}
 
-	playGame(GameToPlay{
-		uid:          uidParsed,
-		gid:          *gid,
-		moves:        *moves,
-		callback_url: *callback_url,
-	})
-	fmt.Fprintln(w, "OK.")
+	playGame(game)
 }

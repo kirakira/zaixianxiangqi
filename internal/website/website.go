@@ -16,13 +16,12 @@ import (
 	"strings"
 	"time"
 
-	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/datastore"
+	"cloud.google.com/go/pubsub"
 	. "github.com/kirakira/zaixianxiangqi/internal"
-	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 )
 
-const queueID string = "play-ai-move"
+const topicID string = "play-ai-move"
 const blurURL string = "https://blur.zaixianxiangqi.com/play"
 
 type UserSession struct {
@@ -668,7 +667,7 @@ func updateGame(ctx Context, header http.Header, form url.Values) (*Game, error)
 		return resolvedGame, err
 	}
 
-	maybePushAIMoveTask(ctx, resolvedGame)
+	maybePushAIMove(ctx, resolvedGame)
 
 	return resolvedGame, err
 }
@@ -798,7 +797,19 @@ func getOrCreateAIUser(ctx Context) *datastore.Key {
 	}
 }
 
-func maybePushAIMoveTask(ctx Context, game *Game) {
+func newInt64(v int64) *int64 {
+	p := new(int64)
+	*p = v
+	return p
+}
+
+func newString(v string) *string {
+	s := new(string)
+	*s = v
+	return s
+}
+
+func maybePushAIMove(ctx Context, game *Game) {
 	if game.NextToMove == nil {
 		return
 	}
@@ -807,40 +818,35 @@ func maybePushAIMoveTask(ctx Context, game *Game) {
 		return
 	}
 
-	client, err := cloudtasks.NewClient(ctx.Ctx)
+	client, err := pubsub.NewClient(ctx.Ctx, ctx.ProjectID)
 	if err != nil {
-		log.Fatalf("Failed to create cloud tasks client: %v", err)
+		log.Fatalf("Failed to create pubsub client: %v", err)
 	}
 
-	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s", ctx.ProjectID, ctx.LocationID, queueID)
-	req := &taskspb.CreateTaskRequest{
-		Parent: queuePath,
-		Task: &taskspb.Task{
-			// https://godoc.org/google.golang.org/genproto/googleapis/cloud/tasks/v2#HttpRequest
-			MessageType: &taskspb.Task_HttpRequest{
-				HttpRequest: &taskspb.HttpRequest{
-					HttpMethod: taskspb.HttpMethod_POST,
-					Url:        blurURL,
-					Headers: map[string]string{
-						"Content-Type": "application/x-www-form-urlencoded",
-					},
-				},
-			},
-		},
+	gameToPlay := GameToPlay{
+		Uid:         newInt64(nextMoveUser.Key.ID),
+		Gid:         newString(game.Key.Name),
+		Moves:       newString(game.Moves),
+		CallbackUrl: newString("https://20200301t155209-dot-zaixianxiangqi4.appspot.com"),
 	}
-
-	req.Task.GetHttpRequest().Body = []byte(
-		url.Values{
-			"uid":          {strconv.FormatInt(nextMoveUser.Key.ID, 10)},
-			"gid":          {game.Key.Name},
-			"moves":        {game.Moves},
-			"callback_url": {"https://20200228t000159-dot-zaixianxiangqi4.appspot.com"},
-		}.Encode())
-
-	_, err = client.CreateTask(ctx.Ctx, req)
+	jsonEncoded, err := json.Marshal(gameToPlay)
 	if err != nil {
-		log.Fatalf("cloudtasks.CreateTask: %v", err)
+		log.Fatal("Failed to json encode GameToPlay: %v", err)
 	}
+
+	t := client.Topic(topicID)
+	result := t.Publish(ctx.Ctx, &pubsub.Message{
+		Data: []byte(jsonEncoded),
+	})
+
+	// Block until the result is returned and a server-generated
+	// ID is returned for the published message.
+	id, err := result.Get(ctx.Ctx)
+	if err != nil {
+		log.Printf("Failed to get result from Publish: %v", err)
+		return
+	}
+	log.Printf("Published play-ai-move message; msg ID: %v\n", id)
 }
 
 func inviteAI(ctx Context, _ http.Header, form url.Values) (*Game, error) {
@@ -892,7 +898,7 @@ func inviteAI(ctx Context, _ http.Header, form url.Values) (*Game, error) {
 		return resolvedGame, err
 	}
 
-	maybePushAIMoveTask(ctx, resolvedGame)
+	maybePushAIMove(ctx, resolvedGame)
 
 	return resolvedGame, err
 }
