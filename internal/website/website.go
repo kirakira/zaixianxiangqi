@@ -826,10 +826,10 @@ func maybePushAIMove(ctx Context, game *Game) {
 	}
 
 	gameToPlay := GameToPlay{
-		Uid:         newInt64(nextMoveUser.Key.ID),
-		Gid:         newString(game.Key.Name),
-		Moves:       newString(game.Moves),
-		CallbackUrl: newString("https://20200301t161432-dot-zaixianxiangqi4.appspot.com"),
+		Uid:   newInt64(nextMoveUser.Key.ID),
+		Gid:   newString(game.Key.Name),
+		Moves: newString(game.Moves),
+		// CallbackUrl: newString("https://20200301t161432-dot-zaixianxiangqi4.appspot.com"),
 	}
 	jsonEncoded, err := json.Marshal(gameToPlay)
 	if err != nil {
