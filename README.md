@@ -43,7 +43,7 @@ $ gcloud iam service-accounts create cloud-run-pubsub-invoker --display-name "Cl
 1. After the engine server is deployed,
 ```
 $ gcloud run services add-iam-policy-binding engineserver --platform managed --member=serviceAccount:cloud-run-pubsub-invoker@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --role=roles/run.invoker
-$ gcloud pubsub subscriptions create engine-server-subscription --topic play-ai-move --push-endpoint="https://engineserver-du3scfgxaq-uc.a.run.app/play" --push-auth-service-account=cloud-run-pubsub-invoker@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com
+$ gcloud pubsub subscriptions create engine-server-subscription --topic play-ai-move --push-endpoint="https://engineserver-du3scfgxaq-uc.a.run.app/play" --push-auth-service-account=cloud-run-pubsub-invoker@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --expiration-period=never
 ```
 
 ## Website
