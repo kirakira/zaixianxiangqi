@@ -70,16 +70,15 @@ func callEngine(commands []string, writer io.Writer) {
 func extractEngineMove(engine_output string) (string, bool) {
 	lines := strings.Split(engine_output, "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
-		if strings.HasPrefix(lines[i], "move ") {
-			move, err := ParseXboardMove(lines[i][5:])
-			if err != nil {
-				log.Fatalf("bad move received from engine: %s", err)
-			}
-			return move.NumericNotation(), true
-		} else if strings.HasPrefix(lines[i], "0-1") {
-			return "B", true
-		} else if strings.HasPrefix(lines[i], "1-0") {
-			return "R", true
+		output, err := ParseXboardEngineOutputLine(lines[i])
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+		if output != nil && output.Move != nil {
+			return output.Move.NumericNotation(), true
+		}
+		if output != nil && output.Winner != nil {
+			return *output.Winner, true
 		}
 	}
 	return "", false
