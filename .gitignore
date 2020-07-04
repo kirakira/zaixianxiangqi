@@ -1,6 +1,7 @@
 *.pyc
 cmd/blur_bench/blur_bench
 cmd/engine_server/engine_server
+cmd/game_record_viewer/game_record_viewer
 cmd/get_games_from_datastore/get_games_from_datastore
 cmd/migrate_old_db/migrate_old_db
 cmd/zaixianxiangqi/zaixianxiangqi
