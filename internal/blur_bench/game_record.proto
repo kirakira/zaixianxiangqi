@@ -14,13 +14,15 @@ enum GameResult {
 }
 
 message GameRecord {
-  string red_id = 1;
-  string black_id = 2;
-  google.protobuf.Timestamp start_time = 3;
+  // A unique ID in a game record file.
+  string game_id = 1;
+  string red_id = 2;
+  string black_id = 3;
+  google.protobuf.Timestamp start_time = 4;
   // The moves in Xboard notation.
-  repeated string moves = 4;
+  repeated string moves = 5;
   // The scores (relative to red) given by each engine. Corresponds 1-1 to the
   // moves.
-  repeated double scores = 5 [packed=true];
-  GameResult result = 6;
+  repeated double scores = 6 [packed=true];
+  GameResult result = 7;
 }

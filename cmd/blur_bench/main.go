@@ -34,7 +34,7 @@ func main() {
 	} else {
 		output_directory = ""
 	}
-	outputFileName := path.Join(output_directory, fmt.Sprintf("%s_%s_%s.rio",
+	outputFileName := path.Join(output_directory, fmt.Sprintf("%s_%s_%s",
 		blur_bench.ExtractEngineName(engine1),
 		blur_bench.ExtractEngineName(engine2), time.Now().Format(time.RFC3339)))
 

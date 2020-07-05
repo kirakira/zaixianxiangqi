@@ -7,14 +7,14 @@ import (
 	"io"
 	"log"
 	"math/rand"
-	"os"
 	"os/exec"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	"kythe.io/kythe/go/util/riegeli"
+	"github.com/syndtr/goleveldb/leveldb"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	. "github.com/kirakira/zaixianxiangqi/internal"
 	. "github.com/kirakira/zaixianxiangqi/internal/blur_bench/genfiles"
@@ -122,7 +122,7 @@ func closeEngine(engine *engineHandles) {
 	engine.Cmd.Wait()
 }
 
-func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, error) {
+func playGame(engines [2]string, redPlayer int, threadIndex, gameIndex int) (*GameRecord, error) {
 	// Start engines.
 	var handles [2]*engineHandles
 	for i := 0; i < 2; i++ {
@@ -137,16 +137,14 @@ func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, e
 		}
 	}
 
-	log.Printf("Starting a new game: %s (red), %s (black)\n", handles[redPlayer].Name, handles[1-redPlayer].Name)
+	gameId := fmt.Sprintf("game_%d_%d", threadIndex, gameIndex)
+	log.Printf("Starting a new game %s: %s (red), %s (black)\n", gameId, handles[redPlayer].Name, handles[1-redPlayer].Name)
 
-	startTime, err := ptypes.TimestampProto(time.Now())
-	if err != nil {
-		return nil, err
-	}
 	gameRecord := GameRecord{
+		GameId:    gameId,
 		RedId:     handles[redPlayer].Name,
 		BlackId:   handles[1-redPlayer].Name,
-		StartTime: startTime,
+		StartTime: timestamppb.New(time.Now()),
 	}
 	board := MakeInitialBoard()
 
@@ -158,8 +156,7 @@ func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, e
 	}
 
 	// Start the game.
-	err = sendCommand(handles[redPlayer], "go", threadIndex)
-	if err != nil {
+	if err := sendCommand(handles[redPlayer], "go", threadIndex); err != nil {
 		return nil, err
 	}
 	for i := redPlayer; true; i = 1 - i {
@@ -223,14 +220,15 @@ func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, e
 }
 
 func selfPlayThread(engines [2]string, redPlayer int, threadIndex int, resultChannel chan *GameRecord) {
-	for ; true; redPlayer = 1 - redPlayer {
-		gameRecord, err := playGame(engines, redPlayer, threadIndex)
+	for i := 0; true; i++ {
+		gameRecord, err := playGame(engines, redPlayer, threadIndex, i)
 		if err != nil {
 			log.Printf("Game ended abnormally: %s\n", err)
 			close(resultChannel)
 			break
 		}
 		resultChannel <- gameRecord
+		redPlayer = 1 - redPlayer
 	}
 }
 
@@ -259,13 +257,21 @@ func printCurrentScore(halfScores map[string]int) {
 }
 
 func writeGameRecord(outputFile string, record *GameRecord) error {
-	f, err := os.OpenFile(outputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	db, err := leveldb.OpenFile(outputFile, nil)
 	if err != nil {
 		return err
 	}
-	writer := riegeli.NewWriter(f, nil)
-	writer.PutProto(record)
-	writer.Close()
+	defer db.Close()
+
+	serializedProto, err := proto.Marshal(record)
+	if err != nil {
+		return err
+	}
+	err = db.Put([]byte(record.GameId), serializedProto, nil)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

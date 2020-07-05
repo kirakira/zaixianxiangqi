@@ -22,16 +22,19 @@ type InitOptions struct {
 	ProjectIdOverride   *string
 }
 
-func InitXiangqi(options InitOptions) (Context, error) {
-	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Llongfile)
-
-	var ctx Context
-
+func GetPort() string {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	ctx.Port = port
+	return port
+}
+
+func InitXiangqi(options InitOptions) (Context, error) {
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Llongfile)
+
+	var ctx Context
+	ctx.Port = GetPort()
 
 	if options.ProjectIdOverride != nil {
 		ctx.ProjectID = *options.ProjectIdOverride

@@ -1,0 +1,86 @@
+div.board-layout {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    grid-template-areas:
+      ".   game-info  ."
+      ".    board     ."
+      ". move-history .";
+}
+
+div.game-info-container {
+    grid-area: game-info;
+    display: flex;
+    justify-content: space-around;
+}
+
+div.game-title-container {
+    display: grid;
+    grid-template-rows: auto auto;
+    justify-items: center;
+    align-items: center;
+}
+
+div.game-status-container {
+    font-style: italic;
+}
+
+div.player-info-container {
+    display: grid;
+    grid-template-columns: max-content max-content max-content;
+    align-items: center;
+    justify-content: center;
+}
+
+div#gameTitle h3 {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+span.gameStatus {
+    display: none;
+}
+
+svg.colorIndicator {
+    width: 1.6em;
+    height: 1.6em;
+}
+
+div.playerName {
+    padding-left: 0.3em;
+}
+
+svg.stopwatch {
+    width: 2em;
+    height: 2em;
+}
+
+svg#board {
+    grid-area: board;
+    max-width: 100vw;
+    max-height: 90vh;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+div#move-history {
+    grid-area: move-history;
+}
+
+#moveHistoryControls {
+    margin-left: auto;
+    margin-right: auto;
+    border-collapse: separate;
+    border-spacing: 10px 0px;
+}
+
+.sit-link {
+    font-style: italic;
+}
+
+.disabled-link {
+    color: gray;
+}
+
+.hint-you {
+    font-style: italic;
+}
