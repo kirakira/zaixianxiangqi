@@ -117,7 +117,7 @@ func sendInitialCommands(engine *engineHandles, threadIndex int) error {
 }
 
 func closeEngine(engine *engineHandles) {
-	log.Printf("%s:CLOSE\n")
+	log.Printf("%s:CLOSE\n", engine.Name)
 	engine.Stdin.Close()
 	engine.Cmd.Wait()
 }
@@ -254,7 +254,7 @@ func printCurrentScore(halfScores map[string]int) {
 		return list[i].Name < list[j].Name
 	})
 
-	log.Printf("Current Score: %s %d : %d %s", list[0].Name,
+	log.Printf("Current Score: %s %f : %f %s\n", list[0].Name,
 		float64(list[0].HalfScore)/2, float64(list[1].HalfScore)/2, list[1].Name)
 }
 
