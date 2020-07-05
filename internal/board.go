@@ -17,6 +17,11 @@ type Board struct {
 	MoveHistory []HistoryMove
 }
 
+const (
+	// The number of times the board position needs to be repeated in order to invoke repetition rules.
+	REPETITION_COUNT = 3
+)
+
 func MakeInitialBoard() *Board {
 	var board Board
 	board.SetBoard("rheakaehr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RHEAKAEHR", true)
@@ -136,6 +141,11 @@ func (board *Board) GenerateAllMoves() []Move {
 
 func (board *Board) At(pos Position) *string {
 	return &board.Board[pos.Row][pos.Col]
+}
+
+// Returns whether the same board position has repeated 3 times or more.
+func (board *Board) CheckRepetition() bool {
+	return board.checkRepetitionOfCycle(4) || board.checkRepetitionOfCycle(6) || board.checkRepetitionOfCycle(8)
 }
 
 var di = [...]int{0, 1, 0, -1}
@@ -377,4 +387,59 @@ func (board *Board) generateBPMoves(pos Position) []Move {
 		}
 	}
 	return moves
+}
+
+func sameMoveSequence(seq1, seq2 []HistoryMove) bool {
+	for i := 0; i < len(seq1); i++ {
+		if seq1[i].Move != seq2[i].Move {
+			return false
+		}
+	}
+	return true
+}
+
+func isSamePlayerMoveSequenceCyclic(seq []HistoryMove) bool {
+	for i := 0; i < len(seq); i++ {
+		ni := (i + 1) % len(seq)
+		if seq[i].Move.To != seq[ni].Move.From {
+			return false
+		}
+	}
+	return true
+}
+
+func isMoveSequenceCyclic(seq []HistoryMove) bool {
+	extractPlayerMoves := func(start int) []HistoryMove {
+		var newSeq []HistoryMove
+		for i := start; i < len(seq); i += 2 {
+			newSeq = append(newSeq, seq[i])
+		}
+		return newSeq
+	}
+	return isSamePlayerMoveSequenceCyclic(extractPlayerMoves(0)) &&
+		isSamePlayerMoveSequenceCyclic(extractPlayerMoves(1))
+}
+
+func (board *Board) checkRepetitionOfCycle(cycle int) bool {
+	moveCount := len(board.MoveHistory)
+	lastCapture := -1
+	for i := moveCount - 1; i >= 0; i-- {
+		if len(board.MoveHistory[i].Capture) > 0 {
+			lastCapture = i
+			break
+		}
+	}
+	recentNonCapturingMoves := moveCount - lastCapture - 1
+	if recentNonCapturingMoves < cycle*REPETITION_COUNT {
+		return false
+	}
+
+	for i := 1; i < REPETITION_COUNT; i++ {
+		if !sameMoveSequence(board.MoveHistory[moveCount-cycle:moveCount],
+			board.MoveHistory[moveCount-cycle*i-cycle:moveCount-cycle*i]) {
+			return false
+		}
+	}
+
+	return isMoveSequenceCyclic(board.MoveHistory[moveCount-cycle : moveCount])
 }

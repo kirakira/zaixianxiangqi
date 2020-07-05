@@ -198,8 +198,14 @@ func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, e
 					score = -score
 				}
 			}
-			log.Printf("move %s score %f\n", output.Move.XboardNotation(), score)
 			gameRecord.Scores = append(gameRecord.Scores, score)
+
+			// Check if the move triggered repetition rules.
+			if board.CheckRepetition() {
+				log.Printf("Repetition rule triggered.")
+				gameRecord.Result = GameResult_DRAW
+				break
+			}
 
 			// Send the move to the other engine.
 			err = sendCommand(handles[1-i], output.Move.XboardNotation(), threadIndex)

@@ -121,3 +121,75 @@ func TestCheckedMove(t *testing.T) {
 		board.Unmove()
 	}
 }
+
+func toMoves(movesString []string) []Move {
+	var moves []Move
+	for _, s := range movesString {
+		m, err := ParseXboardMove(s)
+		if err != nil {
+			log.Fatalf("Invalid test move %s", s)
+		}
+		moves = append(moves, m)
+	}
+	return moves
+}
+
+func Test4Repetition(t *testing.T) {
+	board := MakeInitialBoard()
+	moves1 := toMoves([]string{"a0a1", "a1a0"})
+	moves2 := toMoves([]string{"a9a8", "a8a9"})
+
+	for j := 0; j < 3; j++ {
+		for i := 0; i < 2; i++ {
+			board.Move(moves1[i])
+			if board.CheckRepetition() {
+				t.Errorf("should not report repetition yet")
+			}
+			board.Move(moves2[i])
+		}
+	}
+
+	if !board.CheckRepetition() {
+		t.Errorf("should report repetition")
+	}
+}
+
+func Test6Repetition(t *testing.T) {
+	board := MakeInitialBoard()
+	moves1 := toMoves([]string{"a0a2", "a2a1", "a1a0"})
+	moves2 := toMoves([]string{"a9a7", "a7a8", "a8a9"})
+
+	for j := 0; j < 3; j++ {
+		for i := 0; i < 3; i++ {
+			board.Move(moves1[i])
+			if board.CheckRepetition() {
+				t.Errorf("should not report repetition yet")
+			}
+			board.Move(moves2[i])
+		}
+	}
+
+	if !board.CheckRepetition() {
+		t.Errorf("should report repetition")
+	}
+}
+
+func Test8Repetition(t *testing.T) {
+	board := MakeInitialBoard()
+	moves1 := toMoves([]string{"a0a1", "a1a2", "a2a1", "a1a0"})
+	moves2 := toMoves([]string{"a9a8", "a8a7", "a7a8", "a8a9"})
+
+	for j := 0; j < 3; j++ {
+		for i := 0; i < 4; i++ {
+			board.Move(moves1[i])
+			if board.CheckRepetition() {
+				t.Errorf("should not report repetition yet")
+			}
+			board.Move(moves2[i])
+		}
+	}
+
+	if !board.CheckRepetition() {
+		t.Errorf("should report repetition")
+	}
+}
