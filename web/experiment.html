@@ -8,17 +8,17 @@
         <link rel="stylesheet" href="/css/board.css" type="text/css" media="screen" />
         <link rel="stylesheet" href="/css/experiment.css" type="text/css" media="screen" />
         <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-        <title>Experiment {{.ExperimentId}}</title>
+        <title>Experiment {{.ExperimentMetadata.Id}}</title>
     </head>
     <body>
         <div class="vertical-layout">
-            <div class=header-layout>
-                <h1>Experiment {{.ExperimentId}}</h1>
+            <div class="header-layout">
+                <div><span class="engineName treatmentName">{{.ExperimentMetadata.Treatment.Name}}</span> vs <span class="engineName controlName">{{.ExperimentMetadata.Control.Name}}</span></div>
+                <div>Total played {{.Stats.Total}} games: <span class="{{.Stats.Color}}"><b>{{.Stats.Wins}}</b> W <b>{{.Stats.Losses}}</b> L {{.Stats.Draws}} D</span></div>
             </div>
             <div class="horizontal-layout">
                 <div class=game-list-layout>
                     <table>
-                      <thead class="gameList"><tr><th id="gameListHeader" colspan="2">Games</th></tr></thead>
                       <tbody id="gameList" class="gameList"></tbody>
                     </table>
                 </div>

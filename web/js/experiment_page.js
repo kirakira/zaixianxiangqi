@@ -110,13 +110,13 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
                 }
                 if (outcome == 0) {
                     td.appendChild(document.createTextNode("D"));
-                    td.classList.add("gameResultDraw");
+                    td.classList.add("draw");
                 } else if (outcome == 1) {
                     td.appendChild(document.createTextNode("W"));
-                    td.classList.add("gameResultWin");
+                    td.classList.add("win");
                 } else {
                     td.appendChild(document.createTextNode("L"));
-                    td.classList.add("gameResultLose");
+                    td.classList.add("loss");
                 }
                 tr.appendChild(td);
             }
@@ -219,6 +219,9 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         // init the board and game
         board_ = new Board(onPlayerMove);
         refreshPage();
+        if (gameRecordsTOC.length > 0) {
+            requestGameInfo(0);
+        }
     }
 }
 

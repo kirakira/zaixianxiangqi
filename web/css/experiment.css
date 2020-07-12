@@ -15,6 +15,26 @@ div.vertical-layout {
     width: 100%;
 }
 
+.engineName {
+    font-size: x-large;
+}
+
+.controlName {
+    color: gray;
+}
+
+.win {
+    background-color: lightgreen;
+}
+
+.loss {
+    background-color: red;
+}
+
+.draw {
+    background-color: lightgray;
+}
+
 div.horizontal-layout {
     display: flex;
     overflow: auto;

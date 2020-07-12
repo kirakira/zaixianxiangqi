@@ -138,10 +138,11 @@ func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, e
 		}
 	}
 
-	log.Printf("Starting a new game: %s (red), %s (black)\n", handles[redPlayer].Name, handles[1-redPlayer].Name)
+	gameId := RandomString(8)
+	log.Printf("Starting a new game %s: %s (red), %s (black)\n", gameId, handles[redPlayer].Name, handles[1-redPlayer].Name)
 
 	gameRecord := GameRecord{
-		GameId:       RandomString(8),
+		GameId:       gameId,
 		ControlIsRed: redPlayer == 0,
 		StartTime:    timestamppb.New(time.Now()),
 	}

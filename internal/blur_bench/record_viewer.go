@@ -19,17 +19,29 @@ import (
 	. "github.com/kirakira/zaixianxiangqi/internal/blur_bench/genfiles"
 )
 
-type pageJs struct {
-	ExperimentMetadata []byte
-	TOC                []byte
+type stats struct {
+	Wins   int
+	Losses int
+	Draws  int
+	Total  int
+	Color  string
 }
 
-func getPageJs(leveldbDirectory string, metadata *ExperimentMetadata) (*pageJs, error) {
+type pageData struct {
+	ExperimentMetadata   *ExperimentMetadata
+	Stats                *stats
+	ExperimentMetadataJs []byte
+	TOC                  []byte
+}
+
+func getPageData(leveldbDirectory string, metadata *ExperimentMetadata) (*pageData, error) {
 	db, err := leveldb.OpenFile(leveldbDirectory, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer db.Close()
+
+	stats := stats{}
 
 	iter := db.NewIterator(util.BytesPrefix([]byte(keyPrefixForExperimentGames(metadata.Id))), nil)
 	toc := []GameRecord{}
@@ -44,6 +56,23 @@ func getPageJs(leveldbDirectory string, metadata *ExperimentMetadata) (*pageJs, 
 		record.Scores = nil
 
 		toc = append(toc, record)
+
+		if (record.Result == GameResult_RED_WON && !record.ControlIsRed) || (record.Result == GameResult_BLACK_WON && record.ControlIsRed) {
+			stats.Wins += 1
+		} else if (record.Result == GameResult_RED_WON && record.ControlIsRed) || (record.Result == GameResult_BLACK_WON && !record.ControlIsRed) {
+			stats.Losses += 1
+		} else {
+			stats.Draws += 1
+		}
+	}
+	stats.Total = stats.Wins + stats.Draws + stats.Losses
+
+	if stats.Wins > stats.Losses {
+		stats.Color = "win"
+	} else if stats.Wins < stats.Losses {
+		stats.Color = "loss"
+	} else {
+		stats.Color = "draw"
 	}
 
 	sort.Slice(toc, func(i, j int) bool {
@@ -59,9 +88,11 @@ func getPageJs(leveldbDirectory string, metadata *ExperimentMetadata) (*pageJs, 
 		return nil, err
 	}
 
-	return &pageJs{
-		ExperimentMetadata: experimentMetadataEncoded,
-		TOC:                TOCEncoded,
+	return &pageData{
+		ExperimentMetadata:   metadata,
+		Stats:                &stats,
+		ExperimentMetadataJs: experimentMetadataEncoded,
+		TOC:                  TOCEncoded,
 	}, nil
 }
 
@@ -137,19 +168,21 @@ func viewExperimentPage(leveldbDirectory string, t *template.Template, w http.Re
 		http.Error(w, "Invalid experiment id.", http.StatusBadRequest)
 	}
 
-	pageJs, err := getPageJs(leveldbDirectory, metadata)
+	pageData, err := getPageData(leveldbDirectory, metadata)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to load experiment: %v.", err), http.StatusInternalServerError)
 		return
 	}
 
 	if err := t.Execute(w, struct {
-		ExperimentId string
-		JsCode       template.JS
+		ExperimentMetadata *ExperimentMetadata
+		Stats              *stats
+		JsCode             template.JS
 	}{
-		ExperimentId: fmt.Sprintf("%d", experimentId),
+		ExperimentMetadata: pageData.ExperimentMetadata,
+		Stats:              pageData.Stats,
 		JsCode: template.JS(fmt.Sprintf(
-			"var experimentMetadata = JSON.parse('%s'); var toc = JSON.parse('%s');", pageJs.ExperimentMetadata, pageJs.TOC)),
+			"var experimentMetadata = JSON.parse('%s'); var toc = JSON.parse('%s');", pageData.ExperimentMetadataJs, pageData.TOC)),
 	}); err != nil {
 		log.Fatalf("Failed to execute HTML template: %v", err)
 	}
