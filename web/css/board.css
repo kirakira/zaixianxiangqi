@@ -57,12 +57,12 @@ svg.stopwatch {
 
 div.board-container {
     grid-area: board;
-    overflow: auto;
+    overflow: hidden;
 }
 
 svg#board {
     width: 100%;
-    height: 99%;
+    height: 100%;
     margin-left: auto;
     margin-right: auto;
 }
