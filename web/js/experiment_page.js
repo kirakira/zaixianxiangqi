@@ -79,8 +79,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         refreshPage();
     }
 
-    function requestGameInfo(i) {
-        var gameId = gameRecordsTOC[i].game_id;
+    function requestGameInfo(gameId) {
         get(endPointFor("/game_record/" + experimentMetadata.id + "/" + gameId), function(data) {
             onGameInfo(data);
         }, function(content) {
@@ -123,10 +122,10 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
 
             {
                 var td = document.createElement("td");
-                td.appendChild(createLink(undefined, undefined, "#",
-                    function(i_copy) {
-                        return function() { requestGameInfo(i_copy); return false; };
-                    }(i),
+                td.appendChild(createLink(undefined, undefined, "#" + gameRecord.game_id,
+                    function(gameRecordCopy) {
+                      return function() { requestGameInfo(gameRecordCopy.game_id); };
+                    }(gameRecord),
                     gameRecord.game_id));
                 tr.appendChild(td);
             }
@@ -219,8 +218,10 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         // init the board and game
         board_ = new Board(onPlayerMove);
         refreshPage();
-        if (gameRecordsTOC.length > 0) {
-            requestGameInfo(0);
+        if (window.location.hash) {
+            requestGameInfo(window.location.hash.substring(1));
+        } else if (gameRecordsTOC.length > 0) {
+            requestGameInfo(gameRecordsTOC[0].game_id);
         }
     }
 }
