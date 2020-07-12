@@ -23,6 +23,10 @@ div.vertical-layout {
     color: gray;
 }
 
+.gameList {
+    font-family: monospace;
+}
+
 .win {
     background-color: lightgreen;
 }
@@ -32,6 +36,14 @@ div.vertical-layout {
 }
 
 .draw {
+    background-color: lightgray;
+}
+
+.selectedGame {
+    background-color: lightblue;
+}
+
+.pendingSelection {
     background-color: lightgray;
 }
 

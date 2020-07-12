@@ -191,17 +191,20 @@ func viewExperimentPage(leveldbDirectory string, t *template.Template, w http.Re
 func readProtoRecord(leveldbDirectory string, key []byte, record proto.Message) error {
 	db, err := leveldb.OpenFile(leveldbDirectory, nil)
 	if err != nil {
+		log.Printf("Open DB failed %v", err)
 		return err
 	}
 	defer db.Close()
 
 	value, err := db.Get(key, nil)
 	if err != nil {
+		log.Printf("Get key failed %v", err)
 		return err
 	}
 
 	err = proto.Unmarshal(value, record)
 	if err != nil {
+		log.Printf("Unmarshal failed %v", err)
 		return err
 	}
 
@@ -286,6 +289,7 @@ func gameRecordAPI(leveldbDirectory string, w http.ResponseWriter, r *http.Reque
 
 	metadata, err := readExperimentMetadata(leveldbDirectory, experimentId)
 	if err != nil {
+		log.Printf("Failed to read test metadata: %v", err)
 		http.Error(w, "Failed to read test metadata.", http.StatusInternalServerError)
 		return
 	}
