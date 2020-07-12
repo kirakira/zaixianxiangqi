@@ -17,10 +17,17 @@ function BoardUI(onSquareSelected) {
     var gridSize_ = 50, middleGap_ = 0;
     var flippedView_ = false;
 
-    reset(false);
+    initialize();
 
     function getSVG() {
         return document.getElementById("board");
+    }
+
+    function eraseAllPieces(className) {
+        var children = getSVG().getElementsByClassName("piece-element");
+        while (children.length > 0)
+            getSVG().removeChild(children[0]);
+        eraseHighlights();
     }
 
     function getGridX(i, j) {
@@ -44,7 +51,7 @@ function BoardUI(onSquareSelected) {
         line.setAttribute("y1", y1);
         line.setAttribute("x2", x2);
         line.setAttribute("y2", y2);
-        line.setAttribute("class", c);
+        line.classList.add(c);
         if (id)
             line.id = id;
         return line;
@@ -56,13 +63,14 @@ function BoardUI(onSquareSelected) {
         return createLine(x1, y1, x2, y2, c, id);
     }
 
-    function createCircle(i, j, r, c, id) {
+    function createPieceCircle(i, j, r, c, id) {
         var x = getGridX(i, j), y = getGridY(i, j);
         var circle = document.createElementNS(SVG_NS, "circle");
         circle.setAttribute("cx", x);
         circle.setAttribute("cy", y);
         circle.setAttribute("r", r);
-        circle.setAttribute("class", c);
+        circle.classList.add(c[i]);
+        circle.classList.add("piece-element");
         if (id)
             circle.id = id;
         return circle;
@@ -79,7 +87,8 @@ function BoardUI(onSquareSelected) {
         t.setAttribute("x", x);
         t.setAttribute("y", y);
         t.appendChild(document.createTextNode(text));
-        t.setAttribute("class", c);
+        t.classList.add(c);
+        t.classList.add("piece-element");
         t.userSelect = "none";
         if (id)
             t.id = id;
@@ -99,12 +108,12 @@ function BoardUI(onSquareSelected) {
         if (assignId) {
             outerId = "piece-outer-" + positionToString(i, j);
         }
-        var outer = createCircle(i, j, 23, "piece-outer", outerId);
+        var outer = createPieceCircle(i, j, 23, "piece-outer", outerId);
         var innerId = undefined;
         if (assignId) {
             innerId = "piece-inner-" + positionToString(i, j);
         }
-        var inner = createCircle(i, j, 20, "piece-inner", innerId);
+        var inner = createPieceCircle(i, j, 20, "piece-inner", innerId);
         var text = PIECE_TEXTS[piece];
         var textId = undefined;
         if (assignId) {
@@ -155,7 +164,7 @@ function BoardUI(onSquareSelected) {
     }
 
     function putPieceCover(i, j) {
-        var cover = createCircle(i, j, 23, "piece-cover", "piece-cover-" + positionToString(i, j));
+        var cover = createPieceCircle(i, j, 23, "piece-cover", "piece-cover-" + positionToString(i, j));
         cover.style.strokeWidth = 0;
         cover.style.fillOpacity = 0;
         cover.userSelect = "none";
@@ -211,10 +220,18 @@ function BoardUI(onSquareSelected) {
         removeAllChildren("board");
     }
 
-    function reset(flippedView) {
-        flippedView_ = flippedView;
-        resetSVG();
+    function initialize() {
         drawGrid();
+    }
+
+    function reset(flippedView) {
+        if (flippedView_ == flippedView) {
+            eraseAllPieces();
+        } else {
+            flippedView_ = flippedView;
+            resetSVG();
+            drawGrid();
+        }
     }
 
     function highlightSquare(i, j) {

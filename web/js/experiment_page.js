@@ -155,7 +155,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
     function refreshPage() {
         refreshTOC();
         refreshPlayerList();
-        board_.setState("r", true, parseMoves(gameInfo_ ? gameInfo_.moves : ""));
+        board_.resetState("r", true, parseMoves(gameInfo_ ? gameInfo_.moves : ""));
         updateGameTitle();
         updateStatus();
         refreshMoveHistoryControls();

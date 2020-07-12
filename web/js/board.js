@@ -3,6 +3,7 @@
  */
 function Board(onMove) {
     this.setState = setState;
+    this.resetState = resetState;
     this.showMove = showMove;
     this.isRedNext = isRedNext;
     this.numMoves = numMoves;
@@ -62,6 +63,23 @@ function Board(onMove) {
                 unmakeUIMove(oldMoves[i], null);
         }
         showMove(numMovesToShow);
+    }
+
+    // Similar to setState, but discards current selection and highlights the new
+    // last move.
+    function resetState(mySide, viewOnly, moves) {
+        mySide_ = mySide;
+        ui_.reset(mySide == "b");
+        board_.reset();
+        board_.setMoves(moves);
+        redrawBoard();
+        selection_ = null;
+        numMovesShown_ = board_.numMoves();
+        if (board_.numMoves() > 0) {
+          var lastMove = board_.lastMove();
+          ui_.highlightSquare(lastMove.i1, lastMove.j1);
+          ui_.highlightSquare(lastMove.i2, lastMove.j2);
+        }
     }
 
     function showMove(numMovesToShow) {

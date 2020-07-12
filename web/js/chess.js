@@ -28,6 +28,7 @@ function Chess() {
     this.move = move;
     this.checkMove = checkMove;
     this.moveHistory = moveHistory;
+    this.lastMove = lastMove;
     this.pieceAt = pieceAt;
     this.isRedNext = isRedNext;
     this.numMoves = numMoves;
@@ -104,6 +105,10 @@ function Chess() {
             ans.push(moveHistory_[i]);
         }
         return ans;
+    }
+
+    function lastMove() {
+        return moveHistory_[moveHistory_.length - 1];
     }
 
     function numMoves() {
