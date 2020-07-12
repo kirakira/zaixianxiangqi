@@ -13,7 +13,7 @@ import (
 func main() {
 	args := os.Args
 	if len(args) < 2 {
-		fmt.Println("Usage: game_record_viewer filename")
+		fmt.Println("Usage: game_record_viewer leveldb_directory")
 		os.Exit(1)
 	}
 

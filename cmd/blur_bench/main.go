@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 	"strconv"
-	"time"
 
 	"github.com/kirakira/zaixianxiangqi/internal/blur_bench"
 )
@@ -14,7 +12,7 @@ import (
 func main() {
 	args := os.Args
 	if len(args) < 4 {
-		fmt.Println("Usage: blur_bench engine1 engine2 threads [output_directory]")
+		fmt.Println("Usage: blur_bench engine1 engine2 threads [leveldb_directory]")
 		os.Exit(1)
 	}
 
@@ -28,15 +26,12 @@ func main() {
 	engine1 := args[1]
 	engine2 := args[2]
 
-	var output_directory string
+	var leveldbDirectory string
 	if len(args) == 5 {
-		output_directory = args[4]
+		leveldbDirectory = args[4]
 	} else {
-		output_directory = ""
+		leveldbDirectory = "games_data"
 	}
-	outputFileName := path.Join(output_directory, fmt.Sprintf("%s_%s_%s",
-		blur_bench.ExtractEngineName(engine1),
-		blur_bench.ExtractEngineName(engine2), time.Now().Format(time.RFC3339)))
 
-	blur_bench.SelfPlay([2]string{engine1, engine2}, numThreads, outputFileName)
+	blur_bench.SelfPlay([2]string{engine1, engine2}, numThreads, leveldbDirectory)
 }

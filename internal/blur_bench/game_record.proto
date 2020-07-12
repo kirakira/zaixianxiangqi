@@ -6,6 +6,17 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/kirakira/zaixianxiangqi/internal/blur_bench";
 
+message EngineInfo {
+  string name = 1;
+}
+
+message ExperimentMetadata {
+  int64 id = 1;
+  google.protobuf.Timestamp creation_time = 2;
+  EngineInfo control = 3;
+  EngineInfo treatment = 4;
+}
+
 enum GameResult {
   UNKNOWN = 0;
   RED_WON = 1;
@@ -14,15 +25,15 @@ enum GameResult {
 }
 
 message GameRecord {
-  // A unique ID in a game record file.
+  // A unique ID that identifies a game in the experiment.
   string game_id = 1;
-  string red_id = 2;
-  string black_id = 3;
-  google.protobuf.Timestamp start_time = 4;
+  // True if control is red; false if control is black.
+  bool control_is_red = 2;
+  google.protobuf.Timestamp start_time = 3;
   // The moves in Xboard notation.
-  repeated string moves = 5;
+  repeated string moves = 4;
   // The scores (relative to red) given by each engine. Corresponds 1-1 to the
   // moves.
-  repeated double scores = 6 [packed=true];
-  GameResult result = 7;
+  repeated double scores = 5 [packed=true];
+  GameResult result = 6;
 }

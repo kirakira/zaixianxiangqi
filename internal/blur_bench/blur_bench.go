@@ -8,11 +8,12 @@ import (
 	"log"
 	"math/rand"
 	"os/exec"
-	"sort"
 	"strings"
 	"time"
 
+	"github.com/google/orderedcode"
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/util"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -122,7 +123,7 @@ func closeEngine(engine *engineHandles) {
 	engine.Cmd.Wait()
 }
 
-func playGame(engines [2]string, redPlayer int, threadIndex, gameIndex int) (*GameRecord, error) {
+func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, error) {
 	// Start engines.
 	var handles [2]*engineHandles
 	for i := 0; i < 2; i++ {
@@ -137,14 +138,12 @@ func playGame(engines [2]string, redPlayer int, threadIndex, gameIndex int) (*Ga
 		}
 	}
 
-	gameId := fmt.Sprintf("game_%d_%d", threadIndex, gameIndex)
-	log.Printf("Starting a new game %s: %s (red), %s (black)\n", gameId, handles[redPlayer].Name, handles[1-redPlayer].Name)
+	log.Printf("Starting a new game: %s (red), %s (black)\n", handles[redPlayer].Name, handles[1-redPlayer].Name)
 
 	gameRecord := GameRecord{
-		GameId:    gameId,
-		RedId:     handles[redPlayer].Name,
-		BlackId:   handles[1-redPlayer].Name,
-		StartTime: timestamppb.New(time.Now()),
+		GameId:       RandomString(8),
+		ControlIsRed: redPlayer == 0,
+		StartTime:    timestamppb.New(time.Now()),
 	}
 	board := MakeInitialBoard()
 
@@ -220,54 +219,24 @@ func playGame(engines [2]string, redPlayer int, threadIndex, gameIndex int) (*Ga
 }
 
 func selfPlayThread(engines [2]string, redPlayer int, threadIndex int, resultChannel chan *GameRecord) {
-	for i := 0; true; i++ {
-		gameRecord, err := playGame(engines, redPlayer, threadIndex, i)
+	for ; true; redPlayer = 1 - redPlayer {
+		gameRecord, err := playGame(engines, redPlayer, threadIndex)
 		if err != nil {
 			log.Printf("Game ended abnormally: %s\n", err)
 			close(resultChannel)
 			break
 		}
 		resultChannel <- gameRecord
-		redPlayer = 1 - redPlayer
 	}
 }
 
-func printCurrentScore(halfScores map[string]int) {
-	if len(halfScores) != 2 {
-		log.Fatalf("Detected %d unique ids", len(halfScores))
-	}
-
-	type NameHalfScore struct {
-		Name      string
-		HalfScore int
-	}
-	var list []NameHalfScore
-	for id, halfScore := range halfScores {
-		list = append(list, NameHalfScore{
-			Name:      id,
-			HalfScore: halfScore,
-		})
-	}
-	sort.Slice(list, func(i, j int) bool {
-		return list[i].Name < list[j].Name
-	})
-
-	log.Printf("Current Score: %s %f : %f %s\n", list[0].Name,
-		float64(list[0].HalfScore)/2, float64(list[1].HalfScore)/2, list[1].Name)
-}
-
-func writeGameRecord(outputFile string, record *GameRecord) error {
-	db, err := leveldb.OpenFile(outputFile, nil)
+func writeProtoRecordToDB(db *leveldb.DB, key []byte, record proto.Message) error {
+	value, err := proto.Marshal(record)
 	if err != nil {
 		return err
 	}
-	defer db.Close()
 
-	serializedProto, err := proto.Marshal(record)
-	if err != nil {
-		return err
-	}
-	err = db.Put([]byte(record.GameId), serializedProto, nil)
+	err = db.Put(key, value, nil)
 	if err != nil {
 		return err
 	}
@@ -275,28 +244,127 @@ func writeGameRecord(outputFile string, record *GameRecord) error {
 	return nil
 }
 
-func recorderThread(outputFile string, resultChannel chan *GameRecord) {
-	halfScores := map[string]int{}
+func writeProtoRecord(leveldbDirectory string, key []byte, record proto.Message) error {
+	db, err := leveldb.OpenFile(leveldbDirectory, nil)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	return writeProtoRecordToDB(db, key, record)
+}
+
+func writeGameRecord(leveldbDirectory string, experimentId int64, record *GameRecord) error {
+	return writeProtoRecord(leveldbDirectory, keyForGameRecord(experimentId, record.GameId), record)
+}
+
+func createExperimentMetadata(engines [2]string) *ExperimentMetadata {
+	return &ExperimentMetadata{
+		CreationTime: timestamppb.New(time.Now()),
+		Control: &EngineInfo{
+			Name: ExtractEngineName(engines[0]),
+		},
+		Treatment: &EngineInfo{
+			Name: ExtractEngineName(engines[1]),
+		},
+	}
+}
+
+func findNextExperimentKey(db *leveldb.DB) (int64, error) {
+	iter := db.NewIterator(util.BytesPrefix(keyPrefixForExperimentMetadata()), nil)
+	var lastKey int64 = 9999
+	if iter.Next() {
+		var metadata ExperimentMetadata
+		iter.Value()
+		err := proto.Unmarshal(iter.Value(), &metadata)
+		if err != nil {
+			return 0, err
+		}
+		lastKey = metadata.Id
+	}
+	return lastKey + 1, nil
+}
+
+func writeExperimentMetadata(leveldbDirectory string, metadata *ExperimentMetadata) error {
+	db, err := leveldb.OpenFile(leveldbDirectory, nil)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	metadata.Id, err = findNextExperimentKey(db)
+	if err != nil {
+		return err
+	}
+	return writeProtoRecordToDB(db, keyForExperimentMetadata(metadata.Id), metadata)
+}
+
+func keyPrefixForExperimentMetadata() []byte {
+	key, err := orderedcode.Append(nil, "metadata_")
+	if err != nil {
+		log.Fatalf("Failed keyPrefixForExperimentMetadata: %v", err)
+	}
+	return key
+}
+
+func keyForExperimentMetadata(experimentId int64) []byte {
+	key, err := orderedcode.Append(keyPrefixForExperimentMetadata(), orderedcode.Decr(experimentId))
+	if err != nil {
+		log.Fatalf("Failed keyForExperimentMetadata: %v", err)
+	}
+	return key
+}
+
+func keyPrefixForExperimentGames(experimentId int64) []byte {
+	key, err := orderedcode.Append(nil, "game_", orderedcode.Decr(experimentId))
+	if err != nil {
+		log.Fatalf("Failed keyPrefixForExperimentGames: %v", err)
+	}
+	return key
+}
+
+func keyForGameRecord(experimentId int64, gameId string) []byte {
+	key, err := orderedcode.Append(keyPrefixForExperimentGames(experimentId), gameId)
+	if err != nil {
+		log.Fatalf("Failed keyForGameRecord: %v", err)
+	}
+	return key
+}
+
+func recorderThread(engines [2]string, leveldbDirectory string, resultChannel chan *GameRecord) {
+	metadata := createExperimentMetadata(engines)
+	if err := writeExperimentMetadata(leveldbDirectory, metadata); err != nil {
+		log.Fatalf("Failed to write test metadata: %v", err)
+	}
+	log.Printf("Starting experiment %d. Writing output to '%s'.", metadata.Id, leveldbDirectory)
+
+	halfScores := [2]int{}
 	for record := range resultChannel {
 		if record.Result == GameResult_UNKNOWN {
 			log.Fatalf("Received a game with unknown result")
 		}
-		err := writeGameRecord(outputFile, record)
+		err := writeGameRecord(leveldbDirectory, metadata.Id, record)
 		if err != nil {
 			log.Printf("Failed to write game record: %s\n", err)
 		}
 
-		if record.Result == GameResult_RED_WON {
-			halfScores[record.RedId] += 2
-			halfScores[record.BlackId] += 0
-		} else if record.Result == GameResult_BLACK_WON {
-			halfScores[record.RedId] += 0
-			halfScores[record.BlackId] += 2
+		var redEngineIndex, blackEngineIndex int
+		if record.ControlIsRed {
+			redEngineIndex = 0
+			blackEngineIndex = 1
 		} else {
-			halfScores[record.RedId] += 1
-			halfScores[record.BlackId] += 1
+			redEngineIndex = 1
+			blackEngineIndex = 0
 		}
-		printCurrentScore(halfScores)
+		if record.Result == GameResult_RED_WON {
+			halfScores[redEngineIndex] += 2
+		} else if record.Result == GameResult_BLACK_WON {
+			halfScores[blackEngineIndex] += 2
+		} else {
+			halfScores[redEngineIndex] += 1
+			halfScores[blackEngineIndex] += 1
+		}
+		log.Printf("Current Score: %s %f : %f %s\n", ExtractEngineName(engines[0]),
+			float64(halfScores[0])/2, float64(halfScores[1])/2, ExtractEngineName(engines[1]))
 	}
 }
 
@@ -309,13 +377,13 @@ func ExtractEngineName(engine string) string {
 	}
 }
 
-func SelfPlay(engines [2]string, numThreads int, outputFile string) {
-	ch := make(chan *GameRecord)
+func SelfPlay(engines [2]string, numThreads int, leveldbDirectory string) {
 	rand.Seed(time.Now().UnixNano())
+	ch := make(chan *GameRecord)
+	recorderThread(engines, leveldbDirectory, ch)
 	redPlayer := rand.Intn(2)
 	for i := 0; i < numThreads; i++ {
 		go selfPlayThread(engines, redPlayer, i, ch)
 		redPlayer = 1 - redPlayer
 	}
-	recorderThread(outputFile, ch)
 }

@@ -2,6 +2,7 @@ package internal
 
 import (
 	"google.golang.org/api/oauth2/v2"
+	"math/rand"
 	"net/http"
 )
 
@@ -27,4 +28,13 @@ func VerifyIdToken(idToken string) (*oauth2.Tokeninfo, error) {
 		return nil, err
 	}
 	return tokenInfo, nil
+}
+
+func RandomString(length int) string {
+	charset := "abcdefghijklmnopqrstuvwxyz0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
 }

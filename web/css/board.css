@@ -1,5 +1,6 @@
 div.board-layout {
     display: grid;
+    overflow: auto;
     grid-template-columns: auto auto auto;
     grid-template-areas:
       ".   game-info  ."
@@ -54,10 +55,14 @@ svg.stopwatch {
     height: 2em;
 }
 
-svg#board {
+div.board-container {
     grid-area: board;
-    max-width: 100vw;
-    max-height: 90vh;
+    overflow: auto;
+}
+
+svg#board {
+    width: 100%;
+    height: 99%;
     margin-left: auto;
     margin-right: auto;
 }

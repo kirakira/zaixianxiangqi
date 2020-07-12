@@ -1,16 +1,3 @@
-// Define String.endsWith for Safari in order to comply with ECMA6
-if (!String.prototype.endsWith) {
-  String.prototype.endsWith = function(searchString, position) {
-      var subjectString = this.toString();
-      if (position === undefined || position > subjectString.length) {
-          position = subjectString.length;
-      }
-      position -= searchString.length;
-      var lastIndex = subjectString.indexOf(searchString, position);
-      return lastIndex !== -1 && lastIndex === position;
-  };
-}
-
 /**
  * @constructor
  */
@@ -199,20 +186,6 @@ function Game(currentGameId, myUid, gameInfo) {
                   onGameInfoUpdateFailure);
     }
 
-    function createLink(id, className, url, onclick, text) {
-        var a = document.createElement("a");
-        a.id = id;
-        if (className) {
-            a.className = className;
-        }
-        a.href = url;
-        if (onclick) {
-            a.onclick = onclick;
-        }
-        a.appendChild(document.createTextNode(text));
-        return a;
-    }
-
     function createHintYou(dummy) {
         var hintYou = document.createElement("sup");
         hintYou.className = "hint-you";
@@ -366,19 +339,6 @@ function Game(currentGameId, myUid, gameInfo) {
         createInviteAILink(ai_invitable);
     }
 
-    function resizeElements() {
-        var boardSVG = document.getElementById("board");
-        if (window.innerHeight * 0.81 <= window.innerWidth) {
-            // wide screen
-            boardSVG.style.removeProperty("width");
-            boardSVG.style.height = "90vh";
-        } else {
-            // long screen
-            boardSVG.style.width = "100vw";
-            boardSVG.style.removeProperty("height");
-        }
-    }
-
     function initApplication() {
         // init stopwatches
         redWatch_ = new Stopwatch("redStopwatch");
@@ -387,9 +347,6 @@ function Game(currentGameId, myUid, gameInfo) {
             redWatch_.tick();
             blackWatch_.tick();
         }, 60000 / redWatch_.frequency());
-
-        window.onload = resizeElements;
-        window.onresize = resizeElements;
 
         // init the board and game
         board_ = new Board(onPlayerMove);

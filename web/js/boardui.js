@@ -1,8 +1,3 @@
-function removeAllChildren(id) {
-    var elem = document.getElementById(id);
-    while (elem.lastChild) elem.removeChild(elem.lastChild);
-}
-
 /**
  * onSquareSelected(i, j) will be called when user selects square (i, j).
  *
