@@ -84,9 +84,9 @@ function Chess() {
         var rows = fen.split("/");
         if (rows.length != 10)
             throw "Malformed fen string: " + fen;
-        for (i = 0; i < 10; ++i) {
+        for (var i = 0; i < 10; ++i) {
             var j = 0;
-            for (k = 0; k < rows[i].length; ++k) {
+            for (var k = 0; k < rows[i].length; ++k) {
                 if (j >= 9)
                     throw "Malformed fen string at row " + i + ": " + fen;
                 if (isDigit(rows[i][k]))
@@ -120,7 +120,7 @@ function Chess() {
         moveHistory_ = [];
         for (var i = 0; i < 10; ++i) {
             board_.push([]);
-            for (j = 0; j < 9; ++j)
+            for (var j = 0; j < 9; ++j)
                 board_[i].push(0);
         }
         setBoard("rheakaehr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RHEAKAEHR");
@@ -209,11 +209,11 @@ function Chess() {
 
     function generateKMoves(i, j) {
         var moves = [];
-        for (r = 0; r < 4; ++r)
+        for (var r = 0; r < 4; ++r)
             if (inPalace(i + di[r], j + dj[r]))
                 moves.push(new Move(i, j, i + di[r], j + dj[r]));
-        for (delta = -1; delta <= 1; delta += 2)
-            for (ii = i + delta; ii >= 0 && ii < 10; ii += delta) {
+        for (var delta = -1; delta <= 1; delta += 2)
+            for (var ii = i + delta; ii >= 0 && ii < 10; ii += delta) {
                 if (pieceType(board_[ii][j]) == PIECE_K)
                     moves.push(new Move(i, j, ii, j));
                 if (board_[ii][j] != 0)
@@ -224,7 +224,7 @@ function Chess() {
 
     function generateAMoves(i, j) {
         var moves = [];
-        for (r = 0; r < 4; ++r)
+        for (var r = 0; r < 4; ++r)
             if (inPalace(i + ddi[r], j + ddj[r]))
                 moves.push(new Move(i, j, i + ddi[r], j + ddj[r]));
         return moves;
@@ -232,7 +232,7 @@ function Chess() {
 
     function generateREMoves(i, j) {
         var moves = [];
-        for (r = 0; r < 4; ++r) {
+        for (var r = 0; r < 4; ++r) {
             if (inBoard(i + 2 * ddi[r], j + 2 * ddj[r])
                     && board_[i + ddi[r]][j + ddj[r]] == 0
                     && inRedBase(i + ddi[r]))
@@ -243,7 +243,7 @@ function Chess() {
 
     function generateBEMoves(i, j) {
         var moves = [];
-        for (r = 0; r < 4; ++r) {
+        for (var r = 0; r < 4; ++r) {
             if (inBoard(i + 2 * ddi[r], j + 2 * ddj[r])
                     && board_[i + ddi[r]][j + ddj[r]] == 0
                     && !inRedBase(i + ddi[r]))
@@ -264,7 +264,7 @@ function Chess() {
 
     function generateRMoves(i, j) {
         var moves = [];
-        for (r = 0; r < 4; ++r) {
+        for (var r = 0; r < 4; ++r) {
             var ii = i + di[r], jj = j + dj[4];
             for (ii = i + di[r], jj = j + dj[r]; inBoard(ii, jj); ii += di[r], jj += dj[r]) {
                 moves.push(new Move(i, j, ii, jj));
@@ -277,7 +277,7 @@ function Chess() {
 
     function generateCMoves(i, j) {
         var moves = [];
-        for (r = 0; r < 4; ++r) {
+        for (var r = 0; r < 4; ++r) {
             var ii = i + di[r], jj = j + dj[4];
             var met = false;
             for (ii = i + di[r], jj = j + dj[r]; inBoard(ii, jj); ii += di[r], jj += dj[r]) {
@@ -358,8 +358,8 @@ function Chess() {
 
     function generateAllMoves(isRedToGo) {
         var moves = [];
-        for (i = 0; i < 10; ++i)
-            for (j = 0; j < 9; ++j)
+        for (var i = 0; i < 10; ++i)
+            for (var j = 0; j < 9; ++j)
                 if (board_[i][j] != 0 && isRedPiece(board_[i][j]) == isRedToGo)
                     generateMoves(i, j, moves);
         return moves;
