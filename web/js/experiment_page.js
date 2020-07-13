@@ -132,7 +132,6 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
                     } else if (gameRecord.result == 2) {
                         outcome = controlIsRed ? 1 : 2;
                     }
-                    console.log(gameRecord.game_id + " result " + gameRecord.result + " control_is_red " + controlIsRed + " outcome " + outcome);
                 }
                 if (outcome == 0) {
                     td.appendChild(document.createTextNode("D"));
