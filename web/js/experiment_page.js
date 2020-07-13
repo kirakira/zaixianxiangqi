@@ -116,11 +116,12 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
     }
 
     function initializeTOC() {
-        var controlIsRed = experimentMetadata.hasOwnProperty("control_is_red") && experimentMetadata.control_is_red;
-
         var table = document.getElementById("gameList");
         for (var i = 0; i < gameRecordsTOC.length; i++) {
             var gameRecord = gameRecordsTOC[i];
+            var controlIsRed = gameRecord.hasOwnProperty("control_is_red")
+                                && gameRecord.control_is_red;
+
             var tr = document.createElement("tr");
             {
                 var td = document.createElement("td");
@@ -131,6 +132,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
                     } else if (gameRecord.result == 2) {
                         outcome = controlIsRed ? 1 : 2;
                     }
+                    console.log(gameRecord.game_id + " result " + gameRecord.result + " control_is_red " + controlIsRed + " outcome " + outcome);
                 }
                 if (outcome == 0) {
                     td.appendChild(document.createTextNode("D"));
