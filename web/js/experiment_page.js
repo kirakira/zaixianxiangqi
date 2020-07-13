@@ -236,6 +236,10 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         }
 
         div.appendChild(table);
+
+        var fen = document.getElementById("fen");
+        removeAllChildren("fen");
+        fen.appendChild(document.createTextNode(board_.getFen()));
     }
 
     function initApplication() {

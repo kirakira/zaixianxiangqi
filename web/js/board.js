@@ -8,6 +8,7 @@ function Board(onMove) {
     this.isRedNext = isRedNext;
     this.numMoves = numMoves;
     this.numMovesShown = numMovesShown;
+    this.getFen = getFen;
 
     var board_ = new Chess();
     var ui_ = new BoardUI(onSquareSelected);
@@ -190,5 +191,17 @@ function Board(onMove) {
 
     function numMovesShown() {
         return numMovesShown_;
+    }
+
+    function getFen() {
+        var currentMoves = board_.moveHistoryArrayFormat();
+        var truncatedMoves = [];
+        for (var i = 0; i < numMovesShown_; ++i) {
+            truncatedMoves.push(currentMoves[i]);
+        }
+        board_.setMoves(truncatedMoves);
+        var fen = board_.getFen();
+        board_.setMoves(currentMoves);
+        return fen;
     }
 }

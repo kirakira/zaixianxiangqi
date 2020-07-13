@@ -28,10 +28,12 @@ function Chess() {
     this.move = move;
     this.checkMove = checkMove;
     this.moveHistory = moveHistory;
+    this.moveHistoryArrayFormat = moveHistoryArrayFormat;
     this.lastMove = lastMove;
     this.pieceAt = pieceAt;
     this.isRedNext = isRedNext;
     this.numMoves = numMoves;
+    this.getFen = getFen;
 
     var board_ = [];
     var moveHistory_ = [];
@@ -58,6 +60,29 @@ function Chess() {
             ans = 7;
         if (!isLower)
             ans += 8;
+        return ans;
+    }
+
+    function toPieceName(p) {
+        var isRed = isRedPiece(p);
+        if (isRed) p -= 8;
+        var ans = "";
+        if (p == 1)
+            ans = "K";
+        else if (p == 2)
+            ans = "A";
+        else if (p == 3)
+            ans = "E";
+        else if (p == 4)
+            ans = "H";
+        else if (p == 5)
+            ans = "R";
+        else if (p == 6)
+            ans = "C";
+        else if (p == 7)
+            ans = "P";
+        if (!isRed)
+            ans = ans.toLowerCase();
         return ans;
     }
 
@@ -99,10 +124,38 @@ function Chess() {
         }
     }
 
+    function getFen() {
+        var fen = "";
+        for (var i = 0; i < 10; ++i) {
+            for (var j = 0; j < 9; ++j) {
+                if (board_[i][j] == "") {
+                  var jEnd = j + 1;
+                  while (jEnd < 9 && board_[i][jEnd] == "") ++jEnd;
+                  fen += "" + (jEnd - j);
+                  j = jEnd - 1;
+                } else {
+                  fen += toPieceName(board_[i][j]);
+                }
+            }
+            if (i < 9) fen += "/";
+        }
+        fen += " " + (isRedNext() ? "w" : "b");
+        return fen;
+    }
+
     function moveHistory() {
         var ans = [];
         for (var i = 0; i < moveHistory_.length; ++i) {
             ans.push(moveHistory_[i]);
+        }
+        return ans;
+    }
+
+    function moveHistoryArrayFormat() {
+        var ans = [];
+        for (var i = 0; i < moveHistory_.length; ++i) {
+            var m = moveHistory_[i];
+            ans.push([m.i1, m.j1, m.i2, m.j2]);
         }
         return ans;
     }

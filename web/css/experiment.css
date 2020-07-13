@@ -61,3 +61,21 @@ div.board-layout {
     overflow: auto;
     flex-grow: 1;
 }
+
+#fen-container {
+    display: flex;
+    justify-content: center;
+}
+
+#fen {
+    -webkit-user-select: all;
+    user-select: all;
+    display: inline-block;
+    border: dashed #c4c0be;
+    color: #4f4d4c;
+    font-size: x-small;
+}
+
+#fen:focus {
+    animation: select
+}
