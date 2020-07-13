@@ -1,11 +1,10 @@
 div.board-layout {
     display: grid;
     overflow: auto;
-    grid-template-columns: auto auto auto;
     grid-template-areas:
-      ".   game-info  ."
-      ".    board     ."
-      ". move-history .";
+      "  game-info "
+      "   board    "
+      "move-history";
 }
 
 div.game-info-container {
