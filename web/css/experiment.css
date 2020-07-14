@@ -71,9 +71,10 @@ div.board-layout {
     -webkit-user-select: all;
     user-select: all;
     display: inline-block;
-    border: dashed #c4c0be;
-    color: #4f4d4c;
+    border: solid #331a00;
+    background-color: #fff2e6;
     font-size: x-small;
+    padding: 0.3em;
 }
 
 #fen:focus {
