@@ -18,10 +18,19 @@ message ExperimentMetadata {
 }
 
 enum GameResult {
-  UNKNOWN = 0;
+  UNKNOWN_GAME_RESULT = 0;
   RED_WON = 1;
   BLACK_WON = 2;
   DRAW = 3;
+}
+
+enum GameResultReason {
+  UNKNOWN_GAME_RESULT_REASON = 0;
+  MATE = 1;
+  RESIGN = 2;
+  RULE_PERPETUAL_ATTACK = 3;
+  RULE_REPETITION = 4;
+  LACK_OF_PROGRESS = 5;
 }
 
 message GameRecord {
@@ -36,4 +45,5 @@ message GameRecord {
   // moves.
   repeated double scores = 5 [packed=true];
   GameResult result = 6;
+  GameResultReason result_reason = 7;
 }

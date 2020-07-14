@@ -148,6 +148,16 @@ func (board *Board) CheckRepetition() bool {
 	return board.checkRepetitionOfCycle(4) || board.checkRepetitionOfCycle(6) || board.checkRepetitionOfCycle(8)
 }
 
+func (board *Board) MovesSinceCapture() int {
+	moveCount := len(board.MoveHistory)
+	for i := 0; i < moveCount; i++ {
+		if len(board.MoveHistory[moveCount-i-1].Capture) > 0 {
+			return i
+		}
+	}
+	return moveCount
+}
+
 var di = [...]int{0, 1, 0, -1}
 var dj = [...]int{1, 0, -1, 0}
 var ddi = [...]int{1, 1, -1, -1}
@@ -422,15 +432,7 @@ func isMoveSequenceCyclic(seq []HistoryMove) bool {
 
 func (board *Board) checkRepetitionOfCycle(cycle int) bool {
 	moveCount := len(board.MoveHistory)
-	lastCapture := -1
-	for i := moveCount - 1; i >= 0; i-- {
-		if len(board.MoveHistory[i].Capture) > 0 {
-			lastCapture = i
-			break
-		}
-	}
-	recentNonCapturingMoves := moveCount - lastCapture - 1
-	if recentNonCapturingMoves < cycle*REPETITION_COUNT {
+	if board.MovesSinceCapture() < cycle*REPETITION_COUNT {
 		return false
 	}
 

@@ -21,6 +21,10 @@ import (
 	. "github.com/kirakira/zaixianxiangqi/internal/blur_bench/genfiles"
 )
 
+const (
+	NumNoProgressMovesToDraw = 50
+)
+
 type engineHandles struct {
 	Name    string
 	Cmd     *exec.Cmd
@@ -174,6 +178,7 @@ func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, e
 				} else {
 					gameRecord.Result = GameResult_BLACK_WON
 				}
+				gameRecord.ResultReason = GameResultReason_RESIGN
 				break
 			}
 		} else {
@@ -201,7 +206,14 @@ func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, e
 			if board.CheckRepetition() {
 				log.Printf("Repetition rule triggered.")
 				gameRecord.Result = GameResult_DRAW
+				gameRecord.ResultReason = GameResultReason_RULE_REPETITION
 				break
+			}
+
+			if board.MovesSinceCapture() > NumNoProgressMovesToDraw {
+				log.Printf("Declaring draw due to lack of progress.")
+				gameRecord.Result = GameResult_DRAW
+				gameRecord.ResultReason = GameResultReason_LACK_OF_PROGRESS
 			}
 
 			// Send the move to the other engine.
@@ -340,7 +352,7 @@ func recorderThread(engines [2]string, leveldbDirectory string, resultChannel ch
 
 	halfScores := [2]int{}
 	for record := range resultChannel {
-		if record.Result == GameResult_UNKNOWN {
+		if record.Result == GameResult_UNKNOWN_GAME_RESULT {
 			log.Fatalf("Received a game with unknown result")
 		}
 		err := writeGameRecord(leveldbDirectory, metadata.Id, record)
@@ -381,10 +393,10 @@ func ExtractEngineName(engine string) string {
 func SelfPlay(engines [2]string, numThreads int, leveldbDirectory string) {
 	rand.Seed(time.Now().UnixNano())
 	ch := make(chan *GameRecord)
-	recorderThread(engines, leveldbDirectory, ch)
 	redPlayer := rand.Intn(2)
 	for i := 0; i < numThreads; i++ {
 		go selfPlayThread(engines, redPlayer, i, ch)
 		redPlayer = 1 - redPlayer
 	}
+	recorderThread(engines, leveldbDirectory, ch)
 }
