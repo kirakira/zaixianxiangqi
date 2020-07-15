@@ -23,6 +23,7 @@ import (
 
 const (
 	NumNoProgressMovesToDraw = 50
+	MoveTimeLimitCentis      = 100
 )
 
 type engineHandles struct {
@@ -127,6 +128,18 @@ func closeEngine(engine *engineHandles) {
 	engine.Cmd.Wait()
 }
 
+func getGoCommand() string {
+	return "go"
+}
+
+func getTimeCommand() string {
+	return fmt.Sprintf("time %d", MoveTimeLimitCentis)
+}
+
+func getForceCommand() string {
+	return "force"
+}
+
 func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, error) {
 	// Start engines.
 	var handles [2]*engineHandles
@@ -160,7 +173,7 @@ func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, e
 	}
 
 	// Start the game.
-	if err := sendCommand(handles[redPlayer], "go", threadIndex); err != nil {
+	if err := sendCommand(handles[redPlayer], getGoCommand(), threadIndex); err != nil {
 		return nil, err
 	}
 	for i := redPlayer; true; i = 1 - i {
@@ -218,7 +231,10 @@ func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, e
 			}
 
 			// Send the move to the other engine.
+			err = sendCommand(handles[1-i], getForceCommand(), threadIndex)
+			err = sendCommand(handles[1-i], getTimeCommand(), threadIndex)
 			err = sendCommand(handles[1-i], output.Move.XboardNotation(), threadIndex)
+			err = sendCommand(handles[1-i], getGoCommand(), threadIndex)
 			if err != nil {
 				return nil, err
 			}
