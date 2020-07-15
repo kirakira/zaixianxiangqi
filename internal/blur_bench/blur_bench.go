@@ -214,6 +214,7 @@ func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, e
 				log.Printf("Declaring draw due to lack of progress.")
 				gameRecord.Result = GameResult_DRAW
 				gameRecord.ResultReason = GameResultReason_LACK_OF_PROGRESS
+				break
 			}
 
 			// Send the move to the other engine.
