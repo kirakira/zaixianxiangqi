@@ -53,20 +53,31 @@ div.horizontal-layout {
     overflow: auto;
 }
 
-div.game-list-layout {
-    overflow: auto;
-    flex-grow: 0;
+div.horizontal-layout > div {
     padding: 4px;
     margin: 4px;
+    overflow: auto;
     border: 1px solid #ddd;
 }
 
-div.board-layout {
-    overflow: auto;
+div.game-list-layout {
+    flex-grow: 0;
+}
+
+div.game-layout {
     flex-grow: 1;
-    padding: 4px;
-    margin: 4px;
-    border: 1px solid #ddd;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+div.game-layout > div {
+    overflow: auto;
+}
+
+div.board-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 #fen-container {

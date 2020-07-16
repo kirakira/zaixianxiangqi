@@ -227,7 +227,7 @@ func readExperimentMetadata(leveldbDirectory string, experimentId int64) (*Exper
 	return &record, nil
 }
 
-func convertToGameInfo(metadata *ExperimentMetadata, gameRecord *GameRecord) *GameInfo {
+func convertToGameRecordResponse(metadata *ExperimentMetadata, gameRecord *GameRecord) *GameRecordResponse {
 	var redName, blackName string
 	if gameRecord.ControlIsRed {
 		redName = metadata.Control.Name
@@ -255,16 +255,19 @@ func convertToGameInfo(metadata *ExperimentMetadata, gameRecord *GameRecord) *Ga
 		moves += "/D"
 	}
 
-	return &GameInfo{
-		ID:    gameRecord.GameId,
-		Title: gameRecord.GameId,
-		Moves: moves,
-		Red: &PlayerInfo{
-			Name: redName,
+	return &GameRecordResponse{
+		GameInfo: &GameInfo{
+			ID:    gameRecord.GameId,
+			Title: gameRecord.GameId,
+			Moves: moves,
+			Red: &PlayerInfo{
+				Name: redName,
+			},
+			Black: &PlayerInfo{
+				Name: blackName,
+			},
 		},
-		Black: &PlayerInfo{
-			Name: blackName,
-		},
+		GameRecord: gameRecord,
 	}
 }
 
@@ -300,10 +303,10 @@ func gameRecordAPI(leveldbDirectory string, w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	gameInfo := convertToGameInfo(metadata, gameRecord)
-	encoded, err := json.Marshal(gameInfo)
+	gameRecordResponse := convertToGameRecordResponse(metadata, gameRecord)
+	encoded, err := json.Marshal(gameRecordResponse)
 	if err != nil {
-		log.Fatalf("Failed to convert gameinfo to json: %v", err)
+		log.Fatalf("Failed to convert game record response to json: %v", err)
 	}
 
 	w.Write(encoded)

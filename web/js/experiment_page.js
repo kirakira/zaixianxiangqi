@@ -2,10 +2,14 @@
  * @constructor
  */
 function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
+    var gameRecordResponse_ = null;
     var gameInfo_ = null;
     var selectedCell_ = null;
+    var plotlyLoaded_ = false;
+    var chartsInited_ = false;
 
-    initApplication();
+    this.initApplication = initApplication;
+    this.plotlyLoaded = plotlyLoaded;
 
     function onPlayerMove(i1, j1, i2, j2) {
       // This function should never be called as the board is always in read-only mode.
@@ -76,8 +80,9 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         return encodeURI(path);
     }
 
-    function onGameInfo(gameId, data) {
-        gameInfo_ = JSON.parse(data);
+    function onGameRecordResponse(gameId, data) {
+        gameRecordResponse_ = JSON.parse(data);
+        gameInfo_ = gameRecordResponse_.game_info;
         updateSelectedGame(gameId);
         refreshPage();
     }
@@ -105,7 +110,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
 
     function requestGameInfo(gameId) {
         get(endPointFor("/game_record/" + experimentMetadata.id + "/" + gameId), function(data) {
-            onGameInfo(gameId, data);
+            onGameRecordResponse(gameId, data);
         }, function(gameId, content) {
             var td = document.getElementById("game-record-" + gameId);
             if (td) {
@@ -184,6 +189,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         updateGameTitle();
         updateStatus();
         refreshMoveHistoryControls();
+        refreshCharts();
     }
 
     function appendCellToRow(row, cell) {
@@ -254,10 +260,77 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
             showGame(gameRecordsTOC[0].game_id);
         }
     }
+
+    function getScoresData(index) {
+        var scores = gameRecordResponse_.game_record.scores;
+        var x = [], y =[];
+        for (var i = index; i < scores.length; i += 2) {
+            x.push(i + 1);
+            y.push(scores[i]);
+        }
+        return {
+            x: x,
+            y: y,
+            type: "scatter",
+        };
+    }
+
+    function getCustomYRange() {
+        var scores = gameRecordResponse_.game_record.scores;
+        var y = [];
+        for (var i = 0; i < scores.length; ++i) {
+            y.push(scores[i]);
+        }
+        if (y.length <= 2 || Math.abs(y[y.length - 1]) < 400) {
+            return null;
+        }
+        var slice = y.slice(0, y.length - 2);
+        return [Math.min(...slice), Math.max(...slice)];
+    }
+
+    function refreshCharts() {
+        if (!plotlyLoaded_ || !gameRecordResponse_) return;
+
+        var redData = getScoresData(0), blackData = getScoresData(1);
+        redData.name = gameInfo_.red.name;
+        blackData.name = gameInfo_.black.name;
+
+        var layout = {
+            showlegend: true,
+            legend: {
+                bgcolor: 'rgba(0, 0, 0, 0)',
+                x: 0,
+                xanchor: 'left',
+                y: 1,
+            },
+        };
+        var yRange = getCustomYRange(); 
+        if (yRange) {
+            layout.yaxis = { range: yRange };
+        };
+
+        if (!chartsInited_) {
+          chartsInited_ = true;
+          Plotly.newPlot("engineScoreChart", [redData, blackData], layout);
+        } else {
+          Plotly.react("engineScoreChart", [redData, blackData], layout);
+        }
+    }
+
+    function plotlyLoaded() {
+        plotlyLoaded_ = true;
+        refreshCharts();
+    }
 }
+
+var recordViewer = new ExperimentViewer(experimentMetadata, toc);
 
 document.onreadystatechange = function() {
     if (document.readyState == "interactive") {
-        var recordViewer = new ExperimentViewer(experimentMetadata, toc);
+        recordViewer.initApplication();
     }
-}
+};
+
+window.onload = function() {
+    recordViewer.plotlyLoaded();
+};
