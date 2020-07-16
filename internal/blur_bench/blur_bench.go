@@ -23,7 +23,7 @@ import (
 
 const (
 	NumNoProgressMovesToDraw = 50
-	MoveTimeLimitCentis      = 100
+	MoveTimeLimitCentis      = 500
 )
 
 type engineHandles struct {

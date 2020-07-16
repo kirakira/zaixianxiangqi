@@ -4,13 +4,14 @@ html, body {
 
 body {
     margin: 0;
-    padding: 0;
-    font-family: 'Roboto',arial,sans-serif;
+    font-family: Arial,Helvetica,sans-serif;
 }
 
 div.vertical-layout {
     display: flex;
+    padding: 4px;
     flex-direction: column;
+    box-sizing: border-box;
     height: 100%;
     width: 100%;
 }
@@ -55,11 +56,17 @@ div.horizontal-layout {
 div.game-list-layout {
     overflow: auto;
     flex-grow: 0;
+    padding: 4px;
+    margin: 4px;
+    border: 1px solid #ddd;
 }
 
 div.board-layout {
     overflow: auto;
     flex-grow: 1;
+    padding: 4px;
+    margin: 4px;
+    border: 1px solid #ddd;
 }
 
 #fen-container {
@@ -71,8 +78,8 @@ div.board-layout {
     -webkit-user-select: all;
     user-select: all;
     display: inline-block;
-    border: solid #331a00;
-    background-color: #fff2e6;
+    border: 1px solid #ddd;
+    background-color: #fef7f0;
     font-size: x-small;
     padding: 0.3em;
 }
