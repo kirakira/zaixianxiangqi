@@ -5,16 +5,9 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-)
 
-type EngineThinkingOutput struct {
-	Depth            int
-	DepthComplete    bool
-	Score            float64
-	TimeCentiSeconds float64
-	Nodes            int64
-	PV               []string
-}
+	. "github.com/kirakira/zaixianxiangqi/internal/blur_bench/genfiles"
+)
 
 type ExtractedEngineOutput struct {
 	// A single engine output line will contain at most one of the above fields.
@@ -39,7 +32,7 @@ func parseEngineThinking(line string) *EngineThinkingOutput {
 		if err != nil {
 			return nil
 		}
-		output.Depth = depth
+		output.Depth = int32(depth)
 
 		// Score.
 		score, err := strconv.ParseFloat(fields[1], 64)
@@ -63,7 +56,7 @@ func parseEngineThinking(line string) *EngineThinkingOutput {
 		output.Nodes = nodes
 
 		// PV.
-		output.PV = fields[4:]
+		output.Pv = fields[4:]
 
 		return &output
 	}

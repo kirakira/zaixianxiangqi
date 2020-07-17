@@ -33,17 +33,30 @@ enum GameResultReason {
   LACK_OF_PROGRESS = 5;
 }
 
+message EngineThinkingOutput {
+  int32 depth = 1;
+  bool depth_complete = 2;
+  double score = 3;
+  double time_centi_seconds = 4;
+  int64 nodes = 5;
+  repeated string pv = 6;
+}
+
 message GameRecord {
   // A unique ID that identifies a game in the experiment.
   string game_id = 1;
   // True if control is red; false if control is black.
   bool control_is_red = 2;
   google.protobuf.Timestamp start_time = 3;
+
   // The moves in Xboard notation.
   repeated string moves = 4;
   // The scores (relative to red) given by each engine. Corresponds 1-1 to the
   // moves.
   repeated double scores = 5 [packed=true];
+  // Engine debug output for each move.
+  repeated EngineThinkingOutput output = 8;
+
   GameResult result = 6;
   GameResultReason result_reason = 7;
 }
