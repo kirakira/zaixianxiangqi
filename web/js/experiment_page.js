@@ -7,6 +7,8 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
     var selectedCell_ = null;
     var plotlyLoaded_ = false;
     var chartsInited_ = false;
+    var numMovesToShowAtRest_ = 0;
+    var inCallback_ = false;
 
     this.initApplication = initApplication;
     this.plotlyLoaded = plotlyLoaded;
@@ -186,10 +188,11 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
     function refreshPage() {
         refreshPlayerList();
         board_.resetState("r", true, parseMoves(gameInfo_ ? gameInfo_.moves : ""));
+        numMovesToShowAtRest_ = gameInfo_ ? gameInfo_.moves.length : 0;
         updateGameTitle();
         updateStatus();
-        refreshMoveHistoryControls();
         refreshCharts();
+        updateCurrentMove(board_.numMovesShown(), true);
     }
 
     function appendCellToRow(row, cell) {
@@ -198,7 +201,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         row.appendChild(td);
     }
 
-    function refreshMoveHistoryControls() {
+    function updateMoveHistoryControls() {
         removeAllChildren("move-history");
         var div = document.getElementById("move-history");
         var table = document.createElement("table");
@@ -208,14 +211,12 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
 
         if (board_.numMovesShown() > 0) {
             appendCellToRow(row, createLink("move-history-first", undefined, "#", function() {
-                board_.showMove(0);
-                refreshMoveHistoryControls();
+                updateCurrentMove(0, true);
                 return false;
             }, "first"));
 
             appendCellToRow(row, createLink("move-history-prev", undefined, "#", function() {
-                board_.showMove(board_.numMovesShown() - 1);
-                refreshMoveHistoryControls();
+                updateCurrentMove(board_.numMovesShown() - 1, true);
                 return false;
             }, "prev"));
         } else {
@@ -227,14 +228,12 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
 
         if (board_.numMovesShown() < board_.numMoves()) {
             appendCellToRow(row, createLink("move-history-next", undefined, "#", function() {
-                board_.showMove(board_.numMovesShown() + 1);
-                refreshMoveHistoryControls();
+                updateCurrentMove(board_.numMovesShown() + 1, true);
                 return false;
             }, "next"));
 
             appendCellToRow(row, createLink("move-history-last", undefined, "#", function() {
-                board_.showMove(board_.numMoves());
-                refreshMoveHistoryControls();
+                updateCurrentMove(board_.numMoves(), true);
                 return false;
             }, "last"));
         } else {
@@ -261,17 +260,18 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         }
     }
 
-    function getScoresData(index) {
+    function getScoresPlotData(index) {
         var scores = gameRecordResponse_.game_record.scores;
         var x = [], y =[];
-        for (var i = index; i < scores.length; i += 2) {
+        for (var i = 0; i < scores.length; ++i) {
             x.push(i + 1);
-            y.push(scores[i]);
+            y.push(scores[Math.min(scores.length - 1, Math.floor(i / 2) * 2 + index)]);
         }
         return {
             x: x,
             y: y,
             type: "scatter",
+            hoverinfo: "y",
         };
     }
 
@@ -288,14 +288,44 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         return [Math.min(...slice), Math.max(...slice)];
     }
 
+    function updateCurrentMove(x, updateMoveAtRest) {
+        movesShown = board_.showMove(x);
+        if (updateMoveAtRest) {
+            numMovesToShowAtRest_ = movesShown;
+        }
+
+        updateMoveHistoryControls();
+        updateChartsCurrentMove();
+    }
+
+    function updateChartsCurrentMove() {
+        if (chartsInited_ && gameInfo_) {
+            var update = {
+              'shapes[0].x0': numMovesToShowAtRest_,
+              'shapes[0].x1': numMovesToShowAtRest_,
+              'shapes[1].x0': board_.numMovesShown(),
+              'shapes[1].x1': board_.numMovesShown(),
+            };
+            var div = document.getElementById("engineScoreChart");
+            Plotly.relayout(div, update);
+        }
+    }
+
+    function onHoverClickScoreChart(x, updateMovesAtRest) {
+        if (gameInfo_ && x >= 1 && x <= board_.numMoves()) {
+            updateCurrentMove(x, updateMovesAtRest);
+        }
+    }
+
     function refreshCharts() {
         if (!plotlyLoaded_ || !gameRecordResponse_) return;
 
-        var redData = getScoresData(0), blackData = getScoresData(1);
+        var redData = getScoresPlotData(0), blackData = getScoresPlotData(1);
         redData.name = gameInfo_.red.name;
         blackData.name = gameInfo_.black.name;
 
         var layout = {
+            title: "Engine scores",
             showlegend: true,
             legend: {
                 bgcolor: 'rgba(0, 0, 0, 0)',
@@ -303,6 +333,34 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
                 xanchor: 'left',
                 y: 1,
             },
+            shapes: [
+                {
+                    type: "line",
+                    xref: "x",
+                    yref: "paper",
+                    x0: board_.numMovesShown(),
+                    x1: board_.numMovesShown(),
+                    y0: 0,
+                    y1: 1,
+                    fillcolor: '#121212',
+                    opacity: 0.4,
+                },
+                {
+                    type: "line",
+                    xref: "x",
+                    yref: "paper",
+                    x0: board_.numMovesShown(),
+                    x1: board_.numMovesShown(),
+                    y0: 0,
+                    y1: 1,
+                    fillcolor: '#d3d3d3',
+                    opacity: 0.2,
+                    line: {
+                        dash: "dot",
+                    }
+                },
+            ],
+            hovermode: "x",
         };
         var yRange = getCustomYRange(); 
         if (yRange) {
@@ -311,7 +369,33 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
 
         if (!chartsInited_) {
           chartsInited_ = true;
-          Plotly.newPlot("engineScoreChart", [redData, blackData], layout);
+          Plotly.newPlot("engineScoreChart", [redData, blackData], layout, {
+              showLink: false,
+              displaylogo: false,
+          });
+          var div = document.getElementById("engineScoreChart");
+          div.on("plotly_hover", function(data) {
+              // Update the state only when we are not already called from the
+              // callback to avoid an infinite loop, as this function is called from
+              // updateChartsCurrentMove() recursively through the hover event
+              // callback.
+              if (!inCallback_) {
+                  inCallback_ = true;
+                  onHoverClickScoreChart(data.points[0].x, false);
+                  inCallback_ = false;
+              }
+          });
+          div.on("plotly_click", function(data) {
+              onHoverClickScoreChart(data.points[0].x, true);
+          });
+          div.addEventListener("mouseleave", function(data) {
+              // Plotly adds drag cover on click and that triggers mouseleave
+              // event even when the mouse is still inside the plot. Ignore the
+              // event if that's the case.
+              if (data.relatedTarget && !data.relatedTarget.classList.contains("dragcover")) {
+                  updateCurrentMove(numMovesToShowAtRest_, false);
+              }
+          });
         } else {
           Plotly.react("engineScoreChart", [redData, blackData], layout);
         }

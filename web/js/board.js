@@ -86,7 +86,7 @@ function Board(onMove) {
     function showMove(numMovesToShow) {
         numMovesToShow = Math.max(0, numMovesToShow);
         numMovesToShow = Math.min(board_.numMoves(), numMovesToShow);
-        if (numMovesToShow == numMovesShown_) return;
+        if (numMovesToShow == numMovesShown_) return numMovesShown_;
 
         var moves = board_.moveHistory();
         if (numMovesToShow > numMovesShown_) {
@@ -104,6 +104,7 @@ function Board(onMove) {
         }
 
         numMovesShown_ = numMovesToShow;
+        return numMovesShown_;
     }
 
     function isMyPiece(piece) {
