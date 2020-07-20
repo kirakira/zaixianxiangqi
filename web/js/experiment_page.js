@@ -258,6 +258,27 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         } else if (gameRecordsTOC.length > 0) {
             showGame(gameRecordsTOC[0].game_id);
         }
+        document.addEventListener("keydown", function (e) {
+            if (e.key == "ArrowLeft" || e.key == "k") {
+                updateCurrentMove(board_.numMovesShown() - 1, true);
+                return false;
+            } else if (e.key == "ArrowRight" || e.key == "j") {
+                updateCurrentMove(board_.numMovesShown() + 1, true);
+                return false;
+            } else if (e.key == "PageUp") {
+                updateCurrentMove(board_.numMovesShown() - 10, true);
+                return false;
+            } else if (e.key == "PageDown") {
+                updateCurrentMove(board_.numMovesShown() + 10, true);
+                return false;
+            } else if (e.key == "Home") {
+                updateCurrentMove(0, true);
+                return false;
+            } else if (e.key == "End") {
+                updateCurrentMove(board_.numMoves(), true);
+                return false;
+            }
+        });
     }
 
     function getScoresPlotData(index) {

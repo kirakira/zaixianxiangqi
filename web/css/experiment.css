@@ -62,6 +62,7 @@ div.horizontal-layout > div {
 
 div.game-list-layout {
     flex-grow: 0;
+    min-width: 6em;
 }
 
 div.game-layout {
