@@ -78,9 +78,9 @@ func readOutputLine(engine *engineHandles, threadIndex int) (string, error) {
 	}
 }
 
-func readEngineMove(engine *engineHandles, threadIndex int) (*ExtractedEngineOutput, error) {
+func readEngineOutput(engine *engineHandles, threadIndex int) (*ExtractedEngineOutput, error) {
 	var output ExtractedEngineOutput
-	var lastThinking *EngineThinkingOutput
+	var lastThinking *EngineThinkingOutputLine
 	for {
 		line, err := readOutputLine(engine, threadIndex)
 		if err != nil {
@@ -177,7 +177,7 @@ func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, e
 		return nil, err
 	}
 	for i := redPlayer; true; i = 1 - i {
-		output, err := readEngineMove(handles[i], threadIndex)
+		output, err := readEngineOutput(handles[i], threadIndex)
 		if err != nil {
 			return nil, err
 		}
@@ -214,6 +214,9 @@ func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, e
 				}
 			}
 			gameRecord.Scores = append(gameRecord.Scores, score)
+			gameRecord.Output = append(gameRecord.Output, &EngineThinkingOutput{
+				LastCompleteDepth: output.Thinking,
+			})
 
 			// Check if the move triggered repetition rules.
 			if board.CheckRepetition() {

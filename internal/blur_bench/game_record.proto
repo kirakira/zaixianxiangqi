@@ -33,7 +33,7 @@ enum GameResultReason {
   LACK_OF_PROGRESS = 5;
 }
 
-message EngineThinkingOutput {
+message EngineThinkingOutputLine {
   int32 depth = 1;
   bool depth_complete = 2;
   double score = 3;
@@ -41,6 +41,12 @@ message EngineThinkingOutput {
   int64 nodes = 5;
   repeated string pv = 6;
 }
+
+message EngineThinkingOutput {
+  // Output line for the last complete depth.
+  EngineThinkingOutputLine last_complete_depth = 1;
+}
+
 
 message GameRecord {
   // A unique ID that identifies a game in the experiment.
