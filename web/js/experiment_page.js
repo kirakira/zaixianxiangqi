@@ -484,7 +484,17 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         removeAllChildren("pv");
         if (!gameInfo_ || board_.numMovesShown() == 0) return;
 
-        var pv = gameRecordResponse_.game_record.output[board_.numMovesShown() - 1].last_complete_depth.pv;
+        var gameRecord = gameRecordResponse_.game_record;
+        var engineColorBlock = document.getElementById("currentEngineColor");
+        if (controlIsRed(gameRecord) && board_.numMovesShown() % 2 == 1) {
+            engineColorBlock.classList.remove("engineColorTreatment");
+            engineColorBlock.classList.add("engineColorControl");
+        } else {
+            engineColorBlock.classList.remove("engineColorControl");
+            engineColorBlock.classList.add("engineColorTreatment");
+        }
+
+        var pv = gameRecord.output[board_.numMovesShown() - 1].last_complete_depth.pv;
         var ul = document.getElementById("pv");
         pv.forEach(function (move) {
             var li = document.createElement("li");
