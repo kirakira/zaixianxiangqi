@@ -355,6 +355,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
 
         updateMoveHistoryControls();
         updateChartsCurrentMove();
+        updatePV();
     }
 
     function updateChartsCurrentMove() {
@@ -477,6 +478,19 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         } else {
           Plotly.react(divId, data, layout);
         }
+    }
+
+    function updatePV() {
+        removeAllChildren("pv");
+        if (!gameInfo_ || board_.numMovesShown() == 0) return;
+
+        var pv = gameRecordResponse_.game_record.output[board_.numMovesShown() - 1].last_complete_depth.pv;
+        var ul = document.getElementById("pv");
+        pv.forEach(function (move) {
+            var li = document.createElement("li");
+            li.appendChild(document.createTextNode(move));
+            ul.appendChild(li);
+        });
     }
 
     function plotlyLoaded() {
