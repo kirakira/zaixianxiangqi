@@ -296,7 +296,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         };
     }
 
-    function getCustomYRange() {
+    function getScoresYRange() {
         var scores = gameRecordResponse_.game_record.scores;
         var y = [];
         for (var i = 0; i < scores.length; ++i) {
@@ -307,6 +307,21 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         }
         var slice = y.slice(0, y.length - 2);
         return [Math.min(...slice), Math.max(...slice)];
+    }
+
+    function getDepthPlotData(index) {
+        var output = gameRecordResponse_.game_record.output;
+        var x = [], y =[];
+        for (var i = 0; i < output.length; ++i) {
+            x.push(i + 1);
+            y.push(output[Math.min(output.length - 1, Math.floor(i / 2) * 2 + index)].last_complete_depth.depth);
+        }
+        return {
+            x: x,
+            y: y,
+            type: "scatter",
+            hoverinfo: "y",
+        };
     }
 
     function updateCurrentMove(x, updateMoveAtRest) {
@@ -327,12 +342,14 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
               'shapes[1].x0': board_.numMovesShown(),
               'shapes[1].x1': board_.numMovesShown(),
             };
-            var div = document.getElementById("engineScoreChart");
-            Plotly.relayout(div, update);
-            Plotly.Fx.hover(div, [
-                {curveNumber: 0, pointNumber: board_.numMovesShown(), },
-                {curveNumber: 1, pointNumber: board_.numMovesShown(), },
-            ]);
+            ["engineScoreChart", "engineDepthChart"].forEach(function (divId) {
+                var div = document.getElementById(divId);
+                Plotly.relayout(div, update);
+                Plotly.Fx.hover(div, [
+                    {curveNumber: 0, pointNumber: board_.numMovesShown(), },
+                    {curveNumber: 1, pointNumber: board_.numMovesShown(), },
+                ]);
+            });
         }
     }
 
@@ -344,19 +361,29 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
 
     function refreshCharts() {
         if (!plotlyLoaded_ || !gameRecordResponse_) return;
+        refreshEngineChart("engineScoreChart", "Engine scores", getScoresPlotData(0), getScoresPlotData(1), getScoresYRange());
+        refreshEngineChart("engineDepthChart", "Engine depths", getDepthPlotData(0), getDepthPlotData(1), null);
+        chartsInited_ = true;
+    }
 
-        var redData = getScoresPlotData(0), blackData = getScoresPlotData(1);
+    function refreshEngineChart(divId, title, redData, blackData, yRange) {
         redData.name = gameInfo_.red.name;
         blackData.name = gameInfo_.black.name;
 
         var layout = {
-            title: "Engine scores",
+            title: title,
             showlegend: true,
             legend: {
                 bgcolor: 'rgba(0, 0, 0, 0)',
                 x: 0,
                 xanchor: 'left',
                 y: 1,
+            },
+            margin: {
+                l: 20,
+                r: 20,
+                t: 40,
+                b: 40,
             },
             shapes: [
                 {
@@ -387,18 +414,16 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
             ],
             hovermode: "x",
         };
-        var yRange = getCustomYRange(); 
         if (yRange) {
             layout.yaxis = { range: yRange };
         };
 
         if (!chartsInited_) {
-          chartsInited_ = true;
-          Plotly.newPlot("engineScoreChart", [redData, blackData], layout, {
-              showLink: false,
-              displaylogo: false,
+          Plotly.newPlot(divId, [redData, blackData], layout, {
+              displayModeBar: false,
+              responsive: true,
           });
-          var div = document.getElementById("engineScoreChart");
+          var div = document.getElementById(divId);
           div.on("plotly_hover", function(data) {
               // Update the state only when we are not already called from the
               // callback to avoid an infinite loop, as this function is called from
@@ -422,7 +447,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
               }
           });
         } else {
-          Plotly.react("engineScoreChart", [redData, blackData], layout);
+          Plotly.react(divId, [redData, blackData], layout);
         }
     }
 

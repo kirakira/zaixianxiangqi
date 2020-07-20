@@ -99,3 +99,13 @@ div.board-layout {
 #fen:focus {
     animation: select
 }
+
+div.analysis-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+div.analysis-layout > div {
+    height: 50%;
+}
