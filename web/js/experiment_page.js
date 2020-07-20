@@ -137,12 +137,14 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         });
     }
 
+    function controlIsRed(gameRecord) {
+        return gameRecord.hasOwnProperty("control_is_red") && gameRecord.control_is_red;
+    }
+
     function initializeTOC() {
         var table = document.getElementById("gameList");
         for (var i = 0; i < gameRecordsTOC.length; i++) {
             var gameRecord = gameRecordsTOC[i];
-            var controlIsRed = gameRecord.hasOwnProperty("control_is_red")
-                                && gameRecord.control_is_red;
 
             var tr = document.createElement("tr");
             {
@@ -150,9 +152,9 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
                 var outcome = 0;
                 if (gameRecord.hasOwnProperty("result")) {
                     if (gameRecord.result == 1) {
-                        outcome = !controlIsRed ? 1 : 2;
+                        outcome = !controlIsRed(gameRecord) ? 1 : 2;
                     } else if (gameRecord.result == 2) {
-                        outcome = controlIsRed ? 1 : 2;
+                        outcome = controlIsRed(gameRecord) ? 1 : 2;
                     }
                 }
                 if (outcome == 0) {
@@ -390,6 +392,11 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
     function refreshEngineChart(divId, title, redData, blackData, yRange) {
         redData.name = gameInfo_.red.name;
         blackData.name = gameInfo_.black.name;
+        if (controlIsRed(gameRecordResponse_.game_record)) {
+            data = [blackData, redData];
+        } else {
+            data = [redData, blackData];
+        }
 
         var layout = {
             title: title,
@@ -440,7 +447,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         };
 
         if (!chartsInited_) {
-          Plotly.newPlot(divId, [redData, blackData], layout, {
+          Plotly.newPlot(divId, data, layout, {
               displayModeBar: false,
               responsive: true,
           });
@@ -468,7 +475,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
               }
           });
         } else {
-          Plotly.react(divId, [redData, blackData], layout);
+          Plotly.react(divId, data, layout);
         }
     }
 
