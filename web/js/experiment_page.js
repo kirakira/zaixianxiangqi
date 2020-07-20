@@ -329,6 +329,10 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
             };
             var div = document.getElementById("engineScoreChart");
             Plotly.relayout(div, update);
+            Plotly.Fx.hover(div, [
+                {curveNumber: 0, pointNumber: board_.numMovesShown(), },
+                {curveNumber: 1, pointNumber: board_.numMovesShown(), },
+            ]);
         }
     }
 
