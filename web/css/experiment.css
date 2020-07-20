@@ -20,6 +20,12 @@ div.header-layout > div {
     margin: 4px;
 }
 
+div.experimentNav {
+    display: inline-block;
+    font-size: large;
+    margin-right: 4px;
+}
+
 .engineName {
     font-size: x-large;
 }
@@ -71,6 +77,8 @@ div.game-list-layout {
 
 div.game-list-layout > table{
     border-spacing: 0;
+    width: 100%;
+    text-align: center;
 }
 
 div.game-layout {

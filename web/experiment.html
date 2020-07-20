@@ -14,7 +14,7 @@
     <body>
         <div class="vertical-layout">
             <div class="header-layout">
-              <div><a href="{{.IndexPageLink}}">Experiment</a> {{.ExperimentMetadata.Id}}: <span class="engineName treatmentName">{{.ExperimentMetadata.Treatment.Name}}</span> vs <span class="engineName controlName">{{.ExperimentMetadata.Control.Name}}</span></div>
+                <div><div class="experimentNav"><a href="{{.IndexPageLink}}">Experiment</a> {{.ExperimentMetadata.Id}}:</div><span class="engineName treatmentName">{{.ExperimentMetadata.Treatment.Name}}</span> vs <span class="engineName controlName">{{.ExperimentMetadata.Control.Name}}</span></div>
                 <div>Total {{.Stats.Total}} games played: <span class="{{.Stats.Color}}"><b>{{.Stats.Wins}}</b> W <b>{{.Stats.Losses}}</b> L {{.Stats.Draws}} D</span></div>
             </div>
             <div class="horizontal-layout">
