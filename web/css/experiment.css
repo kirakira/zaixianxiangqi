@@ -16,6 +16,10 @@ div.vertical-layout {
     width: 100%;
 }
 
+div.header-layout > div {
+    margin: 4px;
+}
+
 .engineName {
     font-size: x-large;
 }
@@ -63,6 +67,10 @@ div.horizontal-layout > div {
 div.game-list-layout {
     flex-grow: 0;
     min-width: 6em;
+}
+
+div.game-list-layout > table{
+    border-spacing: 0;
 }
 
 div.game-layout {

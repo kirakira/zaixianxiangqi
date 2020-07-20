@@ -27,6 +27,8 @@ type stats struct {
 	Color  string
 }
 
+const IndexPagePath = "/experiments"
+
 type pageData struct {
 	ExperimentMetadata   *ExperimentMetadata
 	Stats                *stats
@@ -125,7 +127,7 @@ func getRecentExperimentLinks(leveldbDirectory string) ([]ExperimentLink, error)
 	return links, nil
 }
 
-func mainPage(leveldbDirectory string, t *template.Template, w http.ResponseWriter, r *http.Request) {
+func indexPage(leveldbDirectory string, t *template.Template, w http.ResponseWriter, r *http.Request) {
 	if !(r.Method == "" || r.Method == "GET") {
 		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
 		return
@@ -175,10 +177,12 @@ func viewExperimentPage(leveldbDirectory string, t *template.Template, w http.Re
 	}
 
 	if err := t.Execute(w, struct {
+		IndexPageLink      string
 		ExperimentMetadata *ExperimentMetadata
 		Stats              *stats
 		JsCode             template.JS
 	}{
+		IndexPageLink:      IndexPagePath,
 		ExperimentMetadata: pageData.ExperimentMetadata,
 		Stats:              pageData.Stats,
 		JsCode: template.JS(fmt.Sprintf(
@@ -322,7 +326,11 @@ func RegisterHandlers(leveldbDirectory string) {
 			return
 		}
 		t := template.Must(template.ParseFiles("web/game_record_viewer.html"))
-		mainPage(leveldbDirectory, t, w, r)
+		indexPage(leveldbDirectory, t, w, r)
+	})
+	http.HandleFunc(IndexPagePath, func(w http.ResponseWriter, r *http.Request) {
+		t := template.Must(template.ParseFiles("web/game_record_viewer.html"))
+		indexPage(leveldbDirectory, t, w, r)
 	})
 	http.HandleFunc("/experiment/", func(w http.ResponseWriter, r *http.Request) {
 		t := template.Must(template.ParseFiles("web/experiment.html"))

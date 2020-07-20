@@ -5,6 +5,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
     var gameRecordResponse_ = null;
     var gameInfo_ = null;
     var selectedCell_ = null;
+    var selectedGameIndex_ = null;
     var plotlyLoaded_ = false;
     var chartsInited_ = false;
     var numMovesToShowAtRest_ = 0;
@@ -98,6 +99,20 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         td.classList.add("selectedGame");
         selectedCell_ = td;
         window.location.hash = "#" + gameId;
+
+        for (var i = 0; i < gameRecordsTOC.length; ++i) {
+            if (gameRecordsTOC[i].game_id == gameId) {
+                selectedGameIndex_ = i;
+            }
+        }
+    }
+
+    function selectGameByIndex(idx) {
+        idx = Math.min(gameRecordsTOC.length - 1, idx);
+        idx = Math.max(0, idx);
+        if (idx < gameRecordsTOC.length) {
+            showGame(gameRecordsTOC[idx].game_id);
+        }
     }
 
     function showGame(gameId) {
@@ -259,10 +274,10 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
             showGame(gameRecordsTOC[0].game_id);
         }
         document.addEventListener("keydown", function (e) {
-            if (e.key == "ArrowLeft" || e.key == "k") {
+            if (e.key == "ArrowLeft" || e.key == "h") {
                 updateCurrentMove(board_.numMovesShown() - 1, true);
                 return false;
-            } else if (e.key == "ArrowRight" || e.key == "j") {
+            } else if (e.key == "ArrowRight" || e.key == "l") {
                 updateCurrentMove(board_.numMovesShown() + 1, true);
                 return false;
             } else if (e.key == "PageUp") {
@@ -276,6 +291,12 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
                 return false;
             } else if (e.key == "End") {
                 updateCurrentMove(board_.numMoves(), true);
+                return false;
+            } else if (e.key == "ArrowUp" || e.key == "k") {
+                selectGameByIndex(selectedGameIndex_ - 1);
+                return false;
+            } else if (e.key == "ArrowDown" || e.key == "j") {
+                selectGameByIndex(selectedGameIndex_ + 1);
                 return false;
             }
         });
@@ -325,9 +346,9 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
     }
 
     function updateCurrentMove(x, updateMoveAtRest) {
-        movesShown = board_.showMove(x);
+        movesToShow = board_.showMove(x);
         if (updateMoveAtRest) {
-            numMovesToShowAtRest_ = movesShown;
+            numMovesToShowAtRest_ = movesToShow;
         }
 
         updateMoveHistoryControls();
@@ -346,8 +367,8 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
                 var div = document.getElementById(divId);
                 Plotly.relayout(div, update);
                 Plotly.Fx.hover(div, [
-                    {curveNumber: 0, pointNumber: board_.numMovesShown(), },
-                    {curveNumber: 1, pointNumber: board_.numMovesShown(), },
+                    {curveNumber: 0, pointNumber: Math.max(0, board_.numMovesShown() - 1), },
+                    {curveNumber: 1, pointNumber: Math.max(0, board_.numMovesShown() - 1), },
                 ]);
             });
         }
@@ -412,7 +433,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
                     }
                 },
             ],
-            hovermode: "x",
+            hovermode: "x+closest",
         };
         if (yRange) {
             layout.yaxis = { range: yRange };
