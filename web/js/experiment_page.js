@@ -306,7 +306,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
 
     function getScoresPlotData(index) {
         var scores = gameRecordResponse_.game_record.scores;
-        var x = [], y =[];
+        var x = [0], y =[0];
         for (var i = 0; i < scores.length; ++i) {
             x.push(i + 1);
             y.push(scores[Math.min(scores.length - 1, Math.floor(i / 2) * 2 + index)]);
@@ -334,7 +334,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
 
     function getDepthPlotData(index) {
         var output = gameRecordResponse_.game_record.output;
-        var x = [], y =[];
+        var x = [0], y =[0];
         for (var i = 0; i < output.length; ++i) {
             x.push(i + 1);
             y.push(output[Math.min(output.length - 1, Math.floor(i / 2) * 2 + index)].last_complete_depth.depth);
@@ -370,8 +370,8 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
                 var div = document.getElementById(divId);
                 Plotly.relayout(div, update);
                 Plotly.Fx.hover(div, [
-                    {curveNumber: 0, pointNumber: Math.max(0, board_.numMovesShown() - 1), },
-                    {curveNumber: 1, pointNumber: Math.max(0, board_.numMovesShown() - 1), },
+                    {curveNumber: 0, pointNumber: board_.numMovesShown(), },
+                    {curveNumber: 1, pointNumber: board_.numMovesShown(), },
                 ]);
             });
         }
