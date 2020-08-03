@@ -8,6 +8,7 @@ import (
 
 	"github.com/kirakira/zaixianxiangqi/internal"
 	"github.com/kirakira/zaixianxiangqi/internal/blur_bench"
+	"github.com/kirakira/zaixianxiangqi/internal/blur_bench/leveldb"
 )
 
 func main() {
@@ -21,6 +22,10 @@ func main() {
 	port := internal.GetPort()
 	log.Printf("Starting server on port %s.\n", port)
 
-	blur_bench.RegisterHandlers(args[1])
+	storage := leveldb.Storage{
+		LeveldbDirectory: args[1],
+	}
+	blur_bench.RegisterHandlers(storage)
+
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }

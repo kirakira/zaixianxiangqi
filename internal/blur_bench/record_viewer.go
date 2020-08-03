@@ -11,10 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/util"
-	"google.golang.org/protobuf/proto"
-
 	. "github.com/kirakira/zaixianxiangqi/internal"
 	. "github.com/kirakira/zaixianxiangqi/internal/blur_bench/genfiles"
 )
@@ -36,27 +32,17 @@ type pageData struct {
 	TOC                  []byte
 }
 
-func getPageData(leveldbDirectory string, metadata *ExperimentMetadata) (*pageData, error) {
-	db, err := leveldb.OpenFile(leveldbDirectory, nil)
+func getPageData(storage Storage, metadata *ExperimentMetadata) (*pageData, error) {
+	games, err := storage.ReadGamesForExperiment(metadata.Id)
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
 
 	stats := stats{}
-
-	iter := db.NewIterator(util.BytesPrefix([]byte(keyPrefixForExperimentGames(metadata.Id))), nil)
 	toc := []GameRecord{}
-	for iter.Next() {
-		var record GameRecord
-		err := proto.Unmarshal(iter.Value(), &record)
-		if err != nil {
-			return nil, err
-		}
-
+	for _, record := range games {
 		record.Moves = nil
 		record.Scores = nil
-
 		toc = append(toc, record)
 
 		if (record.Result == GameResult_RED_WON && !record.ControlIsRed) || (record.Result == GameResult_BLACK_WON && record.ControlIsRed) {
@@ -103,37 +89,30 @@ type ExperimentLink struct {
 	Link         string
 }
 
-func getRecentExperimentLinks(leveldbDirectory string) ([]ExperimentLink, error) {
-	db, err := leveldb.OpenFile(leveldbDirectory, nil)
+func getRecentExperimentLinks(storage Storage) ([]ExperimentLink, error) {
+	experiments, err := storage.GetRecentExperiments(20)
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
 
-	iter := db.NewIterator(util.BytesPrefix([]byte(keyPrefixForExperimentMetadata())), nil)
 	var links []ExperimentLink
-	for iter.Next() {
-		var metadata ExperimentMetadata
-		err := proto.Unmarshal(iter.Value(), &metadata)
-		if err != nil {
-			return nil, err
-		}
+	for _, exp := range experiments {
 		links = append(links, ExperimentLink{
-			ExperimentId: fmt.Sprintf("%d", metadata.Id),
-			Link:         fmt.Sprintf("/experiment/%d", metadata.Id),
+			ExperimentId: fmt.Sprintf("%d", exp.Id),
+			Link:         fmt.Sprintf("/experiment/%d", exp.Id),
 		})
 	}
 
 	return links, nil
 }
 
-func indexPage(leveldbDirectory string, t *template.Template, w http.ResponseWriter, r *http.Request) {
+func indexPage(storage Storage, t *template.Template, w http.ResponseWriter, r *http.Request) {
 	if !(r.Method == "" || r.Method == "GET") {
 		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
 		return
 	}
 
-	links, err := getRecentExperimentLinks(leveldbDirectory)
+	links, err := getRecentExperimentLinks(storage)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to load recent experiments: %v.", err), http.StatusInternalServerError)
 	}
@@ -147,7 +126,7 @@ func indexPage(leveldbDirectory string, t *template.Template, w http.ResponseWri
 	}
 }
 
-func viewExperimentPage(leveldbDirectory string, t *template.Template, w http.ResponseWriter, r *http.Request) {
+func viewExperimentPage(storage Storage, t *template.Template, w http.ResponseWriter, r *http.Request) {
 	if !(r.Method == "" || r.Method == "GET") {
 		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
 		return
@@ -165,12 +144,12 @@ func viewExperimentPage(leveldbDirectory string, t *template.Template, w http.Re
 		return
 	}
 
-	metadata, err := readExperimentMetadata(leveldbDirectory, experimentId)
+	metadata, err := storage.ReadExperimentMetadata(experimentId)
 	if err != nil {
 		http.Error(w, "Invalid experiment id.", http.StatusBadRequest)
 	}
 
-	pageData, err := getPageData(leveldbDirectory, metadata)
+	pageData, err := getPageData(storage, metadata)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to load experiment: %v.", err), http.StatusInternalServerError)
 		return
@@ -190,45 +169,6 @@ func viewExperimentPage(leveldbDirectory string, t *template.Template, w http.Re
 	}); err != nil {
 		log.Fatalf("Failed to execute HTML template: %v", err)
 	}
-}
-
-func readProtoRecord(leveldbDirectory string, key []byte, record proto.Message) error {
-	db, err := leveldb.OpenFile(leveldbDirectory, nil)
-	if err != nil {
-		log.Printf("Open DB failed %v", err)
-		return err
-	}
-	defer db.Close()
-
-	value, err := db.Get(key, nil)
-	if err != nil {
-		log.Printf("Get key failed %v", err)
-		return err
-	}
-
-	err = proto.Unmarshal(value, record)
-	if err != nil {
-		log.Printf("Unmarshal failed %v", err)
-		return err
-	}
-
-	return nil
-}
-
-func readGameRecord(leveldbDirectory string, experimentId int64, gameId string) (*GameRecord, error) {
-	var record GameRecord
-	if err := readProtoRecord(leveldbDirectory, keyForGameRecord(experimentId, gameId), &record); err != nil {
-		return nil, err
-	}
-	return &record, nil
-}
-
-func readExperimentMetadata(leveldbDirectory string, experimentId int64) (*ExperimentMetadata, error) {
-	var record ExperimentMetadata
-	if err := readProtoRecord(leveldbDirectory, []byte(keyForExperimentMetadata(experimentId)), &record); err != nil {
-		return nil, err
-	}
-	return &record, nil
 }
 
 func convertToGameRecordResponse(metadata *ExperimentMetadata, gameRecord *GameRecord) *GameRecordResponse {
@@ -275,7 +215,7 @@ func convertToGameRecordResponse(metadata *ExperimentMetadata, gameRecord *GameR
 	}
 }
 
-func gameRecordAPI(leveldbDirectory string, w http.ResponseWriter, r *http.Request) {
+func gameRecordAPI(storage Storage, w http.ResponseWriter, r *http.Request) {
 	if !(r.Method == "" || r.Method == "GET") {
 		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
 		return
@@ -294,14 +234,14 @@ func gameRecordAPI(leveldbDirectory string, w http.ResponseWriter, r *http.Reque
 	}
 	gameId := reMatches[2]
 
-	metadata, err := readExperimentMetadata(leveldbDirectory, experimentId)
+	metadata, err := storage.ReadExperimentMetadata(experimentId)
 	if err != nil {
 		log.Printf("Failed to read test metadata: %v", err)
 		http.Error(w, "Failed to read test metadata.", http.StatusInternalServerError)
 		return
 	}
 
-	gameRecord, err := readGameRecord(leveldbDirectory, experimentId, gameId)
+	gameRecord, err := storage.ReadGameRecord(experimentId, gameId)
 	if err != nil {
 		http.Error(w, "Game not found.", http.StatusNotFound)
 		return
@@ -316,7 +256,7 @@ func gameRecordAPI(leveldbDirectory string, w http.ResponseWriter, r *http.Reque
 	w.Write(encoded)
 }
 
-func RegisterHandlers(leveldbDirectory string) {
+func RegisterHandlers(storage Storage) {
 	ServeStaticFiles()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// The "/" pattern matches everything, so we need to check
@@ -326,17 +266,17 @@ func RegisterHandlers(leveldbDirectory string) {
 			return
 		}
 		t := template.Must(template.ParseFiles("web/game_record_viewer.html"))
-		indexPage(leveldbDirectory, t, w, r)
+		indexPage(storage, t, w, r)
 	})
 	http.HandleFunc(IndexPagePath, func(w http.ResponseWriter, r *http.Request) {
 		t := template.Must(template.ParseFiles("web/game_record_viewer.html"))
-		indexPage(leveldbDirectory, t, w, r)
+		indexPage(storage, t, w, r)
 	})
 	http.HandleFunc("/experiment/", func(w http.ResponseWriter, r *http.Request) {
 		t := template.Must(template.ParseFiles("web/experiment.html"))
-		viewExperimentPage(leveldbDirectory, t, w, r)
+		viewExperimentPage(storage, t, w, r)
 	})
 	http.HandleFunc("/game_record/", func(w http.ResponseWriter, r *http.Request) {
-		gameRecordAPI(leveldbDirectory, w, r)
+		gameRecordAPI(storage, w, r)
 	})
 }

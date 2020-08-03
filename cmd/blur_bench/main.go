@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/kirakira/zaixianxiangqi/internal/blur_bench"
+	"github.com/kirakira/zaixianxiangqi/internal/blur_bench/leveldb"
 )
 
 func main() {
@@ -33,5 +34,8 @@ func main() {
 		leveldbDirectory = "games_data"
 	}
 
-	blur_bench.SelfPlay([2]string{engine1, engine2}, numThreads, leveldbDirectory)
+	storage := leveldb.Storage{
+		LeveldbDirectory: leveldbDirectory,
+	}
+	blur_bench.SelfPlay([2]string{engine1, engine2}, numThreads, &storage)
 }

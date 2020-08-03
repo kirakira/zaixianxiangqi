@@ -11,10 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/orderedcode"
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/util"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	. "github.com/kirakira/zaixianxiangqi/internal"
@@ -263,33 +259,6 @@ func selfPlayThread(engines [2]string, redPlayer int, threadIndex int, resultCha
 	}
 }
 
-func writeProtoRecordToDB(db *leveldb.DB, key []byte, record proto.Message) error {
-	value, err := proto.Marshal(record)
-	if err != nil {
-		return err
-	}
-
-	err = db.Put(key, value, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func writeProtoRecord(leveldbDirectory string, key []byte, record proto.Message) error {
-	db, err := leveldb.OpenFile(leveldbDirectory, nil)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-	return writeProtoRecordToDB(db, key, record)
-}
-
-func writeGameRecord(leveldbDirectory string, experimentId int64, record *GameRecord) error {
-	return writeProtoRecord(leveldbDirectory, keyForGameRecord(experimentId, record.GameId), record)
-}
-
 func createExperimentMetadata(engines [2]string) *ExperimentMetadata {
 	return &ExperimentMetadata{
 		CreationTime: timestamppb.New(time.Now()),
@@ -302,80 +271,19 @@ func createExperimentMetadata(engines [2]string) *ExperimentMetadata {
 	}
 }
 
-func findNextExperimentKey(db *leveldb.DB) (int64, error) {
-	iter := db.NewIterator(util.BytesPrefix(keyPrefixForExperimentMetadata()), nil)
-	var lastKey int64 = 9999
-	if iter.Next() {
-		var metadata ExperimentMetadata
-		iter.Value()
-		err := proto.Unmarshal(iter.Value(), &metadata)
-		if err != nil {
-			return 0, err
-		}
-		lastKey = metadata.Id
-	}
-	return lastKey + 1, nil
-}
-
-func writeExperimentMetadata(leveldbDirectory string, metadata *ExperimentMetadata) error {
-	db, err := leveldb.OpenFile(leveldbDirectory, nil)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	metadata.Id, err = findNextExperimentKey(db)
-	if err != nil {
-		return err
-	}
-	return writeProtoRecordToDB(db, keyForExperimentMetadata(metadata.Id), metadata)
-}
-
-func keyPrefixForExperimentMetadata() []byte {
-	key, err := orderedcode.Append(nil, "metadata_")
-	if err != nil {
-		log.Fatalf("Failed keyPrefixForExperimentMetadata: %v", err)
-	}
-	return key
-}
-
-func keyForExperimentMetadata(experimentId int64) []byte {
-	key, err := orderedcode.Append(keyPrefixForExperimentMetadata(), orderedcode.Decr(experimentId))
-	if err != nil {
-		log.Fatalf("Failed keyForExperimentMetadata: %v", err)
-	}
-	return key
-}
-
-func keyPrefixForExperimentGames(experimentId int64) []byte {
-	key, err := orderedcode.Append(nil, "game_", orderedcode.Decr(experimentId))
-	if err != nil {
-		log.Fatalf("Failed keyPrefixForExperimentGames: %v", err)
-	}
-	return key
-}
-
-func keyForGameRecord(experimentId int64, gameId string) []byte {
-	key, err := orderedcode.Append(keyPrefixForExperimentGames(experimentId), gameId)
-	if err != nil {
-		log.Fatalf("Failed keyForGameRecord: %v", err)
-	}
-	return key
-}
-
-func recorderThread(engines [2]string, leveldbDirectory string, resultChannel chan *GameRecord) {
+func recorderThread(engines [2]string, storage Storage, resultChannel chan *GameRecord) {
 	metadata := createExperimentMetadata(engines)
-	if err := writeExperimentMetadata(leveldbDirectory, metadata); err != nil {
+	if err := storage.NewExperiment(metadata); err != nil {
 		log.Fatalf("Failed to write test metadata: %v", err)
 	}
-	log.Printf("Starting experiment %d. Writing output to '%s'.", metadata.Id, leveldbDirectory)
+	log.Printf("Starting experiment %d.", metadata.Id)
 
 	halfScores := [2]int{}
 	for record := range resultChannel {
 		if record.Result == GameResult_UNKNOWN_GAME_RESULT {
 			log.Fatalf("Received a game with unknown result")
 		}
-		err := writeGameRecord(leveldbDirectory, metadata.Id, record)
+		err := storage.WriteGameRecord(metadata.Id, record)
 		if err != nil {
 			log.Printf("Failed to write game record: %s\n", err)
 		}
@@ -410,7 +318,7 @@ func ExtractEngineName(engine string) string {
 	}
 }
 
-func SelfPlay(engines [2]string, numThreads int, leveldbDirectory string) {
+func SelfPlay(engines [2]string, numThreads int, storage Storage) {
 	rand.Seed(time.Now().UnixNano())
 	ch := make(chan *GameRecord)
 	redPlayer := rand.Intn(2)
@@ -418,5 +326,5 @@ func SelfPlay(engines [2]string, numThreads int, leveldbDirectory string) {
 		go selfPlayThread(engines, redPlayer, i, ch)
 		redPlayer = 1 - redPlayer
 	}
-	recorderThread(engines, leveldbDirectory, ch)
+	recorderThread(engines, storage, ch)
 }
