@@ -4,30 +4,29 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/go-sql-driver/mysql"
+	. "github.com/kirakira/zaixianxiangqi/internal/blur_bench/genfiles"
 	"github.com/schemalex/schemalex"
 	"github.com/schemalex/schemalex/diff"
+	"google.golang.org/protobuf/proto"
 )
 
 type Storage struct {
-	Db *sql.DB
+	DSN string
 }
 
-func Create() (*Storage, error) {
+func NewStorage() (*Storage, error) {
 	conn, err := getConnectionString()
 	if err != nil {
 		return nil, err
 	}
-	db, err := sql.Open("mysql", conn)
-	if err != nil {
-		return nil, err
-	}
 	return &Storage{
-		Db: db,
+		DSN: conn,
 	}, nil
 }
 
@@ -97,6 +96,228 @@ func InitOrUpdateDB(schemaSqlFilename string) error {
 	}
 
 	return nil
+}
+
+func (storage *Storage) NewExperiment(metadata *ExperimentMetadata) error {
+	db, err := sql.Open("mysql", storage.DSN)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	stmt, err := db.Prepare(`INSERT INTO Experiment (
+		creation_time, control_engine_name, treatment_engine_name,
+		control_engine_info, treatment_engine_info) VALUES (
+		?, ?, ?, ?, ?)`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	controlBlob, err := proto.Marshal(metadata.Control)
+	if err != nil {
+		return err
+	}
+	treatmentBlob, err := proto.Marshal(metadata.Treatment)
+	if err != nil {
+		return err
+	}
+	result, err := stmt.Exec(metadata.CreationTime.AsTime(), metadata.Control.Name, metadata.Treatment.Name, controlBlob, treatmentBlob)
+	if err != nil {
+		return err
+	}
+
+	metadata.Id, err = result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (storage *Storage) GetRecentExperiments(n int) ([]ExperimentMetadata, error) {
+	db, err := sql.Open("mysql", storage.DSN)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	stmt, err := db.Prepare(`SELECT id, control_engine_info, treatment_engine_info FROM Experiment
+															ORDER BY creation_time DESC LIMIT ?`)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(n)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []ExperimentMetadata
+	for rows.Next() {
+		em, err := experimentRowToExperimentMetadata(rows)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, *em)
+	}
+	return result, nil
+}
+
+func (storage *Storage) ReadExperimentMetadata(experimentId int64) (*ExperimentMetadata, error) {
+	db, err := sql.Open("mysql", storage.DSN)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	stmt, err := db.Prepare(`SELECT id, control_engine_info, treatment_engine_info FROM Experiment
+															WHERE id = ?`)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(experimentId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		em, err := experimentRowToExperimentMetadata(rows)
+		if err != nil {
+			return nil, err
+		}
+		return em, nil
+	}
+	return nil, fmt.Errorf("Experiment %d does not exist.", experimentId)
+}
+
+func (storage *Storage) WriteGameRecord(experimentId int64, record *GameRecord) error {
+	db, err := sql.Open("mysql", storage.DSN)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	stmt, err := db.Prepare(`INSERT INTO GameRecord (
+		experiment_id, game_id, control_is_red,
+		result, game_record) VALUES (
+		?, ?, ?, ?, ?)`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	gameRecordBlob, err := proto.Marshal(record)
+	if err != nil {
+		return err
+	}
+
+	result, err := stmt.Exec(experimentId, record.GameId, record.ControlIsRed, record.Result, gameRecordBlob)
+	if err != nil {
+		return err
+	}
+	if cnt, err := result.RowsAffected(); err != nil {
+		return err
+	} else if cnt == 0 {
+		return fmt.Errorf("Insertion succeeded but no rows affected.")
+	}
+
+	return nil
+}
+
+func (storage *Storage) ReadGameRecord(experimentId int64, gameId string) (*GameRecord, error) {
+	db, err := sql.Open("mysql", storage.DSN)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	stmt, err := db.Prepare(`SELECT game_record FROM GameRecord WHERE experiment_id = ? AND game_id = ?`)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(experimentId, gameId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		gr, err := gameRecordRowGameRecord(rows)
+		if err != nil {
+			return nil, err
+		}
+		return gr, nil
+	}
+	return nil, fmt.Errorf("Game record not found: experimentId %d gameId %s", experimentId, gameId)
+}
+
+func (storage *Storage) ReadGamesForExperiment(experimentId int64) ([]GameRecord, error) {
+	db, err := sql.Open("mysql", storage.DSN)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	stmt, err := db.Prepare(`SELECT game_record FROM GameRecord WHERE experiment_id = ?`)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(experimentId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var records []GameRecord
+	for rows.Next() {
+		gr, err := gameRecordRowGameRecord(rows)
+		if err != nil {
+			return nil, err
+		}
+		records = append(records, *gr)
+	}
+	return records, nil
+}
+
+func experimentRowToExperimentMetadata(row *sql.Rows) (*ExperimentMetadata, error) {
+	var em ExperimentMetadata
+	var controlBlob, treatmentBlob []byte
+	if err := row.Scan(&em.Id, &controlBlob, &treatmentBlob); err != nil {
+		return nil, err
+	}
+	em.Control = &EngineInfo{}
+	err := proto.Unmarshal(controlBlob, em.Control)
+	if err != nil {
+		return nil, err
+	}
+	em.Treatment = &EngineInfo{}
+	err = proto.Unmarshal(treatmentBlob, em.Treatment)
+	if err != nil {
+		return nil, err
+	}
+	return &em, nil
+}
+
+func gameRecordRowGameRecord(row *sql.Rows) (*GameRecord, error) {
+	var grBlob []byte
+	if err := row.Scan(&grBlob); err != nil {
+		return nil, err
+	}
+	var gr GameRecord
+	err := proto.Unmarshal(grBlob, &gr)
+	if err != nil {
+		return nil, err
+	}
+	return &gr, nil
 }
 
 func getConnectionString() (string, error) {

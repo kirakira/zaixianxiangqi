@@ -147,6 +147,7 @@ func viewExperimentPage(storage Storage, t *template.Template, w http.ResponseWr
 	metadata, err := storage.ReadExperimentMetadata(experimentId)
 	if err != nil {
 		http.Error(w, "Invalid experiment id.", http.StatusBadRequest)
+		return
 	}
 
 	pageData, err := getPageData(storage, metadata)
