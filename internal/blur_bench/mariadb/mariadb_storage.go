@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
