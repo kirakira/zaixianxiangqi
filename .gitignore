@@ -5,3 +5,4 @@ cmd/game_record_viewer/game_record_viewer
 cmd/get_games_from_datastore/get_games_from_datastore
 cmd/migrate_old_db/migrate_old_db
 cmd/zaixianxiangqi/zaixianxiangqi
+cmd/init_or_update_mariadb/init_or_update_mariadb

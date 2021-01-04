@@ -6,9 +6,11 @@ require (
 	cloud.google.com/go v0.53.0
 	cloud.google.com/go/datastore v1.1.0
 	cloud.google.com/go/pubsub v1.2.0
+	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.1
 	github.com/google/orderedcode v0.0.1
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/schemalex/schemalex v0.1.1
 	github.com/syndtr/goleveldb v1.0.0
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b // indirect

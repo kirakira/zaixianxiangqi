@@ -11,6 +11,11 @@ $ docker run --name mariadb -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -v test_datadir:/v
 $ mysql --host=127.0.0.1 -u root
 ```
 
+* Create DB or update schema. This requires the `mysql` command line tool.
+```
+$ DB_CONNECTION=root@/BlurBench go run cmd/init_or_udpate_mariadb/main.go internal/blur_bench/mariadb/schema.sql
+```
+
 Run benchmark to compare two versions
 ====
 ```

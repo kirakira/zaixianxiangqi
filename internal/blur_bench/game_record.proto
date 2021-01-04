@@ -47,7 +47,6 @@ message EngineThinkingOutput {
   EngineThinkingOutputLine last_complete_depth = 1;
 }
 
-
 message GameRecord {
   // A unique ID that identifies a game in the experiment.
   string game_id = 1;
