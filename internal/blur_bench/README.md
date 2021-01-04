@@ -6,6 +6,11 @@ $ docker pull mariadb
 $ docker run --name mariadb -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -v test_datadir:/var/lib/mysql -p 127.0.0.1:3306:3306/tcp -d mariadb:latest
 ```
 
+* Restart the mysqld container.
+```
+$ docker start mariadb
+```
+
 * Test connection.
 ```
 $ mysql --host=127.0.0.1 -u root
