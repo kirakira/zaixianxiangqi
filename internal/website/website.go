@@ -41,10 +41,10 @@ func isSessionValid(ctx Context, sessionKey *datastore.Key) bool {
 }
 
 func createSessionForUser(ctx Context, user *datastore.Key) *datastore.Key {
-	sessionKey, err := ctx.Client.Put(ctx.Ctx, datastore.IncompleteKey("Session",
+	sessionKey, err := DatastorePutWithRetry(ctx.Client, ctx.Ctx, datastore.IncompleteKey("Session",
 		user), &Session{
 		Creation: time.Now(),
-	})
+	}, 5)
 	if err != nil {
 		log.Fatalf("Failed to create session for user %v: %v", user, err)
 	}
@@ -57,13 +57,15 @@ func pickUserName() string {
 }
 
 func createUser(ctx Context) UserSession {
-	userKey, err := ctx.Client.Put(ctx.Ctx, datastore.IncompleteKey("User", nil), &User{
-		Name: pickUserName(),
-	})
+	userKey, err := DatastorePutWithRetry(ctx.Client, ctx.Ctx, datastore.IncompleteKey("User", nil),
+		&User{
+			Name: pickUserName(),
+		}, 5)
 
 	if err != nil {
 		log.Fatalf("Failed to create user: %v", err)
 	}
+	log.Printf("Created user %v", userKey)
 
 	return UserSession{
 		User:    userKey,
@@ -772,7 +774,8 @@ func getOrCreateAIUser(ctx Context) *datastore.Key {
 			Name: "Blur",
 			AI:   true,
 		}
-		aiKey, err := ctx.Client.Put(ctx.Ctx, datastore.IncompleteKey("User", nil), &user)
+		aiKey, err := DatastorePutWithRetry(ctx.Client, ctx.Ctx,
+			datastore.IncompleteKey("User", nil), &user, 5)
 		if err != nil {
 			log.Fatalf("Failed to create AI user: %v", err)
 		}

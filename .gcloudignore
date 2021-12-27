@@ -26,3 +26,4 @@
 
 /testdata/
 third_party/deep-blur/bin/
+cmd/blur_bench/games_data/
