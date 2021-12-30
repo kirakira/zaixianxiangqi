@@ -11,9 +11,9 @@
         <title>在线象棋对战 | {{.GameId}}</title>
     </head>
     <body>
-        <div class="layout">
+        <div class="layout game-page-layout">
             <div class="nav">
-                <div>Hello, {{.PlayerName}}</div>
+                <div>Hello, <a href="/user/{{.PlayerId}}">{{.PlayerName}}</a></div>
                 <div>Game <span id="gameId">{{.GameId}}</span></div>
                 <div class="menu"><div id="menu-text" onclick="toggleMenu();">menu <span class="menu-toggle">[+]</span></div><div class="menu-content" id="menu-content">
                     <div><a href="/new">new game</a></div>

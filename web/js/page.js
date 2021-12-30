@@ -204,7 +204,9 @@ function Game(currentGameId, myUid, gameInfo) {
             gameInfo.red !== null) {
             var redPlayerNode = document.getElementById("red-player");
             var nameSpan = document.createElement("span");
-            nameSpan.appendChild(document.createTextNode(gameInfo.red.name));
+            nameSpan.appendChild(createLink(
+              "red-player-link", "player-link", "/user/" + gameInfo.red.id, undefined,
+              gameInfo.red.name));
             redPlayerNode.appendChild(nameSpan);
             redPlayerNode.appendChild(createHintYou(gameInfo.red.id != myUid));
         } else {
@@ -215,7 +217,9 @@ function Game(currentGameId, myUid, gameInfo) {
             gameInfo.black !== null) {
             var blackPlayerNode = document.getElementById("black-player");
             var nameSpan = document.createElement("span");
-            nameSpan.appendChild(document.createTextNode(gameInfo.black.name));
+            nameSpan.appendChild(createLink(
+              "black-player-link", "player-link", "/user/" + gameInfo.black.id, undefined,
+              gameInfo.black.name));
             blackPlayerNode.appendChild(nameSpan);
             blackPlayerNode.appendChild(createHintYou(gameInfo.black.id != myUid));
         } else {
@@ -374,7 +378,7 @@ function toggleMenu() {
 // global: currentGameId, myUid, gameInfo
 // Init applicaiton when document is loaded.
 document.onreadystatechange = function() {
-    if (document.readyState == "interactive") {
+    if (document.readyState == "interactive" && typeof currentGameId !== "undefined") {
         var game = new Game(currentGameId, myUid, gameInfo);
     }
 }

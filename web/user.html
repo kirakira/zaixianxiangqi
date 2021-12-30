@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh">
+    <head>
+        <meta charset="UTF-8">
+        <script src="/js/zaixianxiangqi.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="/css/game.css" type="text/css" media="screen" />
+        <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+        <title>在线象棋对战 | {{.UserName}}</title>
+    </head>
+    <body>
+        <div class="layout user-page-layout">
+            <div class="nav">
+                <div>Hello, <a href="/user/{{.PlayerId}}">{{.PlayerName}}</a></div>
+                <div>View User Profile</div>
+                <div class="menu"><div id="menu-text" onclick="toggleMenu();">menu <span class="menu-toggle">[+]</span></div><div class="menu-content" id="menu-content">
+                    <div><a href="/new">new game</a></div>
+                  </div>
+                </div>
+            </div>
+            <div class="user-profile-layout">
+              <h2>User Profile</h2>
+              <table class="user-profile">
+                <tr><td>Name</td><td>{{.UserName}}</td></tr>
+                <tr><td>Games played</td><td>{{.GamesPlayed}}</td></tr>
+              </table>
+              <h2>Recent Games</h2>
+              {{- if len .RecentGames | lt 0 -}}
+              <table class="user-profile">
+                <tr><th>Game</th><th>Created</th><th>Color</th><th>Opponent</th><th>Moves</th><th>Status</th>
+                {{range $item := .RecentGames}}
+                <tr><td><a href="/game/{{$item.GameId}}">{{$item.GameId}}</a></td><td>{{$item.CreatedTimeAgo}}</td><td>{{$item.Color}}</td><td>{{if len $item.Opponent | lt 0}}<a href="/user/{{$item.OpponentUid}}">{{$item.Opponent}}</a>{{else}}N/A{{end}}</td><td>{{$item.Moves}}</td><td><a href="/game/{{$item.GameId}}">{{$item.Status}}</a></td>
+                {{end}}
+              </table>
+              {{- else}}No recent games.{{end -}}
+            </div>
+        </div>
+    </body>
+</html>

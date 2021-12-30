@@ -1,7 +1,6 @@
 package website
 
 import (
-	"html/template"
 	"net/http"
 
 	. "github.com/kirakira/zaixianxiangqi/internal"
@@ -9,7 +8,6 @@ import (
 
 func RegisterHandlers(ctx Context) {
 	maybeServeStaticFiles()
-	t := template.Must(template.ParseFiles("web/game.html"))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// The "/" pattern matches everything, so we need to check
 		// that we're at the root here.
@@ -22,8 +20,11 @@ func RegisterHandlers(ctx Context) {
 	http.HandleFunc("/new", func(w http.ResponseWriter, r *http.Request) {
 		mainPage(ctx, w, r, true)
 	})
+	http.HandleFunc("/user/", func(w http.ResponseWriter, r *http.Request) {
+		userPage(ctx, w, r)
+	})
 	http.HandleFunc("/game/", func(w http.ResponseWriter, r *http.Request) {
-		gamePage(ctx, t, w, r)
+		gamePage(ctx, w, r)
 	})
 	http.HandleFunc("/gameinfo", func(w http.ResponseWriter, r *http.Request) {
 		gameInfoAPI(ctx, w, r)

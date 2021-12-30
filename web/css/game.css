@@ -8,10 +8,20 @@ body {
     font-family: 'Roboto',arial,sans-serif;
 }
 
-div.layout {
+div.game-page-layout {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+}
+
+div.user-page-layout {
+    display: flex;
+    flex-direction: column;
+}
+
+div.user-profile-layout {
+    display: flex;
+    flex-direction: column;
 }
 
 div.nav {
@@ -54,4 +64,20 @@ span.menu-toggle {
 
 span#gameId {
     font-family: monospace;
+}
+
+table.user-profile {
+    margin-left: auto;
+    margin-right: auto;
+    border-collapse: collapse;
+}
+
+table.user-profile tbody th, td {
+    padding: 4px;
+    text-align: center;
+}
+
+table.user-profile tbody tr th, td {
+    border: solid;
+    border-width: 1px;
 }
