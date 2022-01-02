@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh">
+    <head>
+        <meta charset="UTF-8">
+        <script src="/js/update_profile.js"></script>
+        <script>{{.JsCode}}</script>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="/css/common.css" type="text/css" media="screen" />
+        <link rel="stylesheet" href="/css/game.css" type="text/css" media="screen" />
+        <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+        <title>在线象棋对战 | Update Profile</title>
+    </head>
+    <body>
+        <div class="layout update-profile-page-layout">
+            <div class="nav">
+                <div>Hello, <a class="player-link" href="/user/{{.PlayerId}}">{{.PlayerName}}</a></div>
+                <div>Update Profile</div>
+                <div class="menu"><div id="menu-text" onclick="toggleMenu();">menu <span class="menu-toggle">[+]</span></div><div class="menu-content" id="menu-content">
+                    <div><a href="/new">new game</a></div>
+                    <div id="update-profile"><a href="/update_profile">update profile</a></div>
+                  </div>
+                </div>
+            </div>
+            <div class="update-profile-layout">
+                <table class="update-profile">
+                  <tr><th><td>Name</td><td><div class="input-validation-box"><input id="player-name-input" type="text" value="{{.PlayerName}}" autocomplete="off"></input><span class="validation-error" id="player-name-validation-error"></span></div></td></tr>
+                </table>
+                <div id="update-profile-submit"><a id="save-button" href="#save">Save</a></div>
+            </div>
+        </div>
+    </body>
+</html>

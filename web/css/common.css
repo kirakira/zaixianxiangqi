@@ -1,0 +1,10 @@
+a.disabled {
+    pointer-events: none;
+    color: gray
+}
+
+a.player-link {
+    font-weight: bold;
+    text-decoration: none;
+    color: #17612c;
+}

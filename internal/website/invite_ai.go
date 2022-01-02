@@ -33,10 +33,11 @@ func getOrCreateAIUser(ctx Context) *datastore.Key {
 }
 
 func inviteAI(ctx Context, _ http.Header, form url.Values) (*Game, error) {
-	userKey, gid, err := validatePostRequest(ctx, http.Header{}, form)
+	userKey, additionalFields, err := validatePostRequest(ctx, http.Header{}, form, []string{"gid"})
 	if err != nil {
 		return nil, err
 	}
+	gid := additionalFields["gid"]
 
 	aiUser := getOrCreateAIUser(ctx)
 	if *aiUser == *userKey {
@@ -47,7 +48,7 @@ func inviteAI(ctx Context, _ http.Header, form url.Values) (*Game, error) {
 		resolvedGame = nil
 
 		var game Game
-		if err := tx.Get(datastore.NameKey("Game", *gid, nil), &game); err != nil {
+		if err := tx.Get(datastore.NameKey("Game", gid, nil), &game); err != nil {
 			return err
 		}
 		resolvedGame = new(Game)
@@ -83,4 +84,8 @@ func inviteAI(ctx Context, _ http.Header, form url.Values) (*Game, error) {
 	maybePushAIMove(ctx, resolvedGame)
 
 	return resolvedGame, err
+}
+
+func handleInviteAI(ctx Context, w http.ResponseWriter, r *http.Request) {
+	postGameInfoAPIWrapper(ctx, w, r, inviteAI)
 }

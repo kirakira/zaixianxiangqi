@@ -48,37 +48,6 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         }
     }
 
-    function ajax(method, url, contentType, payload, success, failure) {
-        var xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function() {
-            if (xmlhttp.readyState == 4) {
-                if (xmlhttp.status >= 200 && xmlhttp.status <= 299) {
-                    success(xmlhttp.responseText);
-                } else if (failure) {
-                    failure(xmlhttp.responseText);
-                }
-            }
-        };
-        xmlhttp.open(method, url, true);
-        if (contentType) {
-            xmlhttp.setRequestHeader("Content-type", contentType);
-        }
-        if (payload) {
-            xmlhttp.send(payload);
-        } else {
-            xmlhttp.send();
-        }
-    }
-
-    function get(url, success, failure) {
-        ajax("GET", url, undefined, undefined, success, failure);
-    }
-
-    function post(url, payload, success, failure) {
-        ajax("POST", url,
-                "application/x-www-form-urlencoded; charset=UTF-8", payload, success, failure);
-    }
-
     function endPointFor(path) {
         return encodeURI(path);
     }
@@ -126,7 +95,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
     }
 
     function requestGameInfo(gameId) {
-        get(endPointFor("/game_record/" + experimentMetadata.id + "/" + gameId), function(data) {
+        ajaxGet(endPointFor("/game_record/" + experimentMetadata.id + "/" + gameId), function(data) {
             onGameRecordResponse(gameId, data);
         }, function(gameId, content) {
             var td = document.getElementById("game-record-" + gameId);
@@ -227,12 +196,12 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         table.appendChild(row);
 
         if (board_.numMovesShown() > 0) {
-            appendCellToRow(row, createLink("move-history-first", undefined, "#", function() {
+            appendCellToRow(row, createLink("move-history-first", [], "#", function() {
                 updateCurrentMove(0, true);
                 return false;
             }, "first"));
 
-            appendCellToRow(row, createLink("move-history-prev", undefined, "#", function() {
+            appendCellToRow(row, createLink("move-history-prev", [], "#", function() {
                 updateCurrentMove(board_.numMovesShown() - 1, true);
                 return false;
             }, "prev"));
@@ -244,12 +213,12 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
         appendCellToRow(row, document.createTextNode("" + board_.numMovesShown() + " / " + board_.numMoves()));
 
         if (board_.numMovesShown() < board_.numMoves()) {
-            appendCellToRow(row, createLink("move-history-next", undefined, "#", function() {
+            appendCellToRow(row, createLink("move-history-next", [], "#", function() {
                 updateCurrentMove(board_.numMovesShown() + 1, true);
                 return false;
             }, "next"));
 
-            appendCellToRow(row, createLink("move-history-last", undefined, "#", function() {
+            appendCellToRow(row, createLink("move-history-last", [], "#", function() {
                 updateCurrentMove(board_.numMoves(), true);
                 return false;
             }, "last"));

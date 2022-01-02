@@ -108,10 +108,11 @@ func maybePushAIMove(ctx Context, game *Game) {
 }
 
 func updateGame(ctx Context, header http.Header, form url.Values) (*Game, error) {
-	userKey, gid, err := validatePostRequest(ctx, header, form)
+	userKey, additionalFields, err := validatePostRequest(ctx, header, form, []string{"gid"})
 	if err != nil {
 		return nil, err
 	}
+	gid := additionalFields["gid"]
 
 	var resolvedGame *Game
 	_, err = ctx.Client.RunInTransaction(ctx.Ctx, func(tx *datastore.Transaction) error {
@@ -119,7 +120,7 @@ func updateGame(ctx Context, header http.Header, form url.Values) (*Game, error)
 		resolvedGame = nil
 
 		var game Game
-		if err := tx.Get(datastore.NameKey("Game", *gid, nil), &game); err != nil {
+		if err := tx.Get(datastore.NameKey("Game", gid, nil), &game); err != nil {
 			return err
 		}
 		resolvedGame = new(Game)
@@ -174,7 +175,7 @@ func gameInfoAPI(ctx Context, w http.ResponseWriter, r *http.Request) {
 		getGameInfo(ctx, w, r)
 		return
 	} else if r.Method == "POST" {
-		postAPIWrapper(ctx, w, r, updateGame)
+		postGameInfoAPIWrapper(ctx, w, r, updateGame)
 	} else {
 		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
 	}

@@ -44,7 +44,7 @@ func fetchRecentGameInfo(ctx Context, user *datastore.Key) []RecentGameInfo {
 		userSide := ""
 		color := ""
 		var opponentKey *datastore.Key
-		if *game.Red == *user {
+		if game.Red != nil && *game.Red == *user {
 			userSide = "R"
 			color = "Red"
 			opponentKey = game.Black

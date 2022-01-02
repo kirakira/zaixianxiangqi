@@ -14,14 +14,19 @@ div.game-page-layout {
     justify-content: space-between;
 }
 
-div.user-page-layout {
+div.user-page-layout, div.update-profile-page-layout {
     display: flex;
     flex-direction: column;
 }
 
-div.user-profile-layout {
+div.user-profile-layout, div.update-profile-layout {
     display: flex;
     flex-direction: column;
+    align-items: center;
+}
+
+div.update-profile-layout {
+    align-items: center;
 }
 
 div.nav {
@@ -66,18 +71,24 @@ span#gameId {
     font-family: monospace;
 }
 
-table.user-profile {
+table.user-profile, table.update-profile {
     margin-left: auto;
     margin-right: auto;
     border-collapse: collapse;
 }
 
-table.user-profile tbody th, td {
+table.user-profile tbody tr (th, td) {
     padding: 4px;
     text-align: center;
-}
-
-table.user-profile tbody tr th, td {
     border: solid;
     border-width: 1px;
+}
+
+div.input-validation-box {
+    display: flex;
+    flex-direction: column;
+}
+
+span.validation-error {
+    color: red;
 }

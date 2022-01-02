@@ -84,6 +84,7 @@ function BoardUI(onSquareSelected) {
         t.setAttribute("text-anchor", "middle");
         t.setAttribute("alignment-baseline", "central");
         t.setAttribute("dominant-baseline", "middle");
+        t.setAttribute("font-weight", "bold");
         t.setAttribute("x", x);
         t.setAttribute("y", y);
         t.appendChild(document.createTextNode(text));

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -235,4 +236,22 @@ func getRecentGames(ctx Context, user *datastore.Key, count int) []*datastore.Ke
 		gameKeys = append(gameKeys, g.gameKey)
 	}
 	return gameKeys
+}
+
+func postGameInfoAPIWrapper(ctx Context, w http.ResponseWriter, r *http.Request, handler func(Context, http.Header, url.Values) (*Game, error)) {
+	gameInfoHandler := func(ctx Context, headers http.Header, v url.Values) interface{} {
+		game, err := handler(ctx, headers, v)
+		var response GameInfoResponse
+		if err != nil {
+			response.Status = "fail"
+			log.Printf("Failed to update game info: %v", err)
+		} else {
+			response.Status = "success"
+		}
+		if game != nil {
+			response.GameInfo = convertToGameInfo(ctx, game)
+		}
+		return &response
+	}
+	postAPIWrapper(ctx, w, r, gameInfoHandler)
 }

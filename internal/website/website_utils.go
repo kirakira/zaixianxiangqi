@@ -14,7 +14,7 @@ import (
 	. "github.com/kirakira/zaixianxiangqi/internal"
 )
 
-func postAPIWrapper(ctx Context, w http.ResponseWriter, r *http.Request, handler func(Context, http.Header, url.Values) (*Game, error)) {
+func postAPIWrapper(ctx Context, w http.ResponseWriter, r *http.Request, handler func(Context, http.Header, url.Values) interface{}) {
 	if r.Method != "POST" {
 		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
 		return
@@ -28,23 +28,15 @@ func postAPIWrapper(ctx Context, w http.ResponseWriter, r *http.Request, handler
 		return
 	}
 
-	game, err := handler(ctx, r.Header, r.Form)
-	var response GameInfoResponse
-	if err != nil {
-		response.Status = "fail"
-		log.Printf("Failed to update game info: %v", err)
-	} else {
-		response.Status = "success"
-	}
-	if game != nil {
-		response.GameInfo = convertToGameInfo(ctx, game)
-	}
-
+	response := handler(ctx, r.Header, r.Form)
 	encoded, err := json.Marshal(response)
+	if err != nil {
+		log.Fatalf("Failed to marshal response %v", response)
+	}
 	w.Write(encoded)
 }
 
-func validatePostRequest(ctx Context, header http.Header, form url.Values) (userKey *datastore.Key, gid *string, err error) {
+func validatePostRequest(ctx Context, header http.Header, form url.Values, additionalRequiredFields []string) (userKey *datastore.Key, additionalFields map[string]string, err error) {
 	uid := GetFormValue(form, "uid")
 	if uid == nil {
 		return nil, nil, errors.New("Missing uid.")
@@ -80,12 +72,17 @@ func validatePostRequest(ctx Context, header http.Header, form url.Values) (user
 		}
 	}
 
-	gid = GetFormValue(form, "gid")
-	if gid == nil {
-		return nil, nil, errors.New("Missing gid.")
+	additionalFields = make(map[string]string)
+	for _, field := range additionalRequiredFields {
+		value := GetFormValue(form, field)
+		if value == nil {
+			return nil, nil, errors.New(fmt.Sprintf("Missing %s", field))
+		}
+		additionalFields[field] = *value
+
 	}
 
-	return userKey, gid, nil
+	return userKey, additionalFields, nil
 }
 
 func isWhiteListedEmail(email string) bool {

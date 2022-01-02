@@ -13,8 +13,7 @@ $ ./build_and_run_engine_server_local.sh
 
 # Compile Javascript files
 ```
-$ cd web
-$ make js/zaixianxiangqi.js
+$ cd web && make && cd ..
 ```
 
 # Deploy a new version

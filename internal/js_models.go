@@ -18,6 +18,7 @@ type GameInfo struct {
 }
 
 type GameInfoResponse struct {
+	// "success" or "fail".
 	Status   string    `json:"status"`
 	GameInfo *GameInfo `json:"gameinfo,omitempty"`
 }
@@ -25,4 +26,11 @@ type GameInfoResponse struct {
 type GameRecordResponse struct {
 	GameInfo   *GameInfo              `json:"game_info"`
 	GameRecord *blur_bench.GameRecord `json:"game_record"`
+}
+
+type UpdateProfileResponse struct {
+	// "success" or "fail".
+	Status string `json:"status"`
+	// Mapping from fields to error messages.
+	Errors map[string]string `json:"errors,omitempty"`
 }

@@ -33,7 +33,10 @@ func RegisterHandlers(ctx Context) {
 		forkPage(ctx, w, r)
 	})
 	http.HandleFunc("/invite_ai", func(w http.ResponseWriter, r *http.Request) {
-		postAPIWrapper(ctx, w, r, inviteAI)
+		handleInviteAI(ctx, w, r)
+	})
+	http.HandleFunc("/update_profile", func(w http.ResponseWriter, r *http.Request) {
+		handleUpdateProfile(ctx, w, r)
 	})
 	http.HandleFunc("/janitor", func(w http.ResponseWriter, r *http.Request) {
 		janitorPage(ctx, w, r)
