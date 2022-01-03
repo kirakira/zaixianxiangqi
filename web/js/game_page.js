@@ -1,7 +1,8 @@
 class Game {
-    constructor(currentGameId, myUid, gameInfo) {
+    constructor(currentGameId, myUid, myName, gameInfo) {
         this.currentGameId_ = currentGameId;
         this.myUid_ = myUid;
+        this.myName_ = myName;
         this.gameInfo_ = gameInfo;
 
         // Sequencing control ensures in-order delivery of request responses by
@@ -351,6 +352,17 @@ class Game {
     }
 
     initApplication() {
+        var gameIdSpan = document.createElement("span");
+        gameIdSpan.id = "gameId";
+        gameIdSpan.appendChild(document.createTextNode(this.currentGameId_));
+        var navBarTitleHTML = "Game " + gameIdSpan.outerHTML;
+
+        var navBarOptions = new NavBarOptions(this.myUid_, this.myName_);
+        navBarOptions.titleElementHTML = navBarTitleHTML;
+        navBarOptions.menuInviteAI = true;
+        navBarOptions.menuFork = true;
+        initializeNavBar(navBarOptions);
+
         // init stopwatches
         this.redWatch_ = new Stopwatch("redStopwatch");
         this.blackWatch_ = new Stopwatch("blackStopwatch");
@@ -374,6 +386,6 @@ class Game {
 // Init applicaiton when document is loaded.
 document.onreadystatechange = function() {
     if (document.readyState == "interactive") {
-        var game = new Game(currentGameId, myUid, gameInfo);
+        var game = new Game(currentGameId, myUid, myName, gameInfo);
     }
 }

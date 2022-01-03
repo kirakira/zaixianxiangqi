@@ -15,6 +15,7 @@ func updateProfilePage(ctx Context, w http.ResponseWriter, r *http.Request) {
 	SetNoCache(w)
 	userSession := getOrCreateUser(ctx, GetFirstCookieOrDefault(r.Cookie("uid")), GetFirstCookieOrDefault(r.Cookie("sid")))
 	setUidSidInCookie(w, userSession)
+	playerName := getUserName(ctx, userSession.User)
 
 	t := template.Must(template.ParseFiles("web/update_profile.html"))
 	if err := t.Execute(w, struct {
@@ -23,10 +24,10 @@ func updateProfilePage(ctx Context, w http.ResponseWriter, r *http.Request) {
 		JsCode     template.JS
 	}{
 		PlayerId:   strconv.FormatInt(userSession.User.ID, 10),
-		PlayerName: getUserName(ctx, userSession.User),
+		PlayerName: playerName,
 		JsCode: template.JS(fmt.Sprintf(
-			"var myUid = '%s';",
-			strconv.FormatInt(userSession.User.ID, 10))),
+			"var myUid = '%s', myName = '%s';",
+			strconv.FormatInt(userSession.User.ID, 10), playerName)),
 	}); err != nil {
 		log.Fatalf("Failed to execute HTML template: %v", err)
 	}

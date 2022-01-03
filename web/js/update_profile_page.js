@@ -3,8 +3,14 @@ const inputKeyToElementId = new Map([
 ]);
 
 class UpdateProfile {
-    constructor(myUid) {
+    constructor(myUid, myName) {
         this.myUid_ = myUid;
+        this.myName_ = myName;
+
+        var navBarOptions = new NavBarOptions(this.myUid_, this.myName_);
+        navBarOptions.titleElementHTML = "Update My Profile";
+        initializeNavBar(navBarOptions);
+
         document.getElementById("save-button").onclick = function() {
             this.onSave();
             return false;
@@ -56,6 +62,6 @@ class UpdateProfile {
 
 document.onreadystatechange = function() {
     if (document.readyState == "interactive") {
-        var updateProfile = new UpdateProfile(myUid);
+        var updateProfile = new UpdateProfile(myUid, myName);
     }
 }

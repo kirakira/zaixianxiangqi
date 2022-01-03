@@ -34,6 +34,7 @@ func gamePage(ctx Context, w http.ResponseWriter, r *http.Request) {
 
 	userSession := getOrCreateUser(ctx, GetFirstCookieOrDefault(r.Cookie("uid")), GetFirstCookieOrDefault(r.Cookie("sid")))
 	setUidSidInCookie(w, userSession)
+	playerName := getUserName(ctx, userSession.User)
 
 	t := template.Must(template.ParseFiles("web/game.html"))
 	if err := t.Execute(w, struct {
@@ -44,10 +45,10 @@ func gamePage(ctx Context, w http.ResponseWriter, r *http.Request) {
 		GameId     string
 	}{
 		PlayerId:   strconv.FormatInt(userSession.User.ID, 10),
-		PlayerName: getUserName(ctx, userSession.User),
+		PlayerName: playerName,
 		JsCode: template.JS(fmt.Sprintf(
-			"var currentGameId = '%s', myUid = '%s', gameInfo = JSON.parse('%s');",
-			gid, strconv.FormatInt(userSession.User.ID, 10), getGameInfoJs(ctx, game))),
+			"var currentGameId = '%s', myUid = '%s', myName = '%s', gameInfo = JSON.parse('%s');",
+			gid, strconv.FormatInt(userSession.User.ID, 10), playerName, getGameInfoJs(ctx, game))),
 		GameTitle: game.Description,
 		GameId:    gid,
 	}); err != nil {

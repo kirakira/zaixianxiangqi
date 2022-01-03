@@ -1,6 +1,7 @@
 package website
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -120,18 +121,23 @@ func userPage(ctx Context, w http.ResponseWriter, r *http.Request) {
 
 	userSession := getOrCreateUser(ctx, GetFirstCookieOrDefault(r.Cookie("uid")), GetFirstCookieOrDefault(r.Cookie("sid")))
 	setUidSidInCookie(w, userSession)
+	playerName := getUserName(ctx, userSession.User)
 
 	t := template.Must(template.ParseFiles("web/user.html"))
 	if err := t.Execute(w, struct {
 		PlayerId    string
 		PlayerName  string
 		UserName    string
+		JsCode      template.JS
 		GamesPlayed int
 		RecentGames []RecentGameInfo
 	}{
-		PlayerId:    strconv.FormatInt(userSession.User.ID, 10),
-		PlayerName:  getUserName(ctx, userSession.User),
-		UserName:    user.Name,
+		PlayerId:   strconv.FormatInt(userSession.User.ID, 10),
+		PlayerName: playerName,
+		UserName:   user.Name,
+		JsCode: template.JS(fmt.Sprintf(
+			"var myUid = '%s', myName = '%s';",
+			strconv.FormatInt(userSession.User.ID, 10), playerName)),
 		GamesPlayed: len(getAllGamesByUser(ctx, userKey)),
 		RecentGames: fetchRecentGameInfo(ctx, userKey),
 	}); err != nil {
