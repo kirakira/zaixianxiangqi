@@ -1,12 +1,23 @@
-function toggleMenu() {
-    var menu_span = document.getElementById("menu-text");
-    var menu_content = document.getElementById("menu-content");
-    if (menu_content.style.display == "grid") {
-      menu_content.style.display = "none";
-      menu_span.innerHTML = 'menu <span class="menu-toggle">[+]</span>';
+function createMenuToggleSpan(plus) {
+    var span = document.createElement("span");
+    span.classList.add("menu-toggle");
+    if (plus) {
+        span.appendChild(document.createTextNode("[+]"));
     } else {
-      menu_content.style.display = "grid";
-      menu_span.innerHTML = 'menu <span class="menu-toggle">[-]</span>';
+        span.appendChild(document.createTextNode("[-]"));
+    }
+    return span;
+}
+
+function toggleMenu() {
+    var menuText = document.getElementById("menu-text");
+    var menuContext = document.getElementById("menu-content");
+    if (menuContext.style.display == "grid") {
+        menuContext.style.display = "none";
+        menuText.innerHTML = createMenuToggleSpan(true).outerHTML;
+    } else {
+        menuContext.style.display = "grid";
+        menuText.innerHTML = createMenuToggleSpan(false).outerHTML;
     }
 }
 
@@ -14,7 +25,7 @@ class NavBarOptions {
     constructor(playerId, playerName) {
         this.playerId = playerId;
         this.playerName = playerName;
-        this.titleElementHTML = document.createTextNode("在线象棋对战").outerHTML;
+        this.titleElementHTML = "在线象棋对战";
         this.menuInviteAI = false;
         this.menuFork = false;
     }
@@ -23,12 +34,15 @@ class NavBarOptions {
 function createNavBarUsernameElement(playerId, playerName) {
     var div = document.createElement("div");
     div.appendChild(document.createTextNode("Hello, "));
-    div.appendChild(createLink(null, ["player-link"], "/user/" + playerId, null, playerName));
+    div.appendChild(createLink(null, ["player-link"], "/user/" + playerId, null,
+        playerName));
+    div.appendChild(document.createTextNode("!"));
     return div;
 }
 
 function createNavBarTitleElement(titleElementHTML) {
     var div = document.createElement("div");
+    div.classList.add("nav-bar-middle");
     div.innerHTML = titleElementHTML;
     return div;
 }
@@ -40,11 +54,7 @@ function createNavBarMenu(navBarOptions) {
     var divMenuText = document.createElement("div");
     divMenuText.id = "menu-text";
     divMenuText.onclick = toggleMenu;
-    divMenuText.appendChild(document.createTextNode("menu "));
-    var span = document.createElement("span");
-    span.classList.add("menu-toggle");
-    span.appendChild(document.createTextNode("[+]"));
-    divMenuText.appendChild(span);
+    divMenuText.appendChild(createMenuToggleSpan(true));
     div.appendChild(divMenuText);
 
     var divMenuContent = document.createElement("div");
@@ -69,17 +79,36 @@ function createNavBarMenu(navBarOptions) {
 
     var divUpdateProfile = document.createElement("div");
     divUpdateProfile.id = "update-profile";
-    divUpdateProfile.appendChild(createLink(null, [], "/update_profile", null, "update profile"));
+    divUpdateProfile.appendChild(createLink(null, [], "/update_profile", null,
+        "update profile"));
     divMenuContent.appendChild(divUpdateProfile);
-    
+
     div.appendChild(divMenuContent);
 
     return div;
 }
 
+function createNavBarRightElement(navBarOptions) {
+    var div = document.createElement("div");
+    div.classList.add("nav-bar-right");
+    div.appendChild(createNavBarUsernameElement(navBarOptions.playerId,
+        navBarOptions.playerName));
+    div.appendChild(createNavBarMenu(navBarOptions));
+    return div;
+}
+
+
+function createNavBarHomeElement() {
+    var div = document.createElement("div");
+    div.classList.add("nav-bar-left");
+    div.appendChild(createLink(null, [], "/", null, "Home"));
+    return div;
+}
+
+
 function initializeNavBar(navBarOptions) {
     var nav = document.getElementById("nav");
-    nav.appendChild(createNavBarUsernameElement(navBarOptions.playerId, navBarOptions.playerName));
+    nav.appendChild(createNavBarHomeElement());
     nav.appendChild(createNavBarTitleElement(navBarOptions.titleElementHTML));
-    nav.appendChild(createNavBarMenu(navBarOptions));
+    nav.appendChild(createNavBarRightElement(navBarOptions));
 }

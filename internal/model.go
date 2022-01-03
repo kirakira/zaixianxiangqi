@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"time"
 
 	"cloud.google.com/go/datastore"
@@ -37,6 +38,23 @@ const (
 	BlackWon = 3
 	Draw     = 4
 )
+
+func (status GameStatus) String() string {
+	switch status {
+	case Waiting:
+		return "Waiting"
+	case InProgress:
+		return "In progress"
+	case RedWon:
+		return "Red won"
+	case BlackWon:
+		return "Black won"
+	case Draw:
+		return "Draw"
+	default:
+		return fmt.Sprintf("%d", int(status))
+	}
+}
 
 type DerivedGameData struct {
 	// Version of the derived game info. 0 means invalid.

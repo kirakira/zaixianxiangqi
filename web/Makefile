@@ -1,4 +1,7 @@
-all: js/zaixianxiangqi.js js/experiment.js js/user_profile.js js/update_profile.js
+all: js/home.js js/zaixianxiangqi.js js/experiment.js js/user_profile.js js/update_profile.js
+
+js/home.js: js/utils.js js/page_common.js js/home_page.js
+	java -jar closure-compiler.jar --js js/utils.js js/page_common.js js/home_page.js --js_output_file js/home.js
 
 js/zaixianxiangqi.js: js/utils.js js/chess.js js/boardui.js js/board.js js/stopwatch.js js/page_common.js js/game_page.js
 	java -jar closure-compiler.jar --js js/utils.js js/chess.js js/boardui.js js/board.js js/stopwatch.js js/page_common.js js/game_page.js --js_output_file js/zaixianxiangqi.js

@@ -2,7 +2,10 @@ package website
 
 import (
 	"net/http"
+	_ "net/http/pprof"
+	"os"
 
+	"github.com/felixge/fgprof"
 	. "github.com/kirakira/zaixianxiangqi/internal"
 )
 
@@ -15,10 +18,10 @@ func RegisterHandlers(ctx Context) {
 			http.NotFound(w, r)
 			return
 		}
-		mainPage(ctx, w, r, false)
+		homePage(ctx, w, r)
 	})
 	http.HandleFunc("/new", func(w http.ResponseWriter, r *http.Request) {
-		mainPage(ctx, w, r, true)
+		newPage(ctx, w, r)
 	})
 	http.HandleFunc("/user/", func(w http.ResponseWriter, r *http.Request) {
 		userPage(ctx, w, r)
@@ -41,4 +44,8 @@ func RegisterHandlers(ctx Context) {
 	http.HandleFunc("/janitor", func(w http.ResponseWriter, r *http.Request) {
 		janitorPage(ctx, w, r)
 	})
+	if _, profile := os.LookupEnv("ENABLE_WALL_PROFILE"); profile {
+		// Run: go tool pprof --http=:6061 http://localhost:8083/debug/fgprof?seconds=10
+		http.Handle("/debug/fgprof", fgprof.Handler())
+	}
 }

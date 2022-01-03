@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/datastore"
@@ -186,15 +187,29 @@ func getAllGamesByUser(ctx Context, user *datastore.Key) []*datastore.Key {
 	return games
 }
 
-func getRecentGames(ctx Context, user *datastore.Key, count int) []*datastore.Key {
+func getRecentGames(ctx Context, user *datastore.Key, status *GameStatus, count int) []*datastore.Key {
 	type GameAndCreation struct {
 		gameKey  *datastore.Key
 		creation time.Time
 	}
 	var games []GameAndCreation
 
-	for _, role := range []string{"Red", "Black"} {
-		q := datastore.NewQuery("Game").Filter(role+" = ", user).Order("-Creation").Limit(count)
+	var userFieldFilter []string
+	if user != nil {
+		userFieldFilter = []string{"Red", "Black"}
+	} else {
+		userFieldFilter = []string{""}
+	}
+
+	for _, role := range userFieldFilter {
+		q := datastore.NewQuery("Game")
+		if len(role) > 0 {
+			q = q.Filter(role+" = ", user)
+		}
+		if status != nil {
+			q = q.Filter("DerivedData.Status = ", int(*status))
+		}
+		q = q.Order("-Creation").Limit(count)
 		var retrievedGames []Game
 		_, err := ctx.Client.GetAll(ctx.Ctx, q, &retrievedGames)
 		if err != nil {
@@ -236,4 +251,151 @@ func postGameInfoAPIWrapper(ctx Context, w http.ResponseWriter, r *http.Request,
 		return &response
 	}
 	postAPIWrapper(ctx, w, r, gameInfoHandler)
+}
+
+type GameSummary struct {
+	GameId         string
+	CreatedTimeAgo string
+	Red            *PlayerInfo
+	Black          *PlayerInfo
+	Moves          int
+	Status         string
+	NextToMove     *PlayerInfo
+}
+
+func toPlayerInfo(userKey *datastore.Key, usersCache []*User, userIdToIndex map[int64]int) *PlayerInfo {
+	if userKey == nil {
+		return nil
+	}
+	user := usersCache[userIdToIndex[userKey.ID]]
+	var userName string
+	if user != nil {
+		userName = user.Name
+	} else {
+		userName = "???"
+	}
+	return &PlayerInfo{
+		ID:   strconv.FormatInt(userKey.ID, 10),
+		Name: userName,
+	}
+}
+
+func fetchGameSummaries(ctx Context, gameKeys []*datastore.Key) []GameSummary {
+	oneSecond, err := time.ParseDuration("1s")
+	if err != nil {
+		log.Fatalf("can't parse one-second")
+	}
+
+	now := time.Now()
+
+	games := make([]Game, len(gameKeys))
+	if len(gameKeys) > 0 {
+		if err := ctx.Client.GetMulti(ctx.Ctx, gameKeys, games); err != nil {
+			log.Printf("Unable to fetch game summaries: %v", err)
+			return nil
+		}
+	}
+
+	var userKeys []*datastore.Key
+	userIdToIndex := make(map[int64]int)
+	for _, game := range games {
+		if game.Red != nil {
+			_, ok := userIdToIndex[game.Red.ID]
+			if !ok {
+				userIdToIndex[game.Red.ID] = len(userKeys)
+				userKeys = append(userKeys, game.Red)
+			}
+		}
+		if game.Black != nil {
+			_, ok := userIdToIndex[game.Black.ID]
+			if !ok {
+				userIdToIndex[game.Black.ID] = len(userKeys)
+				userKeys = append(userKeys, game.Black)
+			}
+		}
+	}
+	users := make([]*User, len(userKeys))
+	if len(userKeys) > 0 {
+		if err := ctx.Client.GetMulti(ctx.Ctx, userKeys, users); err != nil {
+			if merr, ok := err.(datastore.MultiError); ok {
+				for i, err := range merr {
+					if err != nil && err != datastore.ErrNoSuchEntity {
+						log.Fatalf("Unable to fetch user %v: %v", userKeys[i], err)
+					}
+				}
+			} else {
+				log.Fatalf("Unable to fetch users: %v", err)
+			}
+		}
+	}
+
+	var summaries []GameSummary
+	for _, game := range games {
+		createdAgo := now.Sub(game.Creation).Truncate(oneSecond)
+
+		summaries = append(summaries, GameSummary{
+			GameId:         game.Key.Name,
+			CreatedTimeAgo: createdAgo.String() + " ago",
+			Red:            toPlayerInfo(game.Red, users, userIdToIndex),
+			Black:          toPlayerInfo(game.Black, users, userIdToIndex),
+			Moves:          strings.Count(game.Moves, "/"),
+			Status:         game.DerivedData.Status.String(),
+			NextToMove:     toPlayerInfo(game.DerivedData.NextToMove, users, userIdToIndex),
+		})
+	}
+	return summaries
+}
+
+type UserGameSummary struct {
+	GameId         string
+	CreatedTimeAgo string
+	Color          string
+	Opponent       string
+	OpponentUid    string
+	Moves          int
+	Status         string
+	NextToMove     *PlayerInfo
+}
+
+func toUserGameSummaries(userKey *datastore.Key, gameSummaries []GameSummary) []UserGameSummary {
+	userID := strconv.FormatInt(userKey.ID, 10)
+
+	var userGameSummaries []UserGameSummary
+	for _, summary := range gameSummaries {
+		var color, opponent, opponentUid string
+		if summary.Red != nil && userID == summary.Red.ID {
+			color = "Red"
+			if summary.Black != nil {
+				opponent = summary.Black.Name
+				opponentUid = summary.Black.ID
+			}
+		} else if summary.Black != nil && userID == summary.Black.ID {
+			color = "Black"
+			if summary.Red != nil {
+				opponent = summary.Red.Name
+				opponentUid = summary.Red.ID
+			}
+		}
+
+		status := summary.Status
+		if len(color) > 0 && strings.HasSuffix(status, "won") {
+			if strings.HasPrefix(status, color) {
+				status = "Win"
+			} else {
+				status = "Loss"
+			}
+		}
+
+		userGameSummaries = append(userGameSummaries, UserGameSummary{
+			GameId:         summary.GameId,
+			CreatedTimeAgo: summary.CreatedTimeAgo,
+			Color:          color,
+			Opponent:       opponent,
+			OpponentUid:    opponentUid,
+			Moves:          summary.Moves,
+			Status:         status,
+			NextToMove:     summary.NextToMove,
+		})
+	}
+	return userGameSummaries
 }

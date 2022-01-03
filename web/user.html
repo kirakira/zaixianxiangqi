@@ -16,7 +16,7 @@
             <div class="user-profile-layout">
               <h2>User Profile</h2>
               <table class="user-profile">
-                <tr><td>Name</td><td>{{.UserName}}</td></tr>
+                <tr><td>Name</td><td><a class="player-link" href="/user/{{.UserId}}">{{.UserName}}</a></td></tr>
                 <tr><td>Games played</td><td>{{.GamesPlayed}}</td></tr>
               </table>
               <h2>Recent Games</h2>
