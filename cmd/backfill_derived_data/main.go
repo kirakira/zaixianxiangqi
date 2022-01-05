@@ -42,7 +42,7 @@ func main() {
 		log.Fatalf("Error during initialization: %v", err)
 	}
 	if strings.Index(ctx.ProjectID, "test") == -1 {
-		if !askForConfirmation(fmt.Sprintf("The project ID %s does not appear to be a test project. Continue?")) {
+		if !askForConfirmation(fmt.Sprintf("The project ID '%s' appears to be a production project. Continue?", ctx.ProjectID)) {
 			fmt.Println("User abort.")
 			return
 		}
