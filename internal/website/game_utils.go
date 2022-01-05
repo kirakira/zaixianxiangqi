@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"cloud.google.com/go/datastore"
@@ -47,8 +46,12 @@ func userInGame(userKey *datastore.Key, game *Game) bool {
 	return (game.Red != nil && *game.Red == *userKey) || (game.Black != nil && *game.Black == *userKey)
 }
 
+func updateNextToMove(game *Game) {
+	game.NextToMove = CalculateNextToMove(game)
+}
+
 func sit(userKey *datastore.Key, game *Game, side string) error {
-	if gameHasEnded(game) {
+	if GameHasEnded(game) {
 		return errors.New("cannot sit on a finished game")
 	} else if side == "red" {
 		if game.Red == nil {
@@ -75,22 +78,6 @@ func sit(userKey *datastore.Key, game *Game, side string) error {
 	}
 	updateNextToMove(game)
 	return nil
-}
-
-func updateNextToMove(game *Game) {
-	if game.Red == nil || game.Black == nil {
-		game.NextToMove = nil
-	} else if gameHasEnded(game) {
-		game.NextToMove = nil
-	} else if len(strings.Split(game.Moves, "/"))%2 == 1 {
-		game.NextToMove = game.Red
-	} else {
-		game.NextToMove = game.Black
-	}
-}
-
-func gameHasEnded(game *Game) bool {
-	return strings.HasSuffix(game.Moves, "R") || strings.HasSuffix(game.Moves, "B")
 }
 
 func convertToGameInfo(ctx Context, game *Game) *GameInfo {
@@ -164,7 +151,7 @@ func getGame(ctx Context, gid string) *Game {
 func insertGameIfNotExists(ctx Context, game *Game) bool {
 	if _, err := ctx.Client.RunInTransaction(ctx.Ctx, func(tx *datastore.Transaction) error {
 		if err := tx.Get(game.Key, &Game{}); err != nil {
-			if _, err := tx.Put(game.Key, game); err != nil {
+			if err := StoreGame(tx, game.Key, game); err != nil {
 				return err
 			} else {
 				return nil

@@ -68,7 +68,7 @@ func fetchRecentGameInfo(ctx Context, user *datastore.Key) []RecentGameInfo {
 		}
 
 		status := ""
-		if gameHasEnded(game) {
+		if GameHasEnded(game) {
 			if game.Moves[len(game.Moves)-1:] == userSide {
 				status = "Win"
 			} else {

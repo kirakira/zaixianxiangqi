@@ -70,7 +70,7 @@ func inviteAI(ctx Context, _ http.Header, form url.Values) (*Game, error) {
 
 		updateActivityTime(userKey, &game)
 		updateActivityTime(aiUser, &game)
-		if _, err := tx.Put(game.Key, &game); err != nil {
+		if err := StoreGame(tx, game.Key, &game); err != nil {
 			return err
 		}
 		*resolvedGame = game

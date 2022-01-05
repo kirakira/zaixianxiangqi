@@ -1,24 +1,27 @@
 # Run dev test server (Linux)
 
-## Website
+## Bootstrapping the dev environment
+
+1. Create a dev service account, and assign it to be owner of the test project `zaixianxiangqi-test`. [Doc](https://cloud.google.com/docs/authentication/production#create_service_account).
+
+1. Download the keyfile.
 ```
-$ gcloud beta emulators datastore start
+$ gcloud iam service-accounts keys create ~/Downloads/zaixianxiangqi-test.json --iam-account=zaixianxiangqi-test@zaixianxiangqi-test.iam.gserviceaccount.com
+```
+
+## Run Website
+```
 $ ./dev_zaixianxiangqi.sh
 ```
 
-## Engine server
+## Run Engine Server
 ```
 $ ./build_and_run_engine_server_local.sh
 ```
 
-# Compile Javascript files
-```
-$ cd web && make && cd ..
-```
-
 # Deploy a new version
 
-## Bootstrap
+## Bootstrapping
 
 1. Create Pub/Sub topic.
 ```

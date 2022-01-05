@@ -50,6 +50,7 @@ func InitXiangqi(options InitOptions) (Context, error) {
 	ctx.Ctx = context.Background()
 
 	if options.InitDatastoreClient {
+		log.Printf("Initializing datastore client with project %s", ctx.ProjectID)
 		client, err := datastore.NewClient(ctx.Ctx, ctx.ProjectID)
 		if err != nil {
 			return Context{}, err

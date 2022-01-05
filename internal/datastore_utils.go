@@ -15,7 +15,7 @@ func DatastorePutWithRetry(
 		if err == nil {
 			return key, err
 		}
-		log.Printf("Failed to put entity %s, attempt %d out of %d: %v", key, err, i, numRetries)
+		log.Printf("Failed to put entity %s, attempt %d out of %d: %v", key, i, numRetries, err)
 	}
 	return nil, err
 }

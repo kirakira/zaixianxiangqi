@@ -25,6 +25,27 @@ type GameFork struct {
 	ForkedMoveCount int
 }
 
+type GameStatus int
+
+const (
+	// The game is waiting for players to join.
+	Waiting GameStatus = 0
+	// Both players joined the game, and game is in progress.
+	InProgress = 1
+	// The game has concluded.
+	RedWon   = 2
+	BlackWon = 3
+	Draw     = 4
+)
+
+type DerivedGameData struct {
+	// Version of the derived game info. 0 means invalid.
+	Version int
+	Status  GameStatus
+	// Key of the player to move next, or empty for new or ended games.
+	NextToMove *datastore.Key
+}
+
 type Game struct {
 	// if game is forked, this is the time when it is forked
 	Creation      time.Time
@@ -35,7 +56,8 @@ type Game struct {
 	RedActivity   *time.Time
 	BlackActivity *time.Time
 	// key of the player to move next, or empty for new or ended games
-	NextToMove *datastore.Key
-	GameFork   *GameFork
-	Key        *datastore.Key `datastore:"__key__"`
+	NextToMove  *datastore.Key
+	GameFork    *GameFork
+	DerivedData DerivedGameData
+	Key         *datastore.Key `datastore:"__key__"`
 }

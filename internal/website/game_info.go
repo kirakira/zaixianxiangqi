@@ -26,7 +26,7 @@ func makeMove(game *Game, redSide bool, newMovesString string) error {
 		}
 	}
 
-	if gameHasEnded(game) {
+	if GameHasEnded(game) {
 		return errors.New("game has ended")
 	}
 	b := buildBoardFromTrustedMoves(oldMoves)
@@ -153,7 +153,7 @@ func updateGame(ctx Context, header http.Header, form url.Values) (*Game, error)
 			return errors.New("No operation specified")
 		} else {
 			updateActivityTime(userKey, &game)
-			if _, err := tx.Put(game.Key, &game); err != nil {
+			if err := StoreGame(tx, game.Key, &game); err != nil {
 				return err
 			}
 			*resolvedGame = game
