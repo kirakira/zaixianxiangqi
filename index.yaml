@@ -12,6 +12,12 @@ indexes:
   - name: Creation
     direction: desc
 
+- kind: Game
+  properties:
+  - name: DerivedData.Status
+  - name: Creation
+    direction: desc
+
 - kind: Session
   ancestor: yes
   properties:
