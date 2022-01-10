@@ -1,7 +1,7 @@
 #!/bin/sh
 
 
-CREDENTIALS_FILE="/home/menghui/Downloads/zaixianxiangqi-test.json"
+CREDENTIALS_FILE="/Users/menghui/Downloads/zaixianxiangqi-test.json"
 
 if cd web/ && make; then
   cd ..

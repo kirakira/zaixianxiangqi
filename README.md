@@ -14,7 +14,7 @@ $ gcloud iam service-accounts keys create ~/Downloads/zaixianxiangqi-test.json -
 $ ./dev_zaixianxiangqi.sh
 ```
 
-## Run Engine Server
+## Run Standalone Engine Server
 ```
 $ ./build_and_run_engine_server_local.sh
 ```
@@ -28,12 +28,12 @@ $ ./build_and_run_engine_server_local.sh
 $ gcloud pubsub topics create play-ai-move
 ```
 
-1. Create service account for engine server "engine-server@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com".
+1. Create service account for engine server "engine-server@$(gcloud config get-value project).iam.gserviceaccount.com".
 
 1. Grant Pub/Sub permissions to generate auth tokens.
 ```
-$ gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} \
-     --member=serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com \
+$ gcloud projects add-iam-policy-binding $(gcloud config get-value project) \
+     --member=serviceAccount:service-$(gcloud projects list --filter="$(gcloud config get-value project)" --format="value(PROJECT_NUMBER)")@gcp-sa-pubsub.iam.gserviceaccount.com \
      --role=roles/iam.serviceAccountTokenCreator
 ```
 
@@ -44,8 +44,8 @@ $ gcloud iam service-accounts create cloud-run-pubsub-invoker --display-name "Cl
 
 1. After the engine server is deployed,
 ```
-$ gcloud run services add-iam-policy-binding engineserver --platform managed --member=serviceAccount:cloud-run-pubsub-invoker@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --role=roles/run.invoker
-$ gcloud pubsub subscriptions create engine-server-subscription --topic play-ai-move --push-endpoint="https://engineserver-du3scfgxaq-uc.a.run.app/play" --push-auth-service-account=cloud-run-pubsub-invoker@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com --expiration-period=never
+$ gcloud run services add-iam-policy-binding engineserver --platform managed --member=serviceAccount:cloud-run-pubsub-invoker@$(gcloud config get-value project).iam.gserviceaccount.com --role=roles/run.invoker
+$ gcloud pubsub subscriptions create engine-server-subscription --topic play-ai-move --push-endpoint="https://engineserver-du3scfgxaq-uc.a.run.app/play" --push-auth-service-account=cloud-run-pubsub-invoker@$(gcloud config get-value project).iam.gserviceaccount.com --expiration-period=never
 ```
 
 ## Website
@@ -55,6 +55,6 @@ $ gcloud app deploy
 
 ## Engine server
 ```
-$ gcloud builds submit --tag gcr.io/${GOOGLE_CLOUD_PROJECT}/engine_server
-$ gcloud run deploy engineserver --image gcr.io/${GOOGLE_CLOUD_PROJECT}/engine_server --platform managed --service-account "engine-server@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com" --concurrency 1
+$ gcloud builds submit --tag gcr.io/$(gcloud config get-value project)/engine_server
+$ gcloud run deploy engineserver --image gcr.io/$(gcloud config get-value project)/engine_server --platform managed --service-account "engine-server@$(gcloud config get-value project).iam.gserviceaccount.com" --concurrency 1
 ```

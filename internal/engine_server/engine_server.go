@@ -85,7 +85,9 @@ func extractEngineMove(engine_output string) (string, bool) {
 }
 
 func sendEngineMove(game GameToPlay, move string) {
-	req, err := http.NewRequest("POST", *game.CallbackUrl+kGameInfoPath, strings.NewReader(
+	callbackUrl := *game.CallbackUrl + kGameInfoPath
+	log.Printf("Sending engine move to %s", callbackUrl)
+	req, err := http.NewRequest("POST", callbackUrl, strings.NewReader(
 		url.Values{
 			"uid":   {strconv.FormatInt(*game.Uid, 10)},
 			"gid":   {*game.Gid},

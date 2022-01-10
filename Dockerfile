@@ -3,7 +3,7 @@
 # Use the official Golang image to create a build artifact.
 # This is based on Debian and sets the GOPATH to /go.
 # https://hub.docker.com/_/golang
-FROM golang:1.13 as server_builder
+FROM golang:1.15 as server_builder
 WORKDIR /app
 # Retrieve application dependencies.
 # This allows the container build to reuse cached dependencies.
@@ -15,7 +15,7 @@ RUN cd cmd/engine_server && CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -
 
 #
 # Build game engine.
-FROM gcc:7.5 as engine_builder
+FROM gcc:10.3 as engine_builder
 WORKDIR /app
 COPY . ./
 # Build engine code.

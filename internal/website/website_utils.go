@@ -86,7 +86,7 @@ func validatePostRequest(ctx Context, header http.Header, form url.Values, addit
 }
 
 func isWhiteListedEmail(email string) bool {
-	return email == "engine-server@zaixianxiangqi4.iam.gserviceaccount.com"
+	return email == "engine-server@zaixianxiangqi4.iam.gserviceaccount.com" || email == "engine-server@zaixianxiangqi-test.iam.gserviceaccount.com"
 }
 
 func generateRandomString(length int) string {

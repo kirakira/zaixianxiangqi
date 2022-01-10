@@ -12,7 +12,7 @@ func GameHasEnded(game *Game) bool {
 	return strings.HasSuffix(game.Moves, "R") || strings.HasSuffix(game.Moves, "B")
 }
 
-func CalculateNextToMove(game *Game) *datastore.Key {
+func calculateNextToMove(game *Game) *datastore.Key {
 	if game.Red == nil || game.Black == nil {
 		return nil
 	} else if GameHasEnded(game) {
@@ -40,7 +40,7 @@ func calculateGameStatus(game *Game) GameStatus {
 func populateDerivedGameData(game *Game) {
 	game.DerivedData.Version = DerivedGameDataVersion
 	game.DerivedData.Status = calculateGameStatus(game)
-	game.DerivedData.NextToMove = CalculateNextToMove(game)
+	game.DerivedData.NextToMove = calculateNextToMove(game)
 }
 
 func StoreGame(tx *datastore.Transaction, key *datastore.Key, game *Game) error {

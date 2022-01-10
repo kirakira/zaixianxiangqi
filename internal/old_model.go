@@ -76,9 +76,6 @@ func GameFromOldGame(oldGame *OldGame) *Game {
 			ForkedMoveCount: int(oldGame.ForkedMoveCount),
 		}
 	}
-	if oldGame.NextToMove != 0 {
-		game.NextToMove = datastore.IDKey("User", oldGame.NextToMove, nil)
-	}
 
 	return &game
 }

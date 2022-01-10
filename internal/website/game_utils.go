@@ -46,10 +46,6 @@ func userInGame(userKey *datastore.Key, game *Game) bool {
 	return (game.Red != nil && *game.Red == *userKey) || (game.Black != nil && *game.Black == *userKey)
 }
 
-func updateNextToMove(game *Game) {
-	game.NextToMove = CalculateNextToMove(game)
-}
-
 func sit(userKey *datastore.Key, game *Game, side string) error {
 	if GameHasEnded(game) {
 		return errors.New("cannot sit on a finished game")
@@ -76,7 +72,6 @@ func sit(userKey *datastore.Key, game *Game, side string) error {
 	} else {
 		return errors.New("unknown side to sit")
 	}
-	updateNextToMove(game)
 	return nil
 }
 

@@ -51,7 +51,6 @@ func makeMove(game *Game, redSide bool, newMovesString string) error {
 	}
 
 	game.Moves = newMovesString
-	updateNextToMove(game)
 	return nil
 }
 
@@ -68,10 +67,10 @@ func newInt64(v int64) *int64 {
 }
 
 func maybePushAIMove(ctx Context, game *Game) {
-	if game.NextToMove == nil {
+	if game.DerivedData.NextToMove == nil {
 		return
 	}
-	nextMoveUser := getUser(ctx, game.NextToMove)
+	nextMoveUser := getUser(ctx, game.DerivedData.NextToMove)
 	if !nextMoveUser.AI {
 		return
 	}
@@ -82,10 +81,10 @@ func maybePushAIMove(ctx Context, game *Game) {
 	}
 
 	gameToPlay := GameToPlay{
-		Uid:   newInt64(nextMoveUser.Key.ID),
-		Gid:   newString(game.Key.Name),
-		Moves: newString(game.Moves),
-		// CallbackUrl: newString("https://20200301t161432-dot-zaixianxiangqi4.appspot.com"),
+		Uid:         newInt64(nextMoveUser.Key.ID),
+		Gid:         newString(game.Key.Name),
+		Moves:       newString(game.Moves),
+		CallbackUrl: newString(fmt.Sprintf("https://%s.appspot.com", ctx.ProjectID)),
 	}
 	jsonEncoded, err := json.Marshal(gameToPlay)
 	if err != nil {

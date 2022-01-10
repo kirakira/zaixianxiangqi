@@ -55,9 +55,10 @@ type Game struct {
 	Moves         string `datastore:",noindex"`
 	RedActivity   *time.Time
 	BlackActivity *time.Time
-	// key of the player to move next, or empty for new or ended games
-	NextToMove  *datastore.Key
-	GameFork    *GameFork
-	DerivedData DerivedGameData
-	Key         *datastore.Key `datastore:"__key__"`
+	GameFork      *GameFork
+	DerivedData   DerivedGameData
+	Key           *datastore.Key `datastore:"__key__"`
+
+	// Deleted - do not use.
+	NextToMove *datastore.Key
 }
