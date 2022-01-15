@@ -33,9 +33,7 @@ class NavBarOptions {
 
 function createNavBarUsernameElement(playerId, playerName) {
     var div = document.createElement("div");
-    div.appendChild(document.createTextNode("Hello, "));
-    div.appendChild(createLink(null, ["player-link"], "/user/" + playerId, null,
-        playerName));
+    div.appendChild(document.createTextNode("Hello, " + playerName));
     div.appendChild(document.createTextNode("!"));
     return div;
 }
@@ -76,6 +74,12 @@ function createNavBarMenu(navBarOptions) {
         divFork.id = "forkGame";
         divMenuContent.appendChild(divFork);
     }
+
+    var divViewMyProfile = document.createElement("div");
+    divViewMyProfile.appendChild(createLink(null, [], "/user/" + navBarOptions
+        .playerId, null,
+        "my profile"));
+    divMenuContent.appendChild(divViewMyProfile);
 
     var divUpdateProfile = document.createElement("div");
     divUpdateProfile.id = "update-profile";

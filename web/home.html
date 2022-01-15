@@ -13,7 +13,7 @@
     <body>
         <div class="layout home-page-layout">
             <div class="nav" id="nav"></div>
-            <div class="home-layout">
+            <div class="home-layout content">
               {{- if len .MyRecentGames | lt 0 -}}
               <h2>Continue on games I played:</h2>
               <table class="games-table">
@@ -35,9 +35,9 @@
               <h2>Watch a game:</h2>
               {{- if len .StartedGames | lt 0 -}}
               <table class="games-table">
-                <tr><th>Game</th><th>Created</th><th>Red</th><th>Black</th><th>Moves</th><th>Status</th></tr>
+                <tr><th>Game</th><th>Created</th><th>Red</th><th>Black</th><th>Moves</th></tr>
                 {{range $item := .StartedGames}}
-                <tr><td><a href="/game/{{$item.GameId}}">{{$item.GameId}}</a></td><td>{{$item.CreatedTimeAgo}}</td><td><a class="player-link" href="/user/{{$item.Red.ID}}">{{$item.Red.Name}}</a></td><td><a class="player-link" href="/user/{{$item.Black.ID}}">{{$item.Black.Name}}</a></td><td>{{$item.Moves}}</td><td>{{$item.Status}}</td></tr>
+                <tr><td><a href="/game/{{$item.GameId}}">{{$item.GameId}}</a></td><td>{{$item.CreatedTimeAgo}}</td><td><a class="player-link" href="/user/{{$item.Red.ID}}">{{$item.Red.Name}}</a></td><td><a class="player-link" href="/user/{{$item.Black.ID}}">{{$item.Black.Name}}</a></td><td>{{$item.Moves}}</td></tr>
                 {{end}}
               </table>
               {{- else}}No games to watch.{{end -}}

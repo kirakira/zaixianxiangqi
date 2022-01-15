@@ -8,6 +8,11 @@ body {
     font-family: 'Roboto',arial,sans-serif;
 }
 
+div.content {
+    margin-top: 1.5em;
+    margin-bottom: 0.1em;
+}
+
 div.game-page-layout {
     display: flex;
     flex-direction: column;
@@ -33,6 +38,11 @@ div.nav {
     line-height: 1.5em;
     display: flex;
     justify-content: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
 }
 
 div.nav-bar-left {
