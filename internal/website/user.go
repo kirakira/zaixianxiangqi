@@ -50,7 +50,7 @@ func userPage(ctx Context, w http.ResponseWriter, r *http.Request) {
 
 	recentGames := make(chan []UserGameSummary, 1)
 	go func() {
-		recentGameKeys := getRecentGames(ctx, userSession.User, nil, 10)
+		recentGameKeys := getRecentGames(ctx, userKey, nil, 10)
 		recentGames <- toUserGameSummaries(userKey, fetchGameSummaries(ctx, recentGameKeys))
 	}()
 
