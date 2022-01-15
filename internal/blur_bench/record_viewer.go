@@ -13,6 +13,7 @@ import (
 
 	. "github.com/kirakira/zaixianxiangqi/internal"
 	. "github.com/kirakira/zaixianxiangqi/internal/blur_bench/genfiles"
+	"github.com/kirakira/zaixianxiangqi/web"
 )
 
 type stats struct {
@@ -266,15 +267,15 @@ func RegisterHandlers(storage Storage) {
 			http.NotFound(w, r)
 			return
 		}
-		t := template.Must(template.ParseFiles("web/game_record_viewer.html"))
+		t := web.GetWebPageTemplate("game_record_viewer.html")
 		indexPage(storage, t, w, r)
 	})
 	http.HandleFunc(IndexPagePath, func(w http.ResponseWriter, r *http.Request) {
-		t := template.Must(template.ParseFiles("web/game_record_viewer.html"))
+		t := web.GetWebPageTemplate("game_record_viewer.html")
 		indexPage(storage, t, w, r)
 	})
 	http.HandleFunc("/experiment/", func(w http.ResponseWriter, r *http.Request) {
-		t := template.Must(template.ParseFiles("web/experiment.html"))
+		t := web.GetWebPageTemplate("experiment.html")
 		viewExperimentPage(storage, t, w, r)
 	})
 	http.HandleFunc("/game_record/", func(w http.ResponseWriter, r *http.Request) {

@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	. "github.com/kirakira/zaixianxiangqi/internal"
+	"github.com/kirakira/zaixianxiangqi/web"
 )
 
 func homePage(ctx Context, w http.ResponseWriter, r *http.Request) {
@@ -24,7 +25,7 @@ func homePage(ctx Context, w http.ResponseWriter, r *http.Request) {
 	var waiting GameStatus = Waiting
 	userKey := userSession.User
 
-	t := template.Must(template.ParseFiles("web/home.html"))
+	t := web.GetWebPageTemplate("home.html")
 	if err := t.Execute(w, struct {
 		JsCode        template.JS
 		MyRecentGames []UserGameSummary

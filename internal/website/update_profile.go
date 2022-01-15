@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	. "github.com/kirakira/zaixianxiangqi/internal"
+	"github.com/kirakira/zaixianxiangqi/web"
 )
 
 func updateProfilePage(ctx Context, w http.ResponseWriter, r *http.Request) {
@@ -17,7 +18,7 @@ func updateProfilePage(ctx Context, w http.ResponseWriter, r *http.Request) {
 	setUidSidInCookie(w, userSession)
 	playerName := getUserName(ctx, userSession.User)
 
-	t := template.Must(template.ParseFiles("web/update_profile.html"))
+	t := web.GetWebPageTemplate("update_profile.html")
 	if err := t.Execute(w, struct {
 		PlayerId   string
 		PlayerName string

@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	. "github.com/kirakira/zaixianxiangqi/internal"
+	"github.com/kirakira/zaixianxiangqi/web"
 )
 
 func userPage(ctx Context, w http.ResponseWriter, r *http.Request) {
@@ -43,7 +44,7 @@ func userPage(ctx Context, w http.ResponseWriter, r *http.Request) {
 
 	recentGameKeys := getRecentGames(ctx, userSession.User, nil, 10)
 
-	t := template.Must(template.ParseFiles("web/user.html"))
+	t := web.GetWebPageTemplate("user.html")
 	if err := t.Execute(w, struct {
 		UserId      string
 		UserName    string

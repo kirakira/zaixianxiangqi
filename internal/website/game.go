@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	. "github.com/kirakira/zaixianxiangqi/internal"
+	"github.com/kirakira/zaixianxiangqi/web"
 )
 
 func gamePage(ctx Context, w http.ResponseWriter, r *http.Request) {
@@ -36,7 +37,7 @@ func gamePage(ctx Context, w http.ResponseWriter, r *http.Request) {
 	setUidSidInCookie(w, userSession)
 	playerName := getUserName(ctx, userSession.User)
 
-	t := template.Must(template.ParseFiles("web/game.html"))
+	t := web.GetWebPageTemplate("game.html")
 	if err := t.Execute(w, struct {
 		PlayerId   string
 		PlayerName string
