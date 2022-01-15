@@ -56,10 +56,11 @@ func getOrCreateUser(ctx Context, uid, sid string) UserSession {
 
 	if userKey != nil && sessionKey != nil {
 		sessionKey.Parent = userKey
-		if isSessionValid(ctx, sessionKey) {
+		mostRecentSessionKey := getMostRecentSession(ctx, userKey)
+		if mostRecentSessionKey != nil && (*mostRecentSessionKey == *sessionKey || isSessionValid(ctx, sessionKey)) {
 			return UserSession{
 				User:    userKey,
-				Session: getMostRecentSession(ctx, userKey),
+				Session: mostRecentSessionKey,
 			}
 		}
 	}
@@ -74,7 +75,7 @@ func getMostRecentSession(ctx Context, user *datastore.Key) *datastore.Key {
 		log.Fatalf("Failed to query for the most recent sid: %v", err)
 	}
 	if len(session_keys) == 0 {
-		log.Fatalf("User %v does not have a session", user)
+		return nil
 	}
 	return session_keys[0]
 }
