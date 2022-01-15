@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"cloud.google.com/go/datastore"
 	. "github.com/kirakira/zaixianxiangqi/internal"
 	"github.com/kirakira/zaixianxiangqi/web"
 )
@@ -42,7 +43,16 @@ func userPage(ctx Context, w http.ResponseWriter, r *http.Request) {
 	userSession := getOrCreateUser(ctx, GetFirstCookieOrDefault(r.Cookie("uid")), GetFirstCookieOrDefault(r.Cookie("sid")))
 	setUidSidInCookie(w, userSession)
 
-	recentGameKeys := getRecentGames(ctx, userSession.User, nil, 10)
+	gamesPlayed := make(chan []*datastore.Key, 1)
+	go func() {
+		gamesPlayed <- getAllGamesByUser(ctx, userKey)
+	}()
+
+	recentGames := make(chan []UserGameSummary, 1)
+	go func() {
+		recentGameKeys := getRecentGames(ctx, userSession.User, nil, 10)
+		recentGames <- toUserGameSummaries(userKey, fetchGameSummaries(ctx, recentGameKeys))
+	}()
 
 	t := web.GetWebPageTemplate("user.html")
 	if err := t.Execute(w, struct {
@@ -57,8 +67,8 @@ func userPage(ctx Context, w http.ResponseWriter, r *http.Request) {
 		JsCode: template.JS(fmt.Sprintf(
 			"var myUid = '%s', myName = '%s';",
 			strconv.FormatInt(userSession.User.ID, 10), getUserName(ctx, userSession.User))),
-		GamesPlayed: len(getAllGamesByUser(ctx, userKey)),
-		RecentGames: toUserGameSummaries(userKey, fetchGameSummaries(ctx, recentGameKeys)),
+		GamesPlayed: len(<-gamesPlayed),
+		RecentGames: <-recentGames,
 	}); err != nil {
 		log.Fatalf("Failed to execute HTML template: %v", err)
 	}
