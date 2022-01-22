@@ -21,21 +21,23 @@ func homePage(ctx Context, w http.ResponseWriter, r *http.Request) {
 	SetNoCache(w)
 	setUidSidInCookie(w, userSession)
 
-	var inProgress GameStatus = InProgress
-	var waiting GameStatus = Waiting
-	userKey := userSession.User
-
 	myRecentGames := make(chan []UserGameSummary, 1)
 	go func() {
-		myRecentGames <- toUserGameSummaries(userKey, fetchGameSummaries(ctx, getRecentGames(ctx, userSession.User, &inProgress, 10)))
+		var inProgress GameStatus = InProgress
+		userKey := userSession.User
+		myRecentGames <- toUserGameSummaries(userKey, fetchGameSummaries(ctx, getRecentGames(ctx, userSession.User, &inProgress, nil, 10)))
 	}()
+
 	waitingGames := make(chan []GameSummary, 1)
 	go func() {
-		waitingGames <- fetchGameSummaries(ctx, getRecentGames(ctx, nil, &waiting, 10))
+		var waiting GameStatus = Waiting
+		waitingGames <- fetchGameSummaries(ctx, getRecentGames(ctx, nil, &waiting, nil, 10))
 	}()
+
 	startedGames := make(chan []GameSummary, 1)
 	go func() {
-		startedGames <- fetchGameSummaries(ctx, getRecentGames(ctx, nil, &inProgress, 10))
+		started := true
+		startedGames <- fetchGameSummaries(ctx, getRecentGames(ctx, nil, nil, &started, 10))
 	}()
 
 	t := web.GetWebPageTemplate("home.html")

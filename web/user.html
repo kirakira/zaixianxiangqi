@@ -22,9 +22,9 @@
               <h2>Recent Games</h2>
               {{- if len .RecentGames | lt 0 -}}
               <table class="user-profile">
-                <tr><th>Game</th><th>Created</th><th>Color</th><th>Opponent</th><th>Moves</th><th>Status</th></tr>
+                <tr><th>Game</th><th>Activity</th><th>Color</th><th>Opponent</th><th>Moves</th><th>Status</th></tr>
                 {{range $item := .RecentGames}}
-                <tr><td><a href="/game/{{$item.GameId}}">{{$item.GameId}}</a></td><td>{{$item.CreatedTimeAgo}}</td><td>{{$item.Color}}</td><td>{{if len $item.Opponent | lt 0}}<a class="player-link" href="/user/{{$item.OpponentUid}}">{{$item.Opponent}}</a>{{else}}N/A{{end}}</td><td>{{$item.Moves}}</td><td><a href="/game/{{$item.GameId}}">{{$item.Status}}</a></td></tr>
+                <tr><td><a href="/game/{{$item.GameId}}">{{$item.GameId}}</a></td><td>{{$item.ActivityTimeAgo}}</td><td>{{$item.Color}}</td><td>{{if len $item.Opponent | lt 0}}<a class="player-link" href="/user/{{$item.OpponentUid}}">{{$item.Opponent}}</a>{{else}}N/A{{end}}</td><td>{{$item.Moves}}</td><td><a href="/game/{{$item.GameId}}">{{$item.Status}}</a></td></tr>
                 {{end}}
               </table>
               {{- else}}No recent games.{{end -}}

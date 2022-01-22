@@ -187,7 +187,7 @@ func getAllGamesByUser(ctx Context, user *datastore.Key) []*datastore.Key {
 	return games
 }
 
-func getRecentGames(ctx Context, user *datastore.Key, status *GameStatus, count int) []*datastore.Key {
+func getRecentGames(ctx Context, user *datastore.Key, status *GameStatus, started *bool, count int) []*datastore.Key {
 	type GameAndCreation struct {
 		gameKey  *datastore.Key
 		creation time.Time
@@ -209,7 +209,10 @@ func getRecentGames(ctx Context, user *datastore.Key, status *GameStatus, count 
 		if status != nil {
 			q = q.Filter("DerivedData.Status = ", int(*status))
 		}
-		q = q.Order("-Creation").Limit(count)
+		if started != nil {
+			q = q.Filter("DerivedData.Started = ", *started)
+		}
+		q = q.Order("-DerivedData.LastActivity").Limit(count)
 		var retrievedGames []Game
 		_, err := ctx.Client.GetAll(ctx.Ctx, q, &retrievedGames)
 		if err != nil {
@@ -254,13 +257,13 @@ func postGameInfoAPIWrapper(ctx Context, w http.ResponseWriter, r *http.Request,
 }
 
 type GameSummary struct {
-	GameId         string
-	CreatedTimeAgo string
-	Red            *PlayerInfo
-	Black          *PlayerInfo
-	Moves          int
-	Status         string
-	NextToMove     *PlayerInfo
+	GameId          string
+	ActivityTimeAgo string
+	Red             *PlayerInfo
+	Black           *PlayerInfo
+	Moves           int
+	Status          string
+	NextToMove      *PlayerInfo
 }
 
 func toPlayerInfo(userKey *datastore.Key, usersCache []*User, userIdToIndex map[int64]int) *PlayerInfo {
@@ -331,30 +334,33 @@ func fetchGameSummaries(ctx Context, gameKeys []*datastore.Key) []GameSummary {
 
 	var summaries []GameSummary
 	for _, game := range games {
-		createdAgo := now.Sub(game.Creation).Truncate(oneSecond)
+		activityAgo := "n/a"
+		if game.DerivedData.LastActivity != nil {
+			activityAgo = now.Sub(*game.DerivedData.LastActivity).Truncate(oneSecond).String()
+		}
 
 		summaries = append(summaries, GameSummary{
-			GameId:         game.Key.Name,
-			CreatedTimeAgo: createdAgo.String() + " ago",
-			Red:            toPlayerInfo(game.Red, users, userIdToIndex),
-			Black:          toPlayerInfo(game.Black, users, userIdToIndex),
-			Moves:          strings.Count(game.Moves, "/"),
-			Status:         game.DerivedData.Status.String(),
-			NextToMove:     toPlayerInfo(game.DerivedData.NextToMove, users, userIdToIndex),
+			GameId:          game.Key.Name,
+			ActivityTimeAgo: activityAgo + " ago",
+			Red:             toPlayerInfo(game.Red, users, userIdToIndex),
+			Black:           toPlayerInfo(game.Black, users, userIdToIndex),
+			Moves:           strings.Count(game.Moves, "/"),
+			Status:          game.DerivedData.Status.String(),
+			NextToMove:      toPlayerInfo(game.DerivedData.NextToMove, users, userIdToIndex),
 		})
 	}
 	return summaries
 }
 
 type UserGameSummary struct {
-	GameId         string
-	CreatedTimeAgo string
-	Color          string
-	Opponent       string
-	OpponentUid    string
-	Moves          int
-	Status         string
-	NextToMove     *PlayerInfo
+	GameId          string
+	ActivityTimeAgo string
+	Color           string
+	Opponent        string
+	OpponentUid     string
+	Moves           int
+	Status          string
+	NextToMove      *PlayerInfo
 }
 
 func toUserGameSummaries(userKey *datastore.Key, gameSummaries []GameSummary) []UserGameSummary {
@@ -387,14 +393,14 @@ func toUserGameSummaries(userKey *datastore.Key, gameSummaries []GameSummary) []
 		}
 
 		userGameSummaries = append(userGameSummaries, UserGameSummary{
-			GameId:         summary.GameId,
-			CreatedTimeAgo: summary.CreatedTimeAgo,
-			Color:          color,
-			Opponent:       opponent,
-			OpponentUid:    opponentUid,
-			Moves:          summary.Moves,
-			Status:         status,
-			NextToMove:     summary.NextToMove,
+			GameId:          summary.GameId,
+			ActivityTimeAgo: summary.ActivityTimeAgo,
+			Color:           color,
+			Opponent:        opponent,
+			OpponentUid:     opponentUid,
+			Moves:           summary.Moves,
+			Status:          status,
+			NextToMove:      summary.NextToMove,
 		})
 	}
 	return userGameSummaries

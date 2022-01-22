@@ -31,7 +31,7 @@ func divideIntoBatches(keys []*datastore.Key) [][]*datastore.Key {
 }
 
 func removeEmptyGames(ctx Context, date_ub time.Time) {
-	q := datastore.NewQuery("Game").Filter("Creation <= ", date_ub)
+	q := datastore.NewQuery("Game").Filter("DerivedData.Status = ", int(Waiting)).Filter("DerivedData.LastActivity <= ", date_ub)
 
 	var games []Game
 	_, err := ctx.Client.GetAll(ctx.Ctx, q, &games)
