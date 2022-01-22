@@ -61,7 +61,9 @@ type DerivedGameData struct {
 	Version int
 	Status  GameStatus
 	// Key of the player to move next, or empty for new or ended games.
-	NextToMove *datastore.Key
+	NextToMove   *datastore.Key
+	LastActivity *time.Time
+	Started      bool
 }
 
 type Game struct {

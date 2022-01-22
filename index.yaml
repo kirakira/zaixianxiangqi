@@ -8,14 +8,38 @@ indexes:
 
 - kind: Game
   properties:
+  - name: Black
+  - name: DerivedData.LastActivity
+    direction: desc
+
+- kind: Game
+  properties:
   - name: Red
   - name: Creation
     direction: desc
 
 - kind: Game
   properties:
+  - name: Red
+  - name: DerivedData.LastActivity
+    direction: desc
+
+- kind: Game
+  properties:
   - name: DerivedData.Status
   - name: Creation
+    direction: desc
+
+- kind: Game
+  properties:
+  - name: DerivedData.Status
+  - name: DerivedData.LastActivity
+    direction: desc
+
+- kind: Game
+  properties:
+  - name: DerivedData.Started
+  - name: DerivedData.LastActivity
     direction: desc
 
 - kind: Session
