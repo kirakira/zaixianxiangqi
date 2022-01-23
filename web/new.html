@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh">
+    <head>
+        <meta charset="UTF-8">
+        <script src="{{assetPath "/js/new.js"}}"></script>
+        <script>{{.JsCode}}</script>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{{assetPath "/css/common.css"}}" type="text/css" media="screen" />
+        <link rel="stylesheet" href="{{assetPath "/css/game.css"}}" type="text/css" media="screen" />
+        <link rel="stylesheet" href="{{assetPath "/css/new.css"}}" type="text/css" media="screen" />
+        <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+        <title>在线象棋对战 | New Game</title>
+    </head>
+    <body>
+        <div class="layout update-profile-page-layout">
+            <div class="nav" id="nav"></div>
+            <div class="update-profile-layout content">
+                <form id="new-game-options" action="/new" method="post">
+                    <input type="radio" id="game-mode-standard" name="game_mode" value="standard" checked />
+                    <label for="game-mode-standard">Standard game</label><br>
+                    <input type="radio" id="game-mode-handicapped" name="game_mode" value="handicapped" />
+                    <label for="game-mode-handicapped">Handicapped: </label>
+                    <select id="handicaps" name="handicaps">
+                        <option value="rook_odds">Rook odds</option>
+                        <option value="horse_odds">Horse odds</option>
+                        <option value="cannon_odds">Cannon odds</option>
+                        <option value="two_horses">Two horses</option>
+                    </select><br>
+                    <input type="submit" id="submit" value="Create Game" />
+                </form>
+            </div>
+        </div>
+    </body>
+</html>

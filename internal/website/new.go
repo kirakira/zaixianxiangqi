@@ -2,13 +2,16 @@ package website
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 
 	"cloud.google.com/go/datastore"
 	. "github.com/kirakira/zaixianxiangqi/internal"
+	"github.com/kirakira/zaixianxiangqi/web"
 )
 
 func createGame(ctx Context, user *datastore.Key) *datastore.Key {
@@ -37,15 +40,50 @@ func createGame(ctx Context, user *datastore.Key) *datastore.Key {
 	return gameKey
 }
 
+func newGameOptionsPage(ctx Context, w http.ResponseWriter, r *http.Request, userSession UserSession) {
+	playerName := getUserName(ctx, userSession.User)
+
+	t := web.GetWebPageTemplate("new.html")
+	if err := t.Execute(w, struct {
+		PlayerId   string
+		PlayerName string
+		JsCode     template.JS
+	}{
+		PlayerId:   strconv.FormatInt(userSession.User.ID, 10),
+		PlayerName: playerName,
+		JsCode: template.JS(fmt.Sprintf(
+			"var myUid = '%s', myName = '%s';",
+			strconv.FormatInt(userSession.User.ID, 10), playerName)),
+	}); err != nil {
+		log.Fatalf("Failed to execute HTML template: %v", err)
+	}
+}
+
+func postNewGamePage(ctx Context, w http.ResponseWriter, r *http.Request, userSession UserSession) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid request form: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("%v", r.Form)
+
+	game := createGame(ctx, userSession.User)
+	http.Redirect(w, r, "/game/"+game.Name, http.StatusFound)
+}
+
 func newPage(ctx Context, w http.ResponseWriter, r *http.Request) {
-	if !(r.Method == "" || r.Method == "GET") {
+	if !(r.Method == "" || r.Method == "GET" || r.Method == "POST") {
 		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
 		return
 	}
 
-	userSession := getOrCreateUser(ctx, GetFirstCookieOrDefault(r.Cookie("uid")), GetFirstCookieOrDefault(r.Cookie("sid")))
 	SetNoCache(w)
+	userSession := getOrCreateUser(ctx, GetFirstCookieOrDefault(r.Cookie("uid")), GetFirstCookieOrDefault(r.Cookie("sid")))
 	setUidSidInCookie(w, userSession)
-	game := createGame(ctx, userSession.User)
-	http.Redirect(w, r, "/game/"+game.Name, http.StatusFound)
+
+	if r.Method == "" || r.Method == "GET" {
+		newGameOptionsPage(ctx, w, r, userSession)
+	} else {
+		postNewGamePage(ctx, w, r, userSession)
+	}
 }
