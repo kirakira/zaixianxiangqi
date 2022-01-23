@@ -353,7 +353,7 @@ class Game {
 
     initApplication() {
         var gameIdSpan = document.createElement("span");
-        gameIdSpan.id = "gameId";
+        gameIdSpan.classList.add("game-id");
         gameIdSpan.appendChild(document.createTextNode(this.currentGameId_));
         var navBarTitleHTML = "Game " + gameIdSpan.outerHTML;
 

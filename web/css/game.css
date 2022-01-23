@@ -87,7 +87,7 @@ span.menu-toggle {
     vertical-align: top;
 }
 
-span#gameId {
+.game-id {
     font-family: monospace;
 }
 

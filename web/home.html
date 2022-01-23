@@ -19,7 +19,7 @@
               <table class="games-table">
                 <tr><th>Game</th><th>Activity</th><th>My Color</th><th>Opponent</th><th>Moves</th><th>Next Turn</th></tr>
                 {{range $item := .MyRecentGames}}
-                <tr><td><a href="/game/{{$item.GameId}}">{{$item.GameId}}</a></td><td>{{$item.ActivityTimeAgo}}</td><td>{{$item.Color}}</td><td>{{if len $item.Opponent | lt 0}}<a class="player-link" href="/user/{{$item.OpponentUid}}">{{$item.Opponent}}</a>{{else}}N/A{{end}}</td><td>{{$item.Moves}}</td><td><a class="player-link" href="/user/{{$item.NextToMove.ID}}">{{$item.NextToMove.Name}}</a></td></tr>
+                <tr><td><a class="game-id" href="/game/{{$item.GameId}}">{{$item.GameId}}</a></td><td>{{$item.ActivityTimeAgo}}</td><td>{{$item.Color}}</td><td>{{if len $item.Opponent | lt 0}}<a class="player-link" href="/user/{{$item.OpponentUid}}">{{$item.Opponent}}</a>{{else}}N/A{{end}}</td><td>{{$item.Moves}}</td><td><a class="player-link" href="/user/{{$item.NextToMove.ID}}">{{$item.NextToMove.Name}}</a></td></tr>
                 {{end}}
               </table>
               {{end -}}
@@ -28,7 +28,7 @@
               <table class="games-table">
                 <tr><th>Game</th><th>Activity</th><th>By</th></tr>
                 {{range $item := .WaitingGames}}
-                <tr><td><a href="/game/{{$item.GameId}}">{{$item.GameId}}</a></td><td>{{$item.ActivityTimeAgo}}</td><td>{{if $item.Red}}<a class="player-link" href="/user/{{$item.Red.ID}}">{{$item.Red.Name}}</a>{{else}}<a class="player-link" href="/user/{{$item.Black.ID}}">{{$item.Black.Name}}</a>{{end}}</td></tr>
+                <tr><td><a class="game-id" href="/game/{{$item.GameId}}">{{$item.GameId}}</a></td><td>{{$item.ActivityTimeAgo}}</td><td>{{if $item.Red}}<a class="player-link" href="/user/{{$item.Red.ID}}">{{$item.Red.Name}}</a>{{else}}<a class="player-link" href="/user/{{$item.Black.ID}}">{{$item.Black.Name}}</a>{{end}}</td></tr>
                 {{end}}
               </table>
               {{- else}}No recent games.{{end -}}
@@ -37,7 +37,7 @@
               <table class="games-table">
                 <tr><th>Game</th><th>Activity</th><th>Red</th><th>Black</th><th>Moves</th></tr>
                 {{range $item := .StartedGames}}
-                <tr><td><a href="/game/{{$item.GameId}}">{{$item.GameId}}</a></td><td>{{$item.ActivityTimeAgo}}</td><td><a class="player-link" href="/user/{{$item.Red.ID}}">{{$item.Red.Name}}</a></td><td><a class="player-link" href="/user/{{$item.Black.ID}}">{{$item.Black.Name}}</a></td><td>{{$item.Moves}}</td></tr>
+                <tr><td><a class="game-id" href="/game/{{$item.GameId}}">{{$item.GameId}}</a></td><td>{{$item.ActivityTimeAgo}}</td><td><a class="player-link" href="/user/{{$item.Red.ID}}">{{$item.Red.Name}}</a></td><td><a class="player-link" href="/user/{{$item.Black.ID}}">{{$item.Black.Name}}</a></td><td>{{$item.Moves}}</td></tr>
                 {{end}}
               </table>
               {{- else}}No games to watch.{{end -}}
