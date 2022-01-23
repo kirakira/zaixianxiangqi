@@ -28,8 +28,8 @@ func declareGameResult(board *Board) string {
 	}
 }
 
-func buildBoardFromTrustedMoves(moves []string) *Board {
-	board := MakeInitialBoard()
+func buildBoardFromTrustedMoves(moves []string, initialState *string) *Board {
+	board := MakeInitialBoard(initialState)
 	for _, moveString := range moves {
 		if moveString == "" {
 			continue
@@ -78,9 +78,10 @@ func sit(userKey *datastore.Key, game *Game, side string) error {
 
 func convertToGameInfo(ctx Context, game *Game) *GameInfo {
 	gameinfo := GameInfo{
-		ID:    game.Key.Name,
-		Title: game.Description,
-		Moves: game.Moves,
+		ID:           game.Key.Name,
+		Title:        game.Description,
+		InitialState: game.InitialState,
+		Moves:        game.Moves,
 	}
 	if game.Red != nil {
 		gameinfo.Red = &PlayerInfo{

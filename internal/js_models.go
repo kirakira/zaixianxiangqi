@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"github.com/kirakira/zaixianxiangqi/internal/blur_bench/genfiles"
+	blur_bench "github.com/kirakira/zaixianxiangqi/internal/blur_bench/genfiles"
 )
 
 type PlayerInfo struct {
@@ -10,11 +10,12 @@ type PlayerInfo struct {
 }
 
 type GameInfo struct {
-	ID    string      `json:"id"`
-	Title string      `json:"title"`
-	Moves string      `json:"moves"`
-	Red   *PlayerInfo `json:"red,omitempty"`
-	Black *PlayerInfo `json:"black,omitempty"`
+	ID           string      `json:"id"`
+	Title        string      `json:"title"`
+	InitialState *string     `json:"initial_state"`
+	Moves        string      `json:"moves"`
+	Red          *PlayerInfo `json:"red,omitempty"`
+	Black        *PlayerInfo `json:"black,omitempty"`
 }
 
 type GameInfoResponse struct {

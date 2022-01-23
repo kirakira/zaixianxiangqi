@@ -13,14 +13,15 @@ import (
 	. "github.com/kirakira/zaixianxiangqi/internal"
 )
 
-func forkGame(ctx Context, user *datastore.Key, parentGame *datastore.Key, forkedMoveCount int, newMoves string, useRed bool) string {
+func forkGame(ctx Context, user *datastore.Key, parentGame *datastore.Key, initialState *string, forkedMoveCount int, newMoves string, useRed bool) string {
 	var gid string
 	for {
 		gid = generateRandomString(6)
 		game := Game{
-			Key:         datastore.NameKey("Game", gid, nil),
-			Description: fmt.Sprintf("从%s创建的分支棋局", parentGame.Name),
-			Moves:       newMoves,
+			Key:          datastore.NameKey("Game", gid, nil),
+			Description:  fmt.Sprintf("从%s创建的分支棋局", parentGame.Name),
+			InitialState: initialState,
+			Moves:        newMoves,
 			GameFork: &GameFork{
 				ParentGame:      parentGame,
 				ForkedMoveCount: forkedMoveCount,
@@ -86,7 +87,7 @@ func forkPage(ctx Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	moveStrings = moveStrings[0:forkedMoveCount]
-	board := buildBoardFromTrustedMoves(moveStrings)
+	board := buildBoardFromTrustedMoves(moveStrings, game.InitialState)
 	if board.IsLosing() {
 		http.Error(w, fmt.Sprintf("the game is already ended at move %d", forkedMoveCount), http.StatusBadRequest)
 		return
@@ -102,6 +103,6 @@ func forkPage(ctx Context, w http.ResponseWriter, r *http.Request) {
 		useRed = rand.Intn(2) == 0
 	}
 
-	newGid := forkGame(ctx, userSession.User, game.Key, forkedMoveCount, newMoves, useRed)
+	newGid := forkGame(ctx, userSession.User, game.Key, game.InitialState, forkedMoveCount, newMoves, useRed)
 	http.Redirect(w, r, "/game/"+newGid, http.StatusFound)
 }

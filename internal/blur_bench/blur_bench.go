@@ -159,7 +159,7 @@ func playGame(engines [2]string, redPlayer int, threadIndex int) (*GameRecord, e
 		ControlIsRed: redPlayer == 0,
 		StartTime:    timestamppb.New(time.Now()),
 	}
-	board := MakeInitialBoard()
+	board := MakeInitialBoard(nil)
 
 	var playerColor []string
 	if redPlayer == 0 {

@@ -22,9 +22,13 @@ const (
 	REPETITION_COUNT = 3
 )
 
-func MakeInitialBoard() *Board {
+func MakeInitialBoard(fen *string) *Board {
 	var board Board
-	board.SetBoard("rheakaehr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RHEAKAEHR", true)
+	if fen == nil {
+		board.SetBoard("rheakaehr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RHEAKAEHR", true)
+	} else {
+		board.SetBoard(*fen, true)
+	}
 	return &board
 }
 

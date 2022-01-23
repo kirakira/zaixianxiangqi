@@ -118,6 +118,9 @@ func sendEngineMove(game GameToPlay, move string) {
 func playGame(game GameToPlay) {
 	log.Printf("Playing %s...\n", *game.Gid)
 	commands := []string{"xboard", "force", "time 500"}
+	if game.InitialState != nil {
+		commands = append(commands, fmt.Sprintf("setboard %s r", *game.InitialState))
+	}
 	for _, move_string := range strings.Split(*game.Moves, "/") {
 		if len(move_string) == 0 {
 			continue

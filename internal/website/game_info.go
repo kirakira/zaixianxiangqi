@@ -29,7 +29,7 @@ func makeMove(game *Game, redSide bool, newMovesString string) error {
 	if GameHasEnded(game) {
 		return errors.New("game has ended")
 	}
-	b := buildBoardFromTrustedMoves(oldMoves)
+	b := buildBoardFromTrustedMoves(oldMoves, game.InitialState)
 	newMoveString := newMoves[len(newMoves)-1]
 	if newMoveString == "R" || newMoveString == "B" {
 		// Resignation.
@@ -81,10 +81,11 @@ func maybePushAIMove(ctx Context, game *Game) {
 	}
 
 	gameToPlay := GameToPlay{
-		Uid:         newInt64(nextMoveUser.Key.ID),
-		Gid:         newString(game.Key.Name),
-		Moves:       newString(game.Moves),
-		CallbackUrl: newString(fmt.Sprintf("https://%s.appspot.com", ctx.ProjectID)),
+		Uid:          newInt64(nextMoveUser.Key.ID),
+		Gid:          newString(game.Key.Name),
+		InitialState: game.InitialState,
+		Moves:        newString(game.Moves),
+		CallbackUrl:  newString(fmt.Sprintf("https://%s.appspot.com", ctx.ProjectID)),
 	}
 	jsonEncoded, err := json.Marshal(gameToPlay)
 	if err != nil {

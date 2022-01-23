@@ -22,7 +22,7 @@ function Move(i1, j1, i2, j2, piece, capture) {
 /**
  * @constructor
  */
-function Chess() {
+function Chess(initialState = null) {
     this.reset = reset;
     this.setMoves = setMoves;
     this.move = move;
@@ -176,7 +176,11 @@ function Chess() {
             for (var j = 0; j < 9; ++j)
                 board_[i].push(0);
         }
-        setBoard("rheakaehr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RHEAKAEHR");
+        if (initialState) {
+            setBoard(initialState);
+        } else {
+            setBoard("rheakaehr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RHEAKAEHR");
+        }
     }
 
     function setMoves(moves) {

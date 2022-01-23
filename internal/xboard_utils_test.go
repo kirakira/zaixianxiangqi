@@ -3,6 +3,8 @@ package internal
 import (
 	"reflect"
 	"testing"
+
+	. "github.com/kirakira/zaixianxiangqi/internal/blur_bench/genfiles"
 )
 
 func TestValidEngineMove(t *testing.T) {
@@ -61,13 +63,13 @@ func TestThinkingIncompleteDepth(t *testing.T) {
 	if output.Thinking == nil {
 		t.Errorf("should contain thinking")
 	}
-	expectedOutput := EngineThinkingOutput{
+	expectedOutput := EngineThinkingOutputLine{
 		Depth:            10,
 		DepthComplete:    false,
 		Score:            -15,
 		TimeCentiSeconds: 2,
 		Nodes:            66229,
-		PV:               []string{"d9e9", "e6e3", "g5f5", "h6g6", "f5g5", "g6f6", "g5f5", "f6e6", "f5f4", "e3e5"},
+		Pv:               []string{"d9e9", "e6e3", "g5f5", "h6g6", "f5g5", "g6f6", "g5f5", "f6e6", "f5f4", "e3e5"},
 	}
 	if !reflect.DeepEqual(*output.Thinking, expectedOutput) {
 		t.Errorf("incorrect thinking output: expected %v actual %v", expectedOutput, output.Thinking)
@@ -83,13 +85,13 @@ func TestThinkingCompleteDepth(t *testing.T) {
 	if output.Thinking == nil {
 		t.Errorf("should contain thinking")
 	}
-	expectedOutput := EngineThinkingOutput{
+	expectedOutput := EngineThinkingOutputLine{
 		Depth:            10,
 		DepthComplete:    true,
 		Score:            -15,
 		TimeCentiSeconds: 2,
 		Nodes:            66229,
-		PV:               []string{"d9e9", "e6e3", "g5f5", "h6g6", "f5g5", "g6f6", "g5f5", "f6e6", "f5f4", "e3e5"},
+		Pv:               []string{"d9e9", "e6e3", "g5f5", "h6g6", "f5g5", "g6f6", "g5f5", "f6e6", "f5f4", "e3e5"},
 	}
 	if !reflect.DeepEqual(*output.Thinking, expectedOutput) {
 		t.Errorf("incorrect thinking output: expected %v actual %v", expectedOutput, output.Thinking)

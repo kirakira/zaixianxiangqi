@@ -17,7 +17,7 @@ func TestGenerateAllMoves(t *testing.T) {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	board := MakeInitialBoard()
+	board := MakeInitialBoard(nil)
 	for scanner.Scan() {
 		tokens := strings.Split(scanner.Text(), " ")
 		fen, turn, moves := tokens[0], tokens[1], tokens[2]
@@ -58,7 +58,7 @@ func TestPastGames(t *testing.T) {
 		moves := strings.Split(movesString, "/")
 		moves = moves[1:]
 
-		board := MakeInitialBoard()
+		board := MakeInitialBoard(nil)
 		for i, moveString := range moves {
 			if moveString == "R" {
 				if board.RedToGo {
@@ -135,7 +135,7 @@ func toMoves(movesString []string) []Move {
 }
 
 func Test4Repetition(t *testing.T) {
-	board := MakeInitialBoard()
+	board := MakeInitialBoard(nil)
 	moves1 := toMoves([]string{"a0a1", "a1a0"})
 	moves2 := toMoves([]string{"a9a8", "a8a9"})
 
@@ -155,7 +155,7 @@ func Test4Repetition(t *testing.T) {
 }
 
 func Test6Repetition(t *testing.T) {
-	board := MakeInitialBoard()
+	board := MakeInitialBoard(nil)
 	moves1 := toMoves([]string{"a0a2", "a2a1", "a1a0"})
 	moves2 := toMoves([]string{"a9a7", "a7a8", "a8a9"})
 
@@ -175,7 +175,7 @@ func Test6Repetition(t *testing.T) {
 }
 
 func Test8Repetition(t *testing.T) {
-	board := MakeInitialBoard()
+	board := MakeInitialBoard(nil)
 	moves1 := toMoves([]string{"a0a1", "a1a2", "a2a1", "a1a0"})
 	moves2 := toMoves([]string{"a9a8", "a8a7", "a7a8", "a8a9"})
 

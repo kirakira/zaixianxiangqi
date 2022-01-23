@@ -1,10 +1,11 @@
 package internal
 
 type GameToPlay struct {
-	Uid         *int64  `json:"uid"`
-	Gid         *string `json:"gid"`
-	Moves       *string `json:"moves"`
-	CallbackUrl *string `json:"callback_url"`
+	Uid          *int64  `json:"uid"`
+	Gid          *string `json:"gid"`
+	InitialState *string `json:"initial_state"`
+	Moves        *string `json:"moves"`
+	CallbackUrl  *string `json:"callback_url"`
 }
 
 type EngineServerRequest struct {

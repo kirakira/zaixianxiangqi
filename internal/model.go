@@ -68,8 +68,11 @@ type DerivedGameData struct {
 
 type Game struct {
 	// if game is forked, this is the time when it is forked
-	Creation      time.Time
-	Description   string `datastore:",noindex"`
+	Creation    time.Time
+	Description string `datastore:",noindex"`
+	// Optional fen string that represents the initial state of the game.
+	// Will be populated for handicapped games.
+	InitialState  *string `datastore:",noindex"`
 	Red           *datastore.Key
 	Black         *datastore.Key
 	Moves         string `datastore:",noindex"`

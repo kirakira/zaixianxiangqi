@@ -1,7 +1,7 @@
 /**
  * @constructor
  */
-function Board(onMove) {
+function Board(onMove, initialState = null) {
     this.setState = setState;
     this.resetState = resetState;
     this.showMove = showMove;
@@ -10,7 +10,7 @@ function Board(onMove) {
     this.numMovesShown = numMovesShown;
     this.getFen = getFen;
 
-    var board_ = new Chess();
+    var board_ = new Chess(initialState);
     var ui_ = new BoardUI(onSquareSelected);
     var mySide_ = "r";
     var viewOnly_ = true;

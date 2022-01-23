@@ -236,7 +236,7 @@ function ExperimentViewer(experimentMetadata, gameRecordsTOC) {
 
     function initApplication() {
         // init the board and game
-        board_ = new Board(onPlayerMove);
+        board_ = new Board(onPlayerMove, null);
         initializeTOC();
         refreshPage();
         if (window.location.hash) {

@@ -372,7 +372,7 @@ class Game {
         }.bind(this), 60000 / this.redWatch_.frequency());
 
         // init the board and game
-        this.board_ = new Board(this.onPlayerMove.bind(this));
+        this.board_ = new Board(this.onPlayerMove.bind(this), this.gameInfo_.initial_state);
         this.refreshGame();
 
         // start live refresh
