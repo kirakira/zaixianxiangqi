@@ -92,7 +92,10 @@ func forkPage(ctx Context, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("the game is already ended at move %d", forkedMoveCount), http.StatusBadRequest)
 		return
 	}
-	newMoves := "/" + strings.Join(moveStrings, "/") + declareGameResult(board)
+	for i := 0; i < len(moveStrings); i++ {
+		moveStrings[i] = "/" + moveStrings[i]
+	}
+	newMoves := strings.Join(moveStrings, "") + declareGameResult(board)
 
 	var useRed bool
 	if game.Red != nil && *game.Red == *userSession.User {
