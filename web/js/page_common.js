@@ -57,7 +57,6 @@ function createNavBarMenu(navBarOptions) {
 
     var divMenuText = document.createElement("div");
     divMenuText.id = "menu-text";
-    divMenuText.onclick = toggleMenu;
     divMenuText.appendChild(createMenuToggleSpan(true));
     div.appendChild(divMenuText);
 
@@ -104,6 +103,7 @@ function createNavBarRightElement(navBarOptions) {
     div.appendChild(createNavBarUsernameElement(navBarOptions.playerId,
         navBarOptions.playerName));
     div.appendChild(createNavBarMenu(navBarOptions));
+    div.onclick = toggleMenu;
     return div;
 }
 
