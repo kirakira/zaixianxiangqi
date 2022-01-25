@@ -189,11 +189,11 @@ func getAllGamesByUser(ctx Context, user *datastore.Key) []*datastore.Key {
 }
 
 func getRecentGames(ctx Context, user *datastore.Key, status *GameStatus, started *bool, count int) []*datastore.Key {
-	type GameAndCreation struct {
+	type GameAndActivity struct {
 		gameKey  *datastore.Key
-		creation time.Time
+		activity time.Time
 	}
-	var games []GameAndCreation
+	var games []GameAndActivity
 
 	var userFieldFilter []string
 	if user != nil {
@@ -220,14 +220,18 @@ func getRecentGames(ctx Context, user *datastore.Key, status *GameStatus, starte
 			log.Fatalf("Failed to query for recent games: %v", err)
 		}
 		for _, game := range retrievedGames {
-			games = append(games, GameAndCreation{
+			activity := time.Unix(0, 0)
+			if game.DerivedData.LastActivity != nil {
+				activity = *game.DerivedData.LastActivity
+			}
+			games = append(games, GameAndActivity{
 				gameKey:  game.Key,
-				creation: game.Creation,
+				activity: activity,
 			})
 		}
 	}
-	// Sort the games by creation time, since they are pieced together from two sources.
-	sort.Slice(games, func(i, j int) bool { return games[i].creation.After(games[j].creation) })
+	// Sort the games by activity time, since they are pieced together from two sources.
+	sort.Slice(games, func(i, j int) bool { return games[i].activity.After(games[j].activity) })
 	if len(games) > count {
 		games = games[:count]
 	}
