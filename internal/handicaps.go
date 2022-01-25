@@ -27,4 +27,9 @@ var HandicapConfigs = []HandicapConfig{
 		Name: "Two horses",
 		Fen:  "rheakaehr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/R1EAKAE1R",
 	},
+	HandicapConfig{
+		Key:  "new_ground",
+		Name: "Break new ground",
+		Fen:  "rheakaehr/9/1c5c1/p1p1p1p1p/9/9/9/1C5C1/9/RH2K2HR",
+	},
 }
