@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"cloud.google.com/go/datastore"
 	. "github.com/kirakira/zaixianxiangqi/internal"
@@ -19,6 +20,7 @@ func forkGame(ctx Context, user *datastore.Key, parentGame *datastore.Key, initi
 		gid = generateRandomString(6)
 		game := Game{
 			Key:          datastore.NameKey("Game", gid, nil),
+			Creation:     time.Now(),
 			Description:  fmt.Sprintf("从%s创建的分支棋局", parentGame.Name),
 			InitialState: initialState,
 			Moves:        newMoves,
