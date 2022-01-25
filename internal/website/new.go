@@ -27,8 +27,15 @@ func setInitialState(game *Game, handicaps *string) error {
 		return nil
 	}
 
-	config, found := HandicapConfigs[*handicaps]
-	if !found {
+	var config *HandicapConfig
+	for _, c := range HandicapConfigs {
+		if c.Key == *handicaps {
+			config = &c
+			break
+		}
+	}
+
+	if config == nil {
 		return fmt.Errorf("Invalid handicap mode %s", *handicaps)
 	}
 
@@ -73,7 +80,7 @@ func newGameOptionsPage(ctx Context, w http.ResponseWriter, r *http.Request, use
 		PlayerId        string
 		PlayerName      string
 		JsCode          template.JS
-		HandicapConfigs map[string]HandicapConfig
+		HandicapConfigs []HandicapConfig
 	}{
 		PlayerId:   strconv.FormatInt(userSession.User.ID, 10),
 		PlayerName: playerName,

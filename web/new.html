@@ -21,8 +21,8 @@
                     <input type="radio" id="game-mode-handicapped" name="game_mode" value="handicapped" />
                     <label for="game-mode-handicapped">Handicapped: </label>
                     <select id="handicaps" name="handicaps">
-                        {{- range $key, $config := .HandicapConfigs -}}
-                        <option value="{{$key}}">{{$config.Name}}</option>
+                        {{- range $config := .HandicapConfigs -}}
+                        <option value="{{$config.Key}}">{{$config.Name}}</option>
                         {{- end -}}
                     </select><br>
                     <input type="submit" id="submit" value="Create Game" />
